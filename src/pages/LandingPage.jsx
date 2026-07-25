@@ -91,7 +91,7 @@ export default function LandingPage() {
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 12px', background: 'var(--glass-bg-2)', border: '1px solid var(--glass-border-glow)', borderRadius: 'var(--radius-full)', width: 'fit-content' }}>
               <span style={{ fontSize: 12 }}>🇵🇸 🇪🇬 🇸🇦 🇯🇴</span>
               <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--clr-accent)' }}>
-                متجرك الإلكتروني السريع للطلب عبر الواتساب - تحديث Vercel نشط! ✨
+                متجرك الإلكتروني السريع للطلب عبر الواتساب - تم التحديث بنجاح! 🎉
               </span>
             </div>
 
