@@ -4,9 +4,10 @@ import { DEMO_CATEGORIES, DEMO_PRODUCTS, DEMO_PRESETS } from '../utils/demoData'
 import { useAuthStore } from './useAuthStore'
 import { useStoreConfig } from './useStoreConfig'
 
-const checkDemo = () => {
-  return !isConfigured || 
-         useAuthStore.getState().isDemoMode || 
+const checkDemo = (storeId) => {
+  return !isConfigured ||
+         useAuthStore.getState().isDemoMode ||
+         (storeId && storeId.startsWith('demo-store-')) ||
          (typeof window !== 'undefined' && window.location.pathname.includes('/dashboard') && !useAuthStore.getState().user)
 }
 
@@ -17,7 +18,7 @@ export const useProductsStore = create((set, get) => ({
   error: null,
 
   fetchAll: async (storeId) => {
-    const isDemo = checkDemo()
+    const isDemo = checkDemo(storeId)
     if (isDemo || !storeId) {
       // Load the correct preset based on the current store's _presetKey
       const currentStore = useStoreConfig.getState().store
