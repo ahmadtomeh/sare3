@@ -1,0 +1,280 @@
+import { useEffect } from 'react'
+import { TrendingUp, Package, ShoppingCart, Users, ArrowUpRight, Plus, Eye, ClipboardList, Zap, Clock } from 'lucide-react'
+import { useStoreConfig } from '../../stores/useStoreConfig'
+import { useOrdersStore } from '../../stores/useOrdersStore'
+import { useProductsStore } from '../../stores/useProductsStore'
+
+const STATUS_CONFIG = {
+  new:              { label: 'جديد',          color: '#f59e0b', bg: 'rgba(245,158,11,0.12)' },
+  preparing:        { label: 'قيد التجهيز',   color: '#3b82f6', bg: 'rgba(59,130,246,0.12)' },
+  out_for_delivery: { label: 'في الطريق',     color: '#6366f1', bg: 'rgba(99,102,241,0.12)' },
+  done:             { label: 'تم التسليم',    color: '#10b981', bg: 'rgba(16,185,129,0.12)' },
+  cancelled:        { label: 'ملغي',          color: '#ef4444', bg: 'rgba(239,68,68,0.12)' },
+}
+
+export default function DashboardHome({ onNavigate }) {
+  const { store } = useStoreConfig()
+  const { orders, fetchOrders } = useOrdersStore()
+  const { products } = useProductsStore()
+
+  useEffect(() => {
+    if (store?.id) fetchOrders(store.id)
+  }, [store?.id])
+
+  const stats = useOrdersStore.getState().getStats()
+  const recentOrders = orders.slice(0, 5)
+
+  const greeting = () => {
+    const h = new Date().getHours()
+    if (h < 12) return 'صباح الخير'
+    if (h < 17) return 'مساء الخير'
+    return 'مساء النور'
+  }
+
+  const todayStr = new Date().toLocaleDateString('ar-EG', {
+    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
+  })
+
+  const handleShareStore = () => {
+    const storeUrl = `${window.location.origin}/store/${store?.slug || 'demo'}`
+    if (navigator.share) {
+      navigator.share({
+        title: store?.name || 'متجري على سريع',
+        text: `تفضل بزيارة متجرنا واطلب عبر الواتساب مباشرة:`,
+        url: storeUrl,
+      }).catch(() => {})
+    } else {
+      navigator.clipboard.writeText(storeUrl)
+      alert('📋 تم نسخ رابط متجرك بنجاح!')
+    }
+  }
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sp-md)' }}>
+
+      {/* ── Welcome Header Banner ── */}
+      <div className="glass dash-welcome-banner" style={{
+        padding: 'var(--sp-lg)',
+        background: 'linear-gradient(135deg, rgba(139,92,246,0.12), rgba(16,185,129,0.08))',
+        border: '1px solid var(--glass-border-glow)',
+        display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 'var(--sp-md)',
+      }}>
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
+            <h1 className="dash-welcome-title" style={{ fontSize: 'var(--text-xl)', fontWeight: 900 }}>
+              {greeting()}{store?.name ? ` — ${store.name}` : ''} 👋
+            </h1>
+            <span className="badge badge-primary dash-welcome-badge">نشط 🟢</span>
+          </div>
+          <p className="dash-welcome-subtitle" style={{ color: 'var(--clr-text-3)', fontSize: 'var(--text-xs)' }}>{todayStr} • ملخص نشاط متجرك اليوم</p>
+        </div>
+
+        <div className="dash-welcome-actions" style={{ display: 'flex', gap: 'var(--sp-sm)', flexWrap: 'wrap' }}>
+          <button className="btn btn-primary btn-sm" onClick={() => onNavigate('products')} id="dash-add-product" style={{ flex: 1 }}>
+            <Plus size={16} />
+            إضافة منتج
+          </button>
+          <button className="btn btn-ghost btn-sm" onClick={handleShareStore} id="dash-share-store" style={{ flex: 1 }}>
+            <Eye size={16} />
+            مشاركة المتجر
+          </button>
+        </div>
+      </div>
+
+      {/* ── Metric Cards Grid ── */}
+      <div className="dash-metrics-grid">
+        <MetricCard
+          icon="📦"
+          bg="var(--clr-primary-glow)"
+          clr="var(--clr-primary)"
+          label="إجمالي الطلبات"
+          value={stats.totalOrders}
+          trend="+18%"
+          sparklinePath="M0,25 Q20,15 40,20 T80,5 T120,18 T160,2 T200,10"
+        />
+
+        <MetricCard
+          icon="💰"
+          bg="rgba(16,185,129,0.15)"
+          clr="var(--clr-accent)"
+          label="الإيرادات"
+          value={`${stats.totalRevenue.toFixed(0)} ${store?.currency || '₪'}`}
+          trend="+24%"
+          sparklinePath="M0,28 Q30,20 60,24 T120,10 T180,4 T200,2"
+        />
+
+        <MetricCard
+          icon="🕐"
+          bg="rgba(245,158,11,0.15)"
+          clr="var(--clr-warning)"
+          label="طلبات اليوم"
+          value={stats.todayOrders}
+          trend="ممتاز 🔥"
+          sparklinePath="M0,20 Q40,10 80,18 T140,5 T200,12"
+        />
+
+        <MetricCard
+          icon="🛍️"
+          bg="rgba(59,130,246,0.15)"
+          clr="var(--clr-info)"
+          label="عدد المنتجات"
+          value={products.length}
+          trend="نشط"
+          sparklinePath="M0,15 Q50,22 100,12 T150,18 T200,8"
+        />
+      </div>
+
+      {/* ── Trial Period Warning Banner ── */}
+      {store?.subscription_status === 'trial' && (
+        <div className="glass dash-trial-banner" style={{
+          padding: 'var(--sp-md)',
+          border: '1px solid var(--clr-warning)',
+          background: 'rgba(245,158,11,0.08)',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 'var(--sp-md)', flexWrap: 'wrap',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div className="trial-icon-box" style={{
+              width: 38, height: 38, borderRadius: 10, background: 'rgba(245,158,11,0.2)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, flexShrink: 0,
+            }}>
+              🕐
+            </div>
+            <div>
+              <div style={{ fontWeight: 800, color: 'var(--clr-warning)', fontSize: 'var(--text-sm)' }}>
+                فترة تجريبية مجانية (7 أيام)
+              </div>
+              <div className="trial-subtitle" style={{ fontSize: 'var(--text-xs)', color: 'var(--clr-text-2)' }}>
+                ترقية حسابك تضمن استمرار استقبال الطلبات دون انقطاع عبر الواتساب.
+              </div>
+            </div>
+          </div>
+          <button className="btn btn-primary btn-sm" onClick={() => onNavigate('subscription')} id="trial-upgrade-btn" style={{ flexShrink: 0 }}>
+            <Zap size={14} /> ترقية الاشتراك
+          </button>
+        </div>
+      )}
+
+      {/* ── Recent Orders Table ── */}
+      <div>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 'var(--sp-md)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <h2 style={{ fontWeight: 800, fontSize: 'var(--text-lg)' }}>آخر الطلبات الواردة 📋</h2>
+            {stats.newOrders > 0 && (
+              <span className="badge badge-warning">{stats.newOrders} طلبات جديدة</span>
+            )}
+          </div>
+          {orders.length > 0 && (
+            <button className="btn btn-ghost btn-sm" onClick={() => onNavigate('orders')} id="dash-view-orders-btn">
+              عرض كل الطلبات →
+            </button>
+          )}
+        </div>
+
+        {recentOrders.length === 0 ? (
+          <div className="glass" style={{ padding: 'var(--sp-3xl)', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 'var(--sp-md)' }}>
+            <div style={{ fontSize: '4rem', opacity: 0.4 }}>📭</div>
+            <div style={{ fontWeight: 800, color: 'var(--clr-text)', fontSize: 'var(--text-xl)' }}>لا توجد طلبات بعد</div>
+            <div style={{ color: 'var(--clr-text-3)', fontSize: 'var(--text-sm)', maxWidth: 400 }}>
+              قم بنشر رابط متجرك أو طباعة رمز الـ QR لتتيح لزبائنك إرسال طلبياتهم فوراً
+            </div>
+            <button className="btn btn-primary" onClick={() => onNavigate('qr')} id="dash-share-qr-btn">
+              🔗 الحصول على الرابط والـ QR
+            </button>
+          </div>
+        ) : (
+          <div className="glass" style={{ overflow: 'hidden' }}>
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 'var(--text-sm)' }}>
+                <thead>
+                  <tr style={{ background: 'var(--glass-bg-2)', borderBottom: '1px solid var(--clr-border)' }}>
+                    <th style={{ padding: '14px var(--sp-md)', textAlign: 'right', color: 'var(--clr-text-3)' }}># الطلب</th>
+                    <th style={{ padding: '14px var(--sp-md)', textAlign: 'right', color: 'var(--clr-text-3)' }}>اسم العميل</th>
+                    <th style={{ padding: '14px var(--sp-md)', textAlign: 'right', color: 'var(--clr-text-3)' }}>المبلغ الكلي</th>
+                    <th style={{ padding: '14px var(--sp-md)', textAlign: 'right', color: 'var(--clr-text-3)' }}>الحالة الحالية</th>
+                    <th style={{ padding: '14px var(--sp-md)', textAlign: 'right', color: 'var(--clr-text-3)' }}>التوقيت</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {recentOrders.map((order) => {
+                    const sc = STATUS_CONFIG[order.status] || STATUS_CONFIG.new
+                    return (
+                      <tr key={order.id} style={{ borderBottom: '1px solid var(--clr-border)', transition: 'background var(--tr-fast)' }}
+                        onMouseEnter={(e) => e.currentTarget.style.background = 'var(--glass-bg-2)'}
+                        onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                      >
+                        <td style={{ padding: '14px var(--sp-md)', fontWeight: 800, color: 'var(--clr-primary)' }}>
+                          #{order.order_number}
+                        </td>
+                        <td style={{ padding: '14px var(--sp-md)', fontWeight: 700 }}>
+                          {order.customer_name}
+                        </td>
+                        <td style={{ padding: '14px var(--sp-md)', fontWeight: 900, color: 'var(--clr-accent)' }}>
+                          {parseFloat(order.total).toFixed(0)} {store?.currency || '₪'}
+                        </td>
+                        <td style={{ padding: '14px var(--sp-md)' }}>
+                          <span style={{
+                            display: 'inline-flex', alignItems: 'center', gap: 6,
+                            padding: '4px 12px', borderRadius: 'var(--radius-full)',
+                            fontSize: 11, fontWeight: 700,
+                            background: sc.bg, color: sc.color,
+                            border: `1px solid ${sc.color}40`,
+                          }}>
+                            <span style={{ width: 6, height: 6, borderRadius: '50%', background: sc.color }} />
+                            {sc.label}
+                          </span>
+                        </td>
+                        <td style={{ padding: '14px var(--sp-md)', color: 'var(--clr-text-3)', fontSize: 'var(--text-xs)' }}>
+                          {formatTime(order.created_at)}
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+      </div>
+
+    </div>
+  )
+}
+
+function MetricCard({ icon, bg, clr, label, value, trend, sparklinePath }) {
+  return (
+    <div className="glass glass-interactive metric-card-box" style={{ padding: 'var(--sp-md)', display: 'flex', flexDirection: 'column', gap: 6, position: 'relative', overflow: 'hidden' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div className="metric-icon-box" style={{ width: 38, height: 38, borderRadius: 12, background: bg, color: clr, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem', flexShrink: 0 }}>
+          {icon}
+        </div>
+        <span className="metric-trend-badge" style={{ fontSize: 10, fontWeight: 700, color: 'var(--clr-accent)', display: 'flex', alignItems: 'center', gap: 2 }}>
+          <ArrowUpRight size={12} /> {trend}
+        </span>
+      </div>
+
+      <div>
+        <div className="metric-value-text" style={{ fontSize: 'var(--text-2xl)', fontWeight: 900, color: 'var(--clr-text)', lineHeight: 1.1 }}>
+          {value}
+        </div>
+        <div className="metric-label-text" style={{ fontSize: 'var(--text-xs)', color: 'var(--clr-text-3)', marginTop: 2 }}>
+          {label}
+        </div>
+      </div>
+
+      {/* Mini SVG Trend Line Background */}
+      <svg className="metric-sparkline-svg" viewBox="0 0 200 30" style={{ width: '100%', height: 20, opacity: 0.2, marginTop: 2 }}>
+        <path d={sparklinePath} fill="none" stroke={clr} strokeWidth="3" strokeLinecap="round" />
+      </svg>
+    </div>
+  )
+}
+
+function formatTime(iso) {
+  if (!iso) return ''
+  const d = new Date(iso)
+  const diff = Date.now() - d
+  if (diff < 60000) return 'الآن'
+  if (diff < 3600000) return `منذ ${Math.floor(diff / 60000)} دقيقة`
+  if (diff < 86400000) return `منذ ${Math.floor(diff / 3600000)} ساعة`
+  return d.toLocaleDateString('ar-EG', { month: 'short', day: 'numeric' })
+}
