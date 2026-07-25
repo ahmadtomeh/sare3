@@ -222,6 +222,19 @@ function ProductCard({ product, category, currency, onEdit, onDelete, onToggle }
 }
 
 function ProductFormModal({ product, categories, storeId, currency, onClose, onSave, loading }) {
+  // Options can be stored as plain string array ['S','M'] OR as [{label, values}]
+  // Normalize to always work with [{label, values}] internally
+  const normalizeOptions = (opts) => {
+    if (!opts || !Array.isArray(opts)) return []
+    if (opts.length === 0) return []
+    if (typeof opts[0] === 'string') {
+      // old format: flat string array — convert to single group
+      return [{ label: 'الخيارات', values: opts }]
+    }
+    // already {label, values} format
+    return opts.map(o => ({ label: o.label || '', values: Array.isArray(o.values) ? o.values : [] }))
+  }
+
   const [form, setForm] = useState({
     name: product?.name || '',
     description: product?.description || '',
@@ -229,7 +242,7 @@ function ProductFormModal({ product, categories, storeId, currency, onClose, onS
     category_id: product?.category_id || '',
     image_url: product?.image_url || '',
     is_available: product?.is_available ?? true,
-    options: product?.options || [],
+    options: normalizeOptions(product?.options),
   })
   const [imagePreview, setImagePreview] = useState(product?.image_url || '')
   const [uploading, setUploading] = useState(false)
