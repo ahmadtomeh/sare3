@@ -5,6 +5,7 @@ import { useStoreConfig } from '../../stores/useStoreConfig'
 import { useProductsStore } from '../../stores/useProductsStore'
 import { useCartStore } from '../../stores/useCartStore'
 import { buildWhatsAppMessage } from '../../utils/whatsapp'
+import { useOrdersStore } from '../../stores/useOrdersStore'
 import { BottomSheet } from '../../components/ui/Modal'
 import ThemeToggle from '../../components/ThemeToggle'
 import { supabase } from '../../lib/supabase'
@@ -655,17 +656,71 @@ function OrderFormSheet({
     const discountObj = appliedCoupon ? { code: appliedCoupon.code, amount: discountAmount } : null
     const shippingObj = selectedShippingZone ? { name: selectedShippingZone.name, cost: selectedShippingZone.cost } : null
 
+    // ── تجهيز تفاصيل المنتجات لقاعدة البيانات ──
+    const dbItems = items.map(i => ({
+      product: { id: i.product.id, name: i.product.name, price: parseFloat(i.product.price) },
+      quantity: i.quantity,
+      selectedOptions: i.option
+    }))
+
+    // إضافة الخصم كبند خاص في سلة الطلب بقاعدة البيانات
+    if (appliedCoupon) {
+      dbItems.push({
+        product: { id: 'discount', name: `خصم كوبون (${appliedCoupon.code})`, price: -discountAmount },
+        quantity: 1,
+        isSpecial: true
+      })
+    }
+
+    // إضافة الشحن كبند خاص في سلة الطلب بقاعدة البيانات
+    if (selectedShippingZone) {
+      dbItems.push({
+        product: { id: 'shipping', name: `رسوم التوصيل (${selectedShippingZone.name})`, price: parseFloat(selectedShippingZone.cost) },
+        quantity: 1,
+        isSpecial: true
+      })
+    }
+
+    // ── حفظ الطلب في قاعدة بيانات Supabase ──
+    const orderData = {
+      store_id: store.id,
+      customer_name: form.name,
+      customer_phone: form.phone || '',
+      customer_address: form.address || '',
+      notes: form.notes || '',
+      items: dbItems,
+      total: finalTotal,
+      status: 'new'
+    }
+
+    let orderNumber = null
+    try {
+      const savedOrder = await useOrdersStore.getState().placeOrder(orderData)
+      if (savedOrder && savedOrder.order_number) {
+        orderNumber = savedOrder.order_number
+      }
+    } catch (err) {
+      console.error('Failed to save order to Supabase:', err)
+      // رقم طلب عشوائي كبديل في حال فشل الاتصال بقاعدة البيانات
+      orderNumber = Math.floor(Math.random() * 9000) + 1000
+    }
+
     const message = buildWhatsAppMessage({
-      store, items, customer: form, total: finalTotal,
-      discount: discountObj, shipping: shippingObj
+      store,
+      items,
+      customer: form,
+      total: finalTotal,
+      discount: discountObj,
+      shipping: shippingObj,
+      orderNumber
     })
 
     const whatsappNumber = `${store.country_code || '+970'}${store.whatsapp}`.replace(/[^0-9]/g, '')
     const url = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`
 
-    // ── حفظ الطلب في localStorage ──
+    // ── حفظ الطلب في localStorage للعميل ──
     const orderRecord = {
-      id: `ORD-${Date.now()}`,
+      id: orderNumber ? `#${orderNumber}` : `ORD-${Date.now()}`,
       storeId: store.id,
       storeName: store.name,
       date: new Date().toISOString(),

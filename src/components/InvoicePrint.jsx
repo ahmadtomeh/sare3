@@ -9,7 +9,38 @@ export default function InvoicePrint({ order, store, onClose }) {
   }
 
   const currency = store.currency || '₪'
-  const items = Array.isArray(order.items) ? order.items : []
+  const allItems = Array.isArray(order.items) ? order.items : []
+
+  // تصفية المنتجات العادية لاستبعاد البنود الخاصة بالشحن والخصم من قائمة العناصر الأساسية
+  const productItems = allItems.filter(item => {
+    const isSpecial = item.isSpecial || item.product?.id === 'discount' || item.product?.id === 'shipping'
+    return !isSpecial
+  })
+
+  // استخراج تفاصيل الخصم وتفاصيل التوصيل
+  const discountItem = allItems.find(item => item.product?.id === 'discount' || (item.isSpecial && item.name?.includes('خصم')))
+  const shippingItem = allItems.find(item => item.product?.id === 'shipping' || (item.isSpecial && item.name?.includes('توصيل')))
+
+  let discountVal = 0
+  let discountName = ''
+  if (discountItem) {
+    const price = parseFloat(discountItem.price) || parseFloat(discountItem.product?.price) || 0
+    discountVal = Math.abs(price)
+    discountName = discountItem.name || discountItem.product?.name || 'خصم كوبون'
+  }
+
+  let shippingVal = 0
+  let shippingName = ''
+  if (shippingItem) {
+    shippingVal = parseFloat(shippingItem.price) || parseFloat(shippingItem.product?.price) || 0
+    shippingName = shippingItem.name || shippingItem.product?.name || 'رسوم التوصيل'
+  }
+
+  const subtotal = productItems.reduce((acc, item) => {
+    const price = parseFloat(item.price) || parseFloat(item.product?.price) || 0
+    const qty = parseInt(item.qty || item.quantity) || 1
+    return acc + (price * qty)
+  }, 0)
 
   return (
     <div style={{
@@ -82,14 +113,16 @@ export default function InvoicePrint({ order, store, onClose }) {
               </tr>
             </thead>
             <tbody>
-              {items.map((item, idx) => {
-                const price = parseFloat(item.price) || 0
+              {productItems.map((item, idx) => {
+                const price = parseFloat(item.price) || parseFloat(item.product?.price) || 0
                 const qty = parseInt(item.qty || item.quantity) || 1
+                const name = item.name || item.product?.name
+                const option = item.option || (item.selectedOptions ? Object.entries(item.selectedOptions).map(([k, v]) => `${k}: ${v}`).join(', ') : '')
                 return (
                   <tr key={idx} style={{ borderBottom: '1px solid #e5e7eb' }}>
                     <td style={{ padding: 8, color: '#111827' }}>
-                      {item.name || item.product?.name}
-                      {item.option && <span style={{ color: '#6b7280', fontSize: 10 }}> ({item.option})</span>}
+                      {name}
+                      {option && <span style={{ color: '#6b7280', fontSize: 10 }}> ({option})</span>}
                     </td>
                     <td style={{ textAlign: 'center', padding: 8, color: '#4b5563' }}>{qty}</td>
                     <td style={{ textAlign: 'left', padding: 8, color: '#4b5563' }}>{price.toFixed(0)} {currency}</td>
@@ -101,8 +134,24 @@ export default function InvoicePrint({ order, store, onClose }) {
           </table>
 
           {/* Totals */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6, alignItems: 'flex-start', fontSize: 12, color: '#4b5563', paddingRight: '60%', textAlign: 'left', marginTop: 16 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6, alignItems: 'flex-start', fontSize: 12, color: '#4b5563', paddingRight: '50%', textAlign: 'left', marginTop: 16 }}>
             <div style={{ display: 'flex', width: '100%', justifyContent: 'space-between', borderTop: '2px solid #e5e7eb', paddingTop: 8 }}>
+              <span>المجموع الفرعي:</span>
+              <span>{subtotal.toFixed(0)} {currency}</span>
+            </div>
+            {discountVal > 0 && (
+              <div style={{ display: 'flex', width: '100%', justifyContent: 'space-between', color: '#8b5cf6' }}>
+                <span>{discountName}:</span>
+                <span>-{discountVal.toFixed(0)} {currency}</span>
+              </div>
+            )}
+            {shippingVal > 0 && (
+              <div style={{ display: 'flex', width: '100%', justifyContent: 'space-between' }}>
+                <span>{shippingName}:</span>
+                <span>+{shippingVal.toFixed(0)} {currency}</span>
+              </div>
+            )}
+            <div style={{ display: 'flex', width: '100%', justifyContent: 'space-between', borderTop: '1px dashed #e5e7eb', paddingTop: 6, marginTop: 4 }}>
               <span style={{ fontWeight: 700, color: '#111827' }}>المجموع النهائي:</span>
               <span style={{ fontWeight: 900, fontSize: 16, color: 'var(--clr-primary, #7c3aed)' }}>{parseFloat(order.total).toFixed(0)} {currency}</span>
             </div>

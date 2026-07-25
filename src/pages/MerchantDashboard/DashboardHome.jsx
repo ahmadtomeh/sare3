@@ -24,6 +24,54 @@ export default function DashboardHome({ onNavigate }) {
   const stats = useOrdersStore.getState().getStats()
   const recentOrders = orders.slice(0, 5)
 
+  // ── تجهيز بيانات الرسومات البيانية ──
+  const salesData = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date()
+    d.setDate(d.getDate() - i)
+    return {
+      dayLabel: d.toLocaleDateString('ar-EG', { weekday: 'short' }),
+      dateKey: d.toDateString(),
+      revenue: 0,
+      count: 0
+    }
+  }).reverse()
+
+  orders.forEach(o => {
+    const orderDate = new Date(o.created_at).toDateString()
+    const match = salesData.find(s => s.dateKey === orderDate)
+    if (match) {
+      match.revenue += parseFloat(o.total) || 0
+      match.count += 1
+    }
+  })
+
+  const maxRev = Math.max(...salesData.map(d => d.revenue), 10)
+  const svgW = 500
+  const svgH = 200
+  const padL = 50
+  const padR = 20
+  const padT = 20
+  const padB = 30
+  const plotW = svgW - padL - padR
+  const plotH = svgH - padT - padB
+
+  const points = salesData.map((d, i) => {
+    const x = padL + i * (plotW / 6)
+    const y = svgH - padB - (d.revenue / maxRev) * plotH
+    return { x, y, ...d }
+  })
+
+  const linePath = points.map((p, i) => (i === 0 ? `M ${p.x} ${p.y}` : `L ${p.x} ${p.y}`)).join(' ')
+  const areaPath = points.length > 0 ? `${linePath} L ${points[points.length - 1].x} ${svgH - padB} L ${points[0].x} ${svgH - padB} Z` : ''
+
+  // توزيع الحالات
+  const totalOrders = orders.length || 1
+  const statusStats = Object.entries(STATUS_CONFIG).map(([key, config]) => {
+    const count = orders.filter(o => o.status === key).length
+    const pct = Math.round((count / totalOrders) * 100)
+    return { key, count, pct, ...config }
+  })
+
   const greeting = () => {
     const h = new Date().getHours()
     if (h < 12) return 'صباح الخير'
@@ -122,6 +170,109 @@ export default function DashboardHome({ onNavigate }) {
           trend="نشط"
           sparklinePath="M0,15 Q50,22 100,12 T150,18 T200,8"
         />
+      </div>
+
+      {/* ── Charts Section ── */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 'var(--sp-md)' }}>
+        {/* Sales Area Chart */}
+        <div className="glass" style={{ padding: 'var(--sp-md)', display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <div>
+            <h3 style={{ fontWeight: 800, fontSize: 'var(--text-sm)' }}>📈 منحنى المبيعات (آخر 7 أيام)</h3>
+            <p style={{ fontSize: 'var(--text-xs)', color: 'var(--clr-text-3)' }}>مجموع الإيرادات بالعملة المحلية للمتجر</p>
+          </div>
+
+          <div style={{ position: 'relative', width: '100%' }}>
+            <svg viewBox={`0 0 ${svgW} ${svgH}`} style={{ width: '100%', height: 'auto', overflow: 'visible' }}>
+              <defs>
+                <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="var(--clr-primary)" stopOpacity="0.4" />
+                  <stop offset="100%" stopColor="var(--clr-primary)" stopOpacity="0.0" />
+                </linearGradient>
+              </defs>
+
+              {/* Grid Lines */}
+              {[0, 0.5, 1].map((ratio) => {
+                const y = padT + ratio * plotH
+                const val = (maxRev * (1 - ratio)).toFixed(0)
+                return (
+                  <g key={ratio} style={{ opacity: 0.15 }}>
+                    <line x1={padL} y1={y} x2={svgW - padR} y2={y} stroke="var(--clr-text)" strokeWidth="1" strokeDasharray="4 4" />
+                    <text x={padL - 8} y={y + 4} textAnchor="end" fontSize="10" fontWeight="700" fill="var(--clr-text)">
+                      {val}
+                    </text>
+                  </g>
+                )
+              })}
+
+              {/* Area & Line */}
+              {points.length > 0 && (
+                <>
+                  <path d={areaPath} fill="url(#chartGradient)" />
+                  <path d={linePath} fill="none" stroke="var(--clr-primary)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+                </>
+              )}
+
+              {/* Circles & Labels */}
+              {points.map((p, i) => (
+                <g key={i}>
+                  <circle
+                    cx={p.x}
+                    cy={p.y}
+                    r="4"
+                    fill="var(--clr-bg-surface)"
+                    stroke="var(--clr-primary)"
+                    strokeWidth="2"
+                    style={{ transition: 'all 0.2s' }}
+                  />
+                  {p.revenue > 0 && (
+                    <text x={p.x} y={p.y - 8} textAnchor="middle" fontSize="9" fontWeight="800" fill="var(--clr-accent)">
+                      {p.revenue.toFixed(0)}
+                    </text>
+                  )}
+                  {/* X Axis Labels */}
+                  <text x={p.x} y={svgH - 8} textAnchor="middle" fontSize="10" fontWeight="700" fill="var(--clr-text-3)">
+                    {p.dayLabel}
+                  </text>
+                </g>
+              ))}
+            </svg>
+          </div>
+        </div>
+
+        {/* Order Status Distribution */}
+        <div className="glass" style={{ padding: 'var(--sp-md)', display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <div>
+            <h3 style={{ fontWeight: 800, fontSize: 'var(--text-sm)' }}>📊 توزيع حالات الطلبات</h3>
+            <p style={{ fontSize: 'var(--text-xs)', color: 'var(--clr-text-3)' }}>حالة ومعالجة الطلبات المستلمة</p>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10, justifyContent: 'center', height: '100%' }}>
+            {statusStats.map((st) => (
+              <div key={st.key} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 'var(--text-xs)' }}>
+                  <span style={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4 }}>
+                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: st.color }} />
+                    {st.label}
+                  </span>
+                  <span style={{ color: 'var(--clr-text-3)', fontWeight: 800 }}>
+                    {st.count} طلب ({st.pct}%)
+                  </span>
+                </div>
+                <div style={{ height: 8, background: 'var(--glass-bg-2)', borderRadius: 'var(--radius-full)', overflow: 'hidden', border: '1px solid var(--clr-border)' }}>
+                  <div
+                    style={{
+                      height: '100%',
+                      background: st.color,
+                      width: `${st.pct}%`,
+                      borderRadius: 'inherit',
+                      transition: 'width 0.6s cubic-bezier(0.4, 0, 0.2, 1)',
+                    }}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
 
       {/* ── Trial Period Warning Banner ── */}
