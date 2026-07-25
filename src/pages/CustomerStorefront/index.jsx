@@ -430,10 +430,17 @@ function CompactProductCard({ product, currency, badge, onAdd }) {
 function ProductOptionsSheet({ product, currency, onClose, onAdd }) {
   const optionsList = useMemo(() => {
     if (!product?.options) return []
-    if (typeof product.options === 'string') {
-      try { return JSON.parse(product.options) } catch { return [] }
+    let opts = product.options
+    if (typeof opts === 'string') {
+      try { opts = JSON.parse(opts) } catch { return [] }
     }
-    return Array.isArray(product.options) ? product.options : []
+    if (!Array.isArray(opts) || opts.length === 0) return []
+    // Normalize: flat string array ['S','M'] → [{label:'الخيار', values:['S','M']}]
+    if (typeof opts[0] === 'string') {
+      return [{ label: 'الخيار', values: opts }]
+    }
+    // Already [{label, values}] format
+    return opts.map(o => ({ label: o.label || 'الخيار', values: Array.isArray(o.values) ? o.values : [] }))
   }, [product?.options])
 
   const [selected, setSelected] = useState({})
