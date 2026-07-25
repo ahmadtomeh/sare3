@@ -116,7 +116,7 @@ export default function LandingPage() {
               </button>
               <button
                 className="btn btn-ghost btn-lg"
-                onClick={() => window.open('/store/demo-cafe', '_blank')}
+                onClick={() => navigate('/store/demo-cafe')}
                 id="hero-demo-btn"
               >
                 🎮 تجربة حية
@@ -212,8 +212,6 @@ export default function LandingPage() {
             <a
               key={s.slug}
               href={`/store/${s.slug}`}
-              target="_blank"
-              rel="noreferrer"
               id={`demo-store-${s.slug}`}
               style={{ textDecoration: 'none' }}
             >

@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import { useParams } from 'react-router-dom'
+import { useParams, useNavigate } from 'react-router-dom'
 import { Search, ShoppingCart, Package, MapPin, Phone, User, MessageCircle, Plus, Check, ArrowRight } from 'lucide-react'
 import { useStoreConfig } from '../../stores/useStoreConfig'
 import { useProductsStore } from '../../stores/useProductsStore'
@@ -14,6 +14,7 @@ import toast from 'react-hot-toast'
 export default function CustomerStorefront({ previewSlug }) {
   const { slug: routeSlug } = useParams()
   const slug = previewSlug || routeSlug
+  const navigate = useNavigate()
 
   const { store, fetchStore, loading: storeLoading } = useStoreConfig()
   const { categories, products, fetchAll } = useProductsStore()
@@ -31,6 +32,50 @@ export default function CustomerStorefront({ previewSlug }) {
   const [couponCode, setCouponCode] = useState('')
   const [appliedCoupon, setAppliedCoupon] = useState(null)
   const [selectedShippingZone, setSelectedShippingZone] = useState(null)
+
+  // ── Mobile Hardware Back Button / Gesture Management ──
+  // Check if any modal/sheet is open
+  const isAnyModalOpen = !!(cartOpen || orderOpen || selectedProduct || myOrdersOpen || searchOpen)
+
+  // Close all open modals helper
+  const closeAllModals = () => {
+    setCartOpen(false)
+    setOrderOpen(false)
+    setSelectedProduct(null)
+    setMyOrdersOpen(false)
+    setSearchOpen(false)
+  }
+
+  // Push state to browser history when a modal opens so back button pops it instead of navigating away
+  useEffect(() => {
+    if (isAnyModalOpen) {
+      window.history.pushState({ modalOpen: true }, '')
+    }
+  }, [isAnyModalOpen])
+
+  useEffect(() => {
+    const handlePopState = (e) => {
+      if (isAnyModalOpen) {
+        // If a modal was open, close it and prevent actual navigation back
+        closeAllModals()
+      } else {
+        // Otherwise do normal navigation
+        navigate('/')
+      }
+    }
+    window.addEventListener('popstate', handlePopState)
+    return () => window.removeEventListener('popstate', handlePopState)
+  }, [isAnyModalOpen])
+
+  const handleManualBack = () => {
+    if (isAnyModalOpen) {
+      closeAllModals()
+    } else if (window.history.length > 1) {
+      navigate(-1)
+    } else {
+      navigate('/')
+    }
+  }
 
   useEffect(() => {
     if (slug) {
@@ -143,21 +188,24 @@ export default function CustomerStorefront({ previewSlug }) {
       }}>
         {/* Store Brand Mini Info */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
-          {/* سريع home link */}
-          <a
-            href="/"
-            title="العودة للصفحة الرئيسية"
+          {/* Back button styled clearly */}
+          <button
+            onClick={handleManualBack}
+            title="رجوع"
             style={{
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              width: 28, height: 28, borderRadius: 8, flexShrink: 0,
-              background: 'linear-gradient(135deg, var(--clr-primary), var(--clr-accent))',
-              color: '#fff', fontSize: 14, fontWeight: 900,
-              textDecoration: 'none', boxShadow: '0 2px 8px var(--clr-primary-glow)',
+              width: 32, height: 32, borderRadius: '50%', flexShrink: 0,
+              background: 'var(--glass-bg-2)',
+              border: '1px solid var(--clr-border)',
+              color: 'var(--clr-text)', cursor: 'pointer',
+              transition: 'transform 0.1s',
             }}
-            id="cust-home-link"
+            onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.92)'}
+            onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
+            id="cust-back-btn"
           >
-            ⚡
-          </a>
+            <ArrowRight size={18} />
+          </button>
           <div style={{
             width: 1, height: 20, background: 'var(--clr-border)', flexShrink: 0,
           }} />
