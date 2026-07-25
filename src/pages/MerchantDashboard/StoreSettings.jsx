@@ -187,16 +187,16 @@ export default function StoreSettings() {
           </div>
           <div className="input-group">
             <label className="input-label">الرابط المخصص للمتجر</label>
-            <div style={{ display: 'flex', gap: 'var(--sp-sm)', alignItems: 'center' }}>
-              <span style={{ color: 'var(--clr-text-3)', fontSize: 'var(--text-sm)', flexShrink: 0 }}>sare3.app/store/</span>
+            <div style={{ display: 'flex', gap: 'var(--sp-sm)', alignItems: 'center', direction: 'ltr' }}>
               <input
                 className="input"
                 value={form.slug || ''}
                 onChange={e => set('slug', e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '').replace(/--+/g, '-'))}
                 placeholder="my-store"
-                style={{ direction: 'ltr' }}
+                style={{ direction: 'ltr', flex: 1 }}
                 id="store-slug-input"
               />
+              <span style={{ color: 'var(--clr-text-3)', fontSize: 'var(--text-sm)', flexShrink: 0, whiteSpace: 'nowrap' }}>sare3.app/store/</span>
             </div>
             <p style={{ fontSize: 'var(--text-xs)', color: 'var(--clr-text-muted)' }}>أحرف إنجليزية وأرقام وشرطات فقط</p>
           </div>
@@ -432,7 +432,16 @@ export default function StoreSettings() {
       </div>
 
       {/* Save Button (sticky on mobile) */}
-      <div style={{ position: 'sticky', bottom: 16, background: 'var(--clr-bg)', padding: '12px 0' }}>
+      <div style={{
+        position: 'sticky', bottom: 16,
+        background: 'var(--clr-bg)',
+        padding: '12px 0',
+        borderTop: '1px solid var(--clr-border)',
+        marginTop: 'var(--sp-sm)',
+        backdropFilter: 'blur(12px)',
+        WebkitBackdropFilter: 'blur(12px)',
+        zIndex: 10,
+      }}>
         <button type="submit" className="btn btn-primary btn-full btn-lg" disabled={loading} id="save-settings-bottom-btn">
           {loading ? '⏳ جاري الحفظ...' : saved ? '✅ تم الحفظ!' : '💾 حفظ إعدادات المتجر'}
         </button>

@@ -111,33 +111,34 @@ export const DEMO_PRODUCTS = DEMO_PRESETS.cafe.products.map((p, i) => ({
 export const DEMO_ORDERS = [
   {
     id: 'demo-order-001',
+    order_number: 1001,
     store_id: 'demo-store-001',
     customer_name: 'أحمد محمد',
     customer_phone: '0599123456',
     customer_address: 'رام الله — شارع الإرسال',
     items: [
-      { product_id: 'p-1', name: 'قهوة أمريكانو', quantity: 2, price: 15, option: 'كبير' },
-      { product_id: 'p-5', name: 'كيكة تشيز كيك', quantity: 1, price: 18, option: 'قطعة واحدة' },
+      { product: { name: 'قهوة أمريكانو', price: 15 }, quantity: 2, option: 'كبير' },
+      { product: { name: 'كيكة تشيز كيك', price: 18 }, quantity: 1, option: 'قطعة واحدة' },
     ],
     total: 48,
-    status: 'pending',
+    status: 'new',
     notes: 'بدون سكر من فضلك',
     created_at: new Date(Date.now() - 3600000).toISOString(),
   },
   {
     id: 'demo-order-002',
+    order_number: 1002,
     store_id: 'demo-store-001',
     customer_name: 'سارة علي',
     customer_phone: '0598765432',
     customer_address: 'البيرة — حي البالوع',
     items: [
-      { product_id: 'p-2', name: 'كابتشينو إيطالي', quantity: 1, price: 20, option: 'وسط' },
-      { product_id: 'p-6', name: 'كرواسان زبدة', quantity: 2, price: 12, option: 'بالجبن' },
+      { product: { name: 'كابتشينو إيطالي', price: 20 }, quantity: 1, option: 'وسط' },
+      { product: { name: 'كرواسان زبدة', price: 12 }, quantity: 2, option: 'بالجبن' },
     ],
     total: 44,
-    status: 'confirmed',
+    status: 'done',
     notes: '',
     created_at: new Date(Date.now() - 7200000).toISOString(),
   },
 ]
-

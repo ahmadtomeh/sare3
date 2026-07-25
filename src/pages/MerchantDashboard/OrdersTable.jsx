@@ -65,7 +65,12 @@ export default function OrdersTable() {
     window.open(url, '_blank')
   }
 
-  const stats = useOrdersStore.getState().getStats()
+  const newOrdersCount = orders.filter(o => o.status === 'new').length
+  const doneOrdersCount = orders.filter(o => o.status === 'done').length
+  const totalRevenue = orders.reduce((s, o) => s + (parseFloat(o.total) || 0), 0)
+  const today = new Date().toDateString()
+  const todayOrders = orders.filter(o => new Date(o.created_at).toDateString() === today)
+  const todayRevenue = todayOrders.reduce((s, o) => s + (parseFloat(o.total) || 0), 0)
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sp-xl)' }}>
@@ -73,7 +78,7 @@ export default function OrdersTable() {
       <div className="page-header">
         <div>
           <h1 className="page-title">سجل الطلبات 📋</h1>
-          <p className="page-subtitle">{orders.length} طلب • {stats.totalRevenue.toFixed(0)} {store?.currency || '₪'} إجمالي</p>
+          <p className="page-subtitle">{orders.length} طلب • {totalRevenue.toFixed(0)} {store?.currency || '₪'} إجمالي</p>
         </div>
         <div style={{ display: 'flex', gap: 'var(--sp-sm)' }}>
           <button className="btn btn-ghost btn-sm" onClick={() => store?.id && fetchOrders(store.id)} id="refresh-orders-btn">
@@ -95,9 +100,9 @@ export default function OrdersTable() {
       {/* Stats Mini */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 'var(--sp-md)' }}>
         {[
-          { label: 'اليوم', value: stats.todayOrders, sub: `${stats.todayRevenue.toFixed(0)} ${store?.currency || '₪'}`, color: 'var(--clr-primary)' },
-          { label: 'جديد', value: orders.filter(o => o.status === 'new').length, sub: 'بحاجة للمعالجة', color: 'var(--clr-warning)' },
-          { label: 'مكتمل', value: orders.filter(o => o.status === 'done').length, sub: 'تم التسليم', color: 'var(--clr-success)' },
+          { label: 'اليوم', value: todayOrders.length, sub: `${todayRevenue.toFixed(0)} ${store?.currency || '₪'}`, color: 'var(--clr-primary)' },
+          { label: 'جديد', value: newOrdersCount, sub: 'بحاجة للمعالجة', color: 'var(--clr-warning)' },
+          { label: 'مكتمل', value: doneOrdersCount, sub: 'تم التسليم', color: 'var(--clr-success)' },
         ].map((s) => (
           <div key={s.label} className="glass" style={{ padding: 'var(--sp-md)' }}>
             <div style={{ fontSize: 'var(--text-2xl)', fontWeight: 800, color: s.color }}>{s.value}</div>

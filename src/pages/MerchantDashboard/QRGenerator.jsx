@@ -134,14 +134,14 @@ export default function QRGenerator() {
           {[
             {
               label: 'واتساب', color: '#25D366', emoji: '💬',
-              url: `https://wa.me/?text=${encodeURIComponent(`🛍️ تسوق من ${store?.name || 'متجري'}\n${storeUrl}`)}`,
+              url: `https://wa.me/?text=${encodeURIComponent(`🛒 تسوق من ${store?.name || 'متجري'}\n${storeUrl}`)}`,
             },
             {
               label: 'تيليغرام', color: '#2AABEE', emoji: '✈️',
-              url: `https://t.me/share/url?url=${encodeURIComponent(storeUrl)}&text=${encodeURIComponent(`🛍️ تسوق من ${store?.name || 'متجري'}`)}`,
+              url: `https://t.me/share/url?url=${encodeURIComponent(storeUrl)}&text=${encodeURIComponent(`🛒 تسوق من ${store?.name || 'متجري'}`)}`,
             },
             {
-              label: 'فيسبوك', color: '#1877F2', emoji: '📘',
+              label: 'فيسبوك', color: '#1877F2', emoji: '🔵',
               url: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(storeUrl)}`,
             },
           ].map((s) => (

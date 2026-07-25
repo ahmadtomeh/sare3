@@ -413,7 +413,7 @@ function MetricCard({ icon, bg, clr, label, value, trend, sparklinePath }) {
       </div>
 
       {/* Mini SVG Trend Line Background */}
-      <svg className="metric-sparkline-svg" viewBox="0 0 200 30" style={{ width: '100%', height: 20, opacity: 0.2, marginTop: 2 }}>
+      <svg className="metric-sparkline-svg" viewBox="0 0 200 30" preserveAspectRatio="none" style={{ width: '100%', height: 20, opacity: 0.2, marginTop: 2, overflow: 'hidden', display: 'block' }}>
         <path d={sparklinePath} fill="none" stroke={clr} strokeWidth="3" strokeLinecap="round" />
       </svg>
     </div>
