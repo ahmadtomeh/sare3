@@ -1,7 +1,8 @@
 import { create } from 'zustand'
 import { supabase, isConfigured } from '../lib/supabase'
-import { DEMO_CATEGORIES, DEMO_PRODUCTS } from '../utils/demoData'
+import { DEMO_CATEGORIES, DEMO_PRODUCTS, DEMO_PRESETS } from '../utils/demoData'
 import { useAuthStore } from './useAuthStore'
+import { useStoreConfig } from './useStoreConfig'
 
 const checkDemo = () => {
   return !isConfigured || 
@@ -18,7 +19,18 @@ export const useProductsStore = create((set, get) => ({
   fetchAll: async (storeId) => {
     const isDemo = checkDemo()
     if (isDemo || !storeId) {
-      set({ categories: DEMO_CATEGORIES, products: DEMO_PRODUCTS, loading: false })
+      // Load the correct preset based on the current store's _presetKey
+      const currentStore = useStoreConfig.getState().store
+      const presetKey = currentStore?._presetKey
+      if (presetKey && DEMO_PRESETS[presetKey]) {
+        const preset = DEMO_PRESETS[presetKey]
+        const demoId = `demo-store-${presetKey}`
+        const cats = preset.categories.map((c, i) => ({ ...c, store_id: demoId, sort_order: i }))
+        const prods = preset.products.map((p, i) => ({ ...p, store_id: demoId, is_available: p.in_stock, sort_order: i }))
+        set({ categories: cats, products: prods, loading: false })
+      } else {
+        set({ categories: DEMO_CATEGORIES, products: DEMO_PRODUCTS, loading: false })
+      }
       return
     }
     set({ loading: true })

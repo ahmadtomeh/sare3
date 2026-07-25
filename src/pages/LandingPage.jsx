@@ -116,7 +116,7 @@ export default function LandingPage() {
               </button>
               <button
                 className="btn btn-ghost btn-lg"
-                onClick={() => navigate('/auth')}
+                onClick={() => window.open('/store/demo-cafe', '_blank')}
                 id="hero-demo-btn"
               >
                 🎮 تجربة حية
@@ -168,6 +168,83 @@ export default function LandingPage() {
               </div>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* ── Live Demo Stores Showcase ── */}
+      <section style={{ padding: 'var(--sp-xl) var(--sp-md)', maxWidth: 1140, margin: '0 auto' }}>
+        <div style={{ textAlign: 'center', marginBottom: 'var(--sp-lg)' }}>
+          <h2 style={{ fontSize: 'var(--text-xl)', fontWeight: 900 }}>متاجر تجريبية حية 🎮</h2>
+          <p style={{ color: 'var(--clr-text-3)', fontSize: 'var(--text-xs)', marginTop: 4 }}>
+            جرّب تجربة الزبون الحقيقية في 3 أنواع متاجر مختلفة — بدون تسجيل
+          </p>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 'var(--sp-md)' }}>
+          {[
+            {
+              slug: 'demo-cafe',
+              emoji: '☕',
+              name: 'كافيه الذوق',
+              desc: 'مشروبات ساخنة، حلويات، وجبات خفيفة مع خيارات الحجم',
+              color: '#92400e',
+              gradient: 'linear-gradient(135deg, #92400e, #c2410c)',
+              badge: '🔥 الأكثر زيارة',
+            },
+            {
+              slug: 'demo-clothes',
+              emoji: '👔',
+              name: 'متجر الأناقة',
+              desc: 'ملابس رجالية وحقائب جلدية بمقاسات متعددة',
+              color: '#7c3aed',
+              gradient: 'linear-gradient(135deg, #7c3aed, #5b21b6)',
+              badge: null,
+            },
+            {
+              slug: 'demo-market',
+              emoji: '🛒',
+              name: 'ميني ماركت الجوار',
+              desc: 'مياه وعصائر ومنتجات يومية بكميات متعددة',
+              color: '#065f46',
+              gradient: 'linear-gradient(135deg, #065f46, #047857)',
+              badge: null,
+            },
+          ].map((s) => (
+            <a
+              key={s.slug}
+              href={`/store/${s.slug}`}
+              target="_blank"
+              rel="noreferrer"
+              id={`demo-store-${s.slug}`}
+              style={{ textDecoration: 'none' }}
+            >
+              <div className="glass glass-interactive" style={{
+                padding: 'var(--sp-lg)', display: 'flex', flexDirection: 'column', gap: 10,
+                border: `1px solid ${s.color}40`, borderRadius: 'var(--radius-xl)',
+                transition: 'transform 0.2s, box-shadow 0.2s',
+                cursor: 'pointer', height: '100%',
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <div style={{
+                    width: 48, height: 48, borderRadius: 14, flexShrink: 0,
+                    background: s.gradient, display: 'flex', alignItems: 'center',
+                    justifyContent: 'center', fontSize: 22,
+                    boxShadow: `0 4px 14px ${s.color}50`,
+                  }}>
+                    {s.emoji}
+                  </div>
+                  <div>
+                    <div style={{ fontWeight: 800, fontSize: 'var(--text-base)', color: 'var(--clr-text)' }}>{s.name}</div>
+                    {s.badge && <span style={{ fontSize: 9, background: s.gradient, color: '#fff', padding: '2px 8px', borderRadius: 20, fontWeight: 700 }}>{s.badge}</span>}
+                  </div>
+                </div>
+                <p style={{ fontSize: 'var(--text-xs)', color: 'var(--clr-text-3)', lineHeight: 1.5, margin: 0 }}>{s.desc}</p>
+                <div style={{ marginTop: 'auto', display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, fontWeight: 700, color: s.color }}>
+                  <Smartphone size={14} />
+                  افتح المتجر التجريبي ←
+                </div>
+              </div>
+            </a>
+          ))}
         </div>
       </section>
 

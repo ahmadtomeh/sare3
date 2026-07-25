@@ -1,14 +1,39 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { supabase, isConfigured } from '../lib/supabase'
-import { DEMO_STORE } from '../utils/demoData'
+import { DEMO_STORE, DEMO_PRESETS } from '../utils/demoData'
 import { useAuthStore } from './useAuthStore'
 
+// Map demo slugs → preset keys
+const DEMO_SLUGS = {
+  'demo':         'cafe',
+  'demo-cafe':    'cafe',
+  'demo-clothes': 'clothes',
+  'demo-market':  'supermarket',
+}
+
+const getDemoStore = (slug) => {
+  const presetKey = DEMO_SLUGS[slug]
+  if (!presetKey) return DEMO_STORE
+  const preset = DEMO_PRESETS[presetKey]
+  return {
+    ...DEMO_STORE,
+    id: `demo-store-${presetKey}`,
+    name: preset.store.name,
+    description: preset.store.description,
+    slug,
+    primary_color: preset.color,
+    _presetKey: presetKey,
+  }
+}
+
 const checkDemo = (slugOrId) => {
-  return !isConfigured || 
-         useAuthStore.getState().isDemoMode || 
-         slugOrId === 'demo' || 
+  const demoSlugs = Object.keys(DEMO_SLUGS)
+  return !isConfigured ||
+         useAuthStore.getState().isDemoMode ||
+         demoSlugs.includes(slugOrId) ||
          slugOrId === 'demo-store-001' ||
+         (slugOrId && slugOrId.startsWith('demo-store-')) ||
          (typeof window !== 'undefined' && window.location.pathname.includes('/dashboard') && !useAuthStore.getState().user)
 }
 
@@ -24,8 +49,9 @@ export const useStoreConfig = create(
       fetchStore: async (slugOrId) => {
         const isDemo = checkDemo(slugOrId)
         if (isDemo) {
-          set({ store: DEMO_STORE, loading: false })
-          return DEMO_STORE
+          const demoStore = getDemoStore(slugOrId)
+          set({ store: demoStore, loading: false })
+          return demoStore
         }
         set({ loading: true, error: null })
         const { data, error } = await supabase
