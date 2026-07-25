@@ -116,7 +116,7 @@ export default function LandingPage() {
               </button>
               <button
                 className="btn btn-ghost btn-lg"
-                onClick={() => navigate('/store/demo-cafe')}
+                onClick={() => document.getElementById('demo-showcase')?.scrollIntoView({ behavior: 'smooth' })}
                 id="hero-demo-btn"
               >
                 🎮 تجربة حية
@@ -172,7 +172,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── Live Demo Stores Showcase ── */}
-      <section style={{ padding: 'var(--sp-xl) var(--sp-md)', maxWidth: 1140, margin: '0 auto' }}>
+      <section id="demo-showcase" style={{ padding: 'var(--sp-xl) var(--sp-md)', maxWidth: 1140, margin: '0 auto' }}>
         <div style={{ textAlign: 'center', marginBottom: 'var(--sp-lg)' }}>
           <h2 style={{ fontSize: 'var(--text-xl)', fontWeight: 900 }}>متاجر تجريبية حية 🎮</h2>
           <p style={{ color: 'var(--clr-text-3)', fontSize: 'var(--text-xs)', marginTop: 4 }}>
