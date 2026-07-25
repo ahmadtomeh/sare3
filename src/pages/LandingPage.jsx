@@ -96,7 +96,7 @@ export default function LandingPage() {
             </div>
 
             <h1 style={{ fontSize: 'clamp(1.8rem, 4vw, 3rem)', fontWeight: 900, lineHeight: 1.15 }}>
-              حول زبائنك إلى <span className="gradient-text">مبيعات فورية</span> على الواتساب 🚀
+              حول زبائنك إلى <span className="gradient-text">مبيعات فورية</span> على الواتساب ⚡
             </h1>
 
             <p style={{ fontSize: 'var(--text-base)', color: 'var(--clr-text-2)', lineHeight: 1.6, maxWidth: 480 }}>
