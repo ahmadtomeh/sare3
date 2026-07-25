@@ -143,6 +143,24 @@ export default function CustomerStorefront({ previewSlug }) {
       }}>
         {/* Store Brand Mini Info */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+          {/* سريع home link */}
+          <a
+            href="/"
+            title="العودة للصفحة الرئيسية"
+            style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              width: 28, height: 28, borderRadius: 8, flexShrink: 0,
+              background: 'linear-gradient(135deg, var(--clr-primary), var(--clr-accent))',
+              color: '#fff', fontSize: 14, fontWeight: 900,
+              textDecoration: 'none', boxShadow: '0 2px 8px var(--clr-primary-glow)',
+            }}
+            id="cust-home-link"
+          >
+            ⚡
+          </a>
+          <div style={{
+            width: 1, height: 20, background: 'var(--clr-border)', flexShrink: 0,
+          }} />
           <div style={{
             width: 34, height: 34, borderRadius: 10,
             background: `linear-gradient(135deg, ${store.primary_color || 'var(--clr-primary)'}, ${store.accent_color || 'var(--clr-accent)'})`,
@@ -203,6 +221,7 @@ export default function CustomerStorefront({ previewSlug }) {
           </button>
         </div>
       </header>
+
 
       {/* ── Expandable Search Bar (Only when toggled) ── */}
       {searchOpen && (
