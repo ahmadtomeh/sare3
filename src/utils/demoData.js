@@ -98,6 +98,10 @@ export const DEMO_STORE = {
   subscription_status: 'trial',
   trial_ends_at: new Date(Date.now() + 7 * 86400000).toISOString(),
   is_active: true,
+  shipping_options: [
+    { name: 'توصيل محلي', cost: 10 },
+    { name: '__free_shipping_threshold__', cost: 50 }
+  ]
 }
 
 export const DEMO_CATEGORIES = DEMO_PRESETS.cafe.categories.map((c, i) => ({

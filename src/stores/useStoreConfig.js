@@ -26,6 +26,7 @@ const getDemoStore = (slug) => {
     _presetKey: presetKey,
     working_hours_start: preset.store.working_hours_start || '09:00',
     working_hours_end: preset.store.working_hours_end || '23:00',
+    shipping_options: DEMO_STORE.shipping_options,
   }
 }
 

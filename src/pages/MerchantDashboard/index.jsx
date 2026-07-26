@@ -2,7 +2,7 @@ import { useState, useEffect, lazy, Suspense } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard, ShoppingBag, ClipboardList, Settings,
-  QrCode, CreditCard, LogOut, Zap, Menu, X, Bell, Tag
+  QrCode, CreditCard, LogOut, Zap, Menu, X, Bell, Tag, Users
 } from 'lucide-react'
 import { useAuthStore } from '../../stores/useAuthStore'
 import { useStoreConfig } from '../../stores/useStoreConfig'
@@ -18,11 +18,13 @@ import StoreSettings     from './StoreSettings'
 import QRGenerator       from './QRGenerator'
 import SubscriptionPanel from './SubscriptionPanel'
 import CouponManager     from './CouponManager'
+import CustomersCRM      from './CustomersCRM'
 
 const NAV_ITEMS = [
   { id: 'home',         icon: <LayoutDashboard size={20}/>, label: 'الرئيسية',       badge: null },
   { id: 'products',     icon: <ShoppingBag size={20}/>,     label: 'المنتجات',       badge: null },
   { id: 'orders',       icon: <ClipboardList size={20}/>,   label: 'الطلبات',        badge: 'orders' },
+  { id: 'customers',    icon: <Users size={20}/>,           label: 'العملاء والزبائن', badge: null },
   { id: 'coupons',      icon: <Tag size={20}/>,             label: 'الكوبونات والخصومات', badge: null },
   { id: 'settings',     icon: <Settings size={20}/>,        label: 'إعدادات المتجر', badge: null },
   { id: 'qr',           icon: <QrCode size={20}/>,          label: 'الرابط والـ QR', badge: null },
@@ -320,6 +322,7 @@ export default function MerchantDashboard() {
         {active === 'home'         && <DashboardHome     onNavigate={setActive}/>}
         {active === 'products'     && <ProductManager/>}
         {active === 'orders'       && <OrdersTable/>}
+        {active === 'customers'    && <CustomersCRM/>}
         {active === 'coupons'      && <CouponManager/>}
         {active === 'settings'     && <StoreSettings/>}
         {active === 'qr'           && <QRGenerator/>}

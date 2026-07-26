@@ -269,9 +269,18 @@ export default function CustomerStorefront({ previewSlug }) {
     }
   }, [appliedCoupon, cartTotal])
 
+  // Extract free shipping limit threshold from store options
+  const freeShippingLimitObj = useMemo(() => {
+    return store?.shipping_options?.find(o => o.name === '__free_shipping_threshold__')
+  }, [store?.shipping_options])
+
+  const freeShippingLimit = freeShippingLimitObj ? parseFloat(freeShippingLimitObj.cost) : null
+  const isFreeShippingEligible = freeShippingLimit !== null && cartTotal >= freeShippingLimit
+
   const finalTotal = useMemo(() => {
-    return Math.max(0, cartTotal - discountAmount + (selectedShippingZone?.cost || 0))
-  }, [cartTotal, discountAmount, selectedShippingZone])
+    const shippingCost = isFreeShippingEligible ? 0 : (selectedShippingZone?.cost || 0)
+    return Math.max(0, cartTotal - discountAmount + shippingCost)
+  }, [cartTotal, discountAmount, selectedShippingZone, isFreeShippingEligible])
 
   const filteredProducts = useMemo(() => {
     return products.filter((p) => {
@@ -510,6 +519,8 @@ export default function CustomerStorefront({ previewSlug }) {
           setAppliedCoupon={setAppliedCoupon}
           discountAmount={discountAmount}
           finalTotal={finalTotal}
+          freeShippingLimit={freeShippingLimit}
+          isFreeShippingEligible={isFreeShippingEligible}
           onClose={() => setCartOpen(false)}
           onCheckout={() => { setCartOpen(false); setOrderOpen(true) }}
         />
@@ -531,6 +542,7 @@ export default function CustomerStorefront({ previewSlug }) {
           onSaveCustomer={setCustomerInfo}
           onClose={() => setOrderOpen(false)}
           triggerConfetti={triggerConfetti}
+          isFreeShippingEligible={isFreeShippingEligible}
         />
       )}
 
@@ -696,7 +708,7 @@ function ProductOptionsSheet({ product, currency, onClose, onAdd }) {
 function CartDrawer({
   store, items, currency, cartTotal,
   couponCode, setCouponCode, appliedCoupon, setAppliedCoupon,
-  discountAmount, finalTotal, onClose, onCheckout
+  discountAmount, finalTotal, freeShippingLimit, isFreeShippingEligible, onClose, onCheckout
 }) {
   const { updateQty, removeItem } = useCartStore()
   const [checkingCoupon, setCheckingCoupon] = useState(false)
@@ -732,6 +744,10 @@ function CartDrawer({
     }
   }
 
+  // Calculate free shipping progress details
+  const percent = freeShippingLimit ? Math.min((cartTotal / freeShippingLimit) * 100, 100) : 0
+  const remaining = freeShippingLimit ? Math.max(0, freeShippingLimit - cartTotal) : 0
+
   return (
     <BottomSheet title="سلة التسوق 🛒" onClose={onClose}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -742,6 +758,33 @@ function CartDrawer({
           </div>
         ) : (
           <>
+            {/* Free Shipping Progress Indicator */}
+            {freeShippingLimit !== null && (
+              <div className="glass" style={{
+                padding: 12, borderRadius: 12, border: '1px solid var(--clr-border)',
+                background: 'var(--glass-bg-2)', display: 'flex', flexDirection: 'column', gap: 6
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, fontWeight: 700 }}>
+                  {isFreeShippingEligible ? (
+                    <span style={{ color: 'var(--clr-accent)' }}>🎉 مبروك! لقد حصلت على توصيل مجاني!</span>
+                  ) : (
+                    <span>يتبقى لك <strong style={{ color: 'var(--clr-primary)' }}>{remaining.toFixed(0)} {currency}</strong> للحصول على شحن مجاني 🚚</span>
+                  )}
+                  <span>{percent.toFixed(0)}%</span>
+                </div>
+                {/* Progress bar track */}
+                <div style={{ width: '100%', height: 8, background: 'var(--clr-border)', borderRadius: 4, overflow: 'hidden' }}>
+                  <div style={{
+                    width: `${percent}%`, height: '100%',
+                    background: isFreeShippingEligible
+                      ? 'linear-gradient(90deg, #10B981, #34D399)'
+                      : 'linear-gradient(90deg, var(--clr-primary), var(--clr-accent))',
+                    borderRadius: 4, transition: 'width 0.4s ease-out'
+                  }} />
+                </div>
+              </div>
+            )}
+
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8, maxHeight: '35dvh', overflowY: 'auto' }}>
               {items.map((item) => (
                 <div key={item.key} style={{ display: 'flex', gap: 8, alignItems: 'center', padding: 8, background: 'var(--glass-bg-2)', borderRadius: 10 }}>
@@ -831,7 +874,7 @@ function CartDrawer({
 function OrderFormSheet({
   store, items, currency, cartTotal,
   appliedCoupon, discountAmount, selectedShippingZone, setSelectedShippingZone,
-  finalTotal, customerInfo, onSaveCustomer, onClose, triggerConfetti
+  finalTotal, customerInfo, onSaveCustomer, onClose, triggerConfetti, isFreeShippingEligible
 }) {
   const { clearCart, setCustomerInfo } = useCartStore()
   const [form, setForm] = useState({
@@ -842,9 +885,9 @@ function OrderFormSheet({
   })
   const [sending, setSending] = useState(false)
 
-  // Default to first shipping option if available and none selected yet
+  // Default to first shipping option if available and none selected yet (excluding the internal free shipping threshold zone)
   useEffect(() => {
-    const opts = store?.shipping_options || []
+    const opts = (store?.shipping_options || []).filter(o => o.name !== '__free_shipping_threshold__')
     if (opts.length > 0 && !selectedShippingZone) {
       setSelectedShippingZone(opts[0])
     }
@@ -860,9 +903,11 @@ function OrderFormSheet({
     setCustomerInfo(info)
     onSaveCustomer?.(info)
 
-    // Build discount and shipping detail objects
+    // Build discount and shipping detail objects (Set shipping cost to 0 if free shipping threshold is active)
     const discountObj = appliedCoupon ? { code: appliedCoupon.code, amount: discountAmount } : null
-    const shippingObj = selectedShippingZone ? { name: selectedShippingZone.name, cost: selectedShippingZone.cost } : null
+    
+    const actualShippingCost = isFreeShippingEligible ? 0 : (selectedShippingZone ? parseFloat(selectedShippingZone.cost) : 0)
+    const shippingObj = selectedShippingZone ? { name: selectedShippingZone.name, cost: actualShippingCost } : null
 
     // ── تجهيز تفاصيل المنتجات لقاعدة البيانات ──
     const dbItems = items.map(i => ({
@@ -883,7 +928,7 @@ function OrderFormSheet({
     // إضافة الشحن كبند خاص في سلة الطلب بقاعدة البيانات
     if (selectedShippingZone) {
       dbItems.push({
-        product: { id: 'shipping', name: `رسوم التوصيل (${selectedShippingZone.name})`, price: parseFloat(selectedShippingZone.cost) },
+        product: { id: 'shipping', name: `رسوم التوصيل (${selectedShippingZone.name})${isFreeShippingEligible ? ' — شحن مجاني 🎁' : ''}`, price: actualShippingCost },
         quantity: 1,
         isSpecial: true
       })
@@ -954,7 +999,8 @@ function OrderFormSheet({
     toast.success('🎉 تم إرسال طلبك وحفظه في سجل طلباتك!')
   }
 
-  const shippingOptions = store?.shipping_options || []
+  // Filter out the free shipping configuration limit option from zone selector dropdown
+  const shippingOptions = (store?.shipping_options || []).filter(o => o.name !== '__free_shipping_threshold__')
   const hasSavedInfo = !!(customerInfo?.name)
 
   return (
@@ -1003,10 +1049,15 @@ function OrderFormSheet({
             >
               {shippingOptions.map((opt, i) => (
                 <option key={i} value={JSON.stringify(opt)}>
-                  {opt.name} (+{opt.cost} {currency})
+                  {opt.name} {isFreeShippingEligible ? `(مجاني 🎁 بدلاً من +${opt.cost} ${currency})` : `(+${opt.cost} ${currency})`}
                 </option>
               ))}
             </select>
+            {isFreeShippingEligible && (
+              <span style={{ fontSize: 11, color: 'var(--clr-accent)', fontWeight: 700, marginTop: 4 }}>
+                🎉 مبروك! طلبك مؤهل للشحن المجاني التلقائي.
+              </span>
+            )}
           </div>
         )}
 

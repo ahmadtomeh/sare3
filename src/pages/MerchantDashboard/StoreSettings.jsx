@@ -31,6 +31,7 @@ export default function StoreSettings() {
     currency: '₪', primary_color: '#8B5CF6', accent_color: '#10B981',
     shipping_options: [], selected_theme: 'neon',
     working_hours_start: '09:00', working_hours_end: '23:00',
+    free_shipping_limit: '',
   })
   const [loading, setLoading] = useState(false)
   const [saved, setSaved] = useState(false)
@@ -40,6 +41,11 @@ export default function StoreSettings() {
 
   useEffect(() => {
     if (store) {
+      // Find and extract free shipping limit if exists in options
+      const rawOptions = store.shipping_options || []
+      const limitOpt = rawOptions.find(o => o.name === '__free_shipping_threshold__')
+      const cleanOptions = rawOptions.filter(o => o.name !== '__free_shipping_threshold__')
+
       setForm({
         name: store.name || '',
         description: store.description || '',
@@ -49,10 +55,11 @@ export default function StoreSettings() {
         primary_color: store.primary_color || '#8B5CF6',
         accent_color: store.accent_color || '#10B981',
         slug: store.slug || '',
-        shipping_options: store.shipping_options || [],
+        shipping_options: cleanOptions,
         selected_theme: store.selected_theme || 'neon',
         working_hours_start: store.working_hours_start || '09:00',
         working_hours_end: store.working_hours_end || '23:00',
+        free_shipping_limit: limitOpt ? limitOpt.cost : '',
       })
     }
   }, [store])
@@ -84,8 +91,25 @@ export default function StoreSettings() {
       return
     }
     setLoading(true)
+
+    // Build the final shipping options list including the free shipping threshold if set
+    let finalShipping = [...(form.shipping_options || [])]
+    const limitNum = parseFloat(form.free_shipping_limit)
+    if (!isNaN(limitNum) && limitNum > 0) {
+      finalShipping.push({
+        name: '__free_shipping_threshold__',
+        cost: limitNum
+      })
+    }
+
+    // Prepare clean form payload
+    const payload = {
+      ...form,
+      shipping_options: finalShipping
+    }
+
     try {
-      await updateStore(form)
+      await updateStore(payload)
       toast.success('✅ تم حفظ إعدادات المتجر')
       setSaved(true)
       setTimeout(() => setSaved(false), 3000)
@@ -327,6 +351,26 @@ export default function StoreSettings() {
             ))}
           </div>
         )}
+
+        <div style={{ height: 1, background: 'var(--clr-border)', margin: '16px 0' }} />
+
+        {/* Free Shipping Urgency Threshold Setting */}
+        <div className="input-group">
+          <label className="input-label" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span>🚚 حد الشحن المجاني (اختياري)</span>
+          </label>
+          <input
+            className="input"
+            style={{ minHeight: 38, fontSize: 13 }}
+            type="number"
+            placeholder="مثال: 150 (سيصبح الشحن مجاناً عند وصول السلة لهذا المبلغ)"
+            value={form.free_shipping_limit || ''}
+            onChange={e => set('free_shipping_limit', e.target.value)}
+          />
+          <span style={{ fontSize: 11, color: 'var(--clr-text-3)' }}>
+            إذا ترك فارغاً، لن يتم تطبيق ميزة الشحن المجاني التلقائي.
+          </span>
+        </div>
       </div>
 
       {/* Brand Colors & Themes */}
