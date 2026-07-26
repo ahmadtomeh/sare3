@@ -97,7 +97,14 @@ export default function CustomerStorefront({ previewSlug }) {
     document.body.appendChild(canvas)
 
     const ctx = canvas.getContext('2d')
-    const colors = ['#f43f5e', '#3b82f6', '#10b981', '#eab308', '#8b5cf6', '#ff7849']
+    const colors = [
+      { r: 244, g: 63, b: 94 },   // rose
+      { r: 59, g: 130, b: 246 },  // blue
+      { r: 16, g: 185, b: 129 },  // emerald
+      { r: 234, g: 179, b: 8 },   // amber
+      { r: 139, g: 92, b: 246 },  // violet
+      { r: 255, g: 120, b: 73 }   // orange
+    ]
     const particles = []
     
     // Resize canvas
@@ -116,11 +123,26 @@ export default function CustomerStorefront({ previewSlug }) {
         tiltAngle: 0,
         speed: Math.random() * 12 + 6,
         slowdown: 0.98,
-        gravity: 0.25
+        gravity: 0.25,
+        opacity: 1.0
       })
     }
 
     let animationFrame
+    let isCleanedUp = false
+
+    const cleanup = () => {
+      if (isCleanedUp) return
+      isCleanedUp = true
+      cancelAnimationFrame(animationFrame)
+      if (canvas.parentNode) {
+        document.body.removeChild(canvas)
+      }
+    }
+
+    // Safety timeout to destroy canvas after 3.5 seconds
+    const safetyTimeout = setTimeout(cleanup, 3500)
+
     const updateConfetti = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height)
       let active = false
@@ -131,23 +153,25 @@ export default function CustomerStorefront({ previewSlug }) {
         p.y += Math.sin(p.d * Math.PI / 180) * p.speed + p.gravity
         p.tiltAngle += p.tiltAngleIncremental
         p.tilt = Math.sin(p.tiltAngle - (particles.indexOf(p) / 3)) * 12
+        p.opacity = Math.max(0, p.opacity - 0.015) // Gradually fade out
 
         ctx.beginPath()
         ctx.lineWidth = p.r / 2
-        ctx.strokeStyle = p.color
+        ctx.strokeStyle = `rgba(${p.color.r}, ${p.color.g}, ${p.color.b}, ${p.opacity})`
         ctx.moveTo(p.x + p.tilt + p.r / 2, p.y)
         ctx.lineTo(p.x + p.tilt, p.y + p.tilt + p.r / 2)
         ctx.stroke()
 
-        if (p.y < canvas.height + 20) {
+        if (p.opacity > 0 && p.y < canvas.height + 20) {
           active = true
         }
       })
 
-      if (active) {
+      if (active && !isCleanedUp) {
         animationFrame = requestAnimationFrame(updateConfetti)
       } else {
-        document.body.removeChild(canvas)
+        clearTimeout(safetyTimeout)
+        cleanup()
       }
     }
     updateConfetti()
