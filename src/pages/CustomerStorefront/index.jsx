@@ -57,6 +57,33 @@ export default function CustomerStorefront({ previewSlug }) {
     }
   }
 
+  const playAudioChime = () => {
+    try {
+      const audioCtx = new (window.AudioContext || window.webkitAudioContext)()
+      const playTone = (freq, startTime, duration) => {
+        const osc = audioCtx.createOscillator()
+        const gain = audioCtx.createGain()
+        osc.connect(gain)
+        gain.connect(audioCtx.destination)
+        
+        osc.type = 'sine'
+        osc.frequency.setValueAtTime(freq, startTime)
+        
+        gain.gain.setValueAtTime(0.06, startTime)
+        gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration)
+        
+        osc.start(startTime)
+        osc.stop(startTime + duration)
+      }
+      
+      const now = audioCtx.currentTime
+      playTone(523.25, now, 0.2) // C5 tone
+      playTone(783.99, now + 0.12, 0.45) // G5 tone
+    } catch (e) {
+      console.warn('Celebrate chime not supported:', e)
+    }
+  }
+
   // ── Confetti Effect (Vanilla Canvas) ──
   const triggerConfetti = () => {
     const canvas = document.createElement('canvas')
@@ -281,6 +308,31 @@ export default function CustomerStorefront({ previewSlug }) {
     const shippingCost = isFreeShippingEligible ? 0 : (selectedShippingZone?.cost || 0)
     return Math.max(0, cartTotal - discountAmount + shippingCost)
   }, [cartTotal, discountAmount, selectedShippingZone, isFreeShippingEligible])
+
+  // Celebrate Free Shipping Milestone
+  const [celebratedFreeShipping, setCelebratedFreeShipping] = useState(false)
+  useEffect(() => {
+    if (isFreeShippingEligible) {
+      if (!celebratedFreeShipping) {
+        triggerConfetti()
+        playAudioChime()
+        toast.success('🚚 مبروك! حصلت على توصيل مجاني!', {
+          icon: '🎉',
+          duration: 3500,
+          style: {
+            background: 'linear-gradient(135deg, #10B981, #059669)',
+            color: '#fff',
+            fontWeight: 'bold',
+            border: '1px solid #34D399',
+            boxShadow: '0 8px 24px rgba(16,185,129,0.3)',
+          }
+        })
+        setCelebratedFreeShipping(true)
+      }
+    } else {
+      setCelebratedFreeShipping(false)
+    }
+  }, [isFreeShippingEligible, celebratedFreeShipping])
 
   const filteredProducts = useMemo(() => {
     return products.filter((p) => {
@@ -760,13 +812,38 @@ function CartDrawer({
           <>
             {/* Free Shipping Progress Indicator */}
             {freeShippingLimit !== null && (
-              <div className="glass" style={{
-                padding: 12, borderRadius: 12, border: '1px solid var(--clr-border)',
-                background: 'var(--glass-bg-2)', display: 'flex', flexDirection: 'column', gap: 6
-              }}>
+              <div
+                className={`glass ${isFreeShippingEligible ? 'free-shipping-container-celebrate' : ''}`}
+                style={{
+                  padding: 12, borderRadius: 12, border: '1px solid var(--clr-border)',
+                  background: 'var(--glass-bg-2)', display: 'flex', flexDirection: 'column', gap: 6,
+                  transition: 'all 0.3s ease',
+                }}
+              >
+                <style>{`
+                  @keyframes celebratePulse {
+                    0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+                    50% { transform: scale(1.02); box-shadow: 0 0 15px 4px rgba(16, 185, 129, 0.6); border-color: #10B981 !important; }
+                    100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+                  }
+                  @keyframes shinyGreen {
+                    0% { background-position: 0% 50%; }
+                    50% { background-position: 100% 50%; }
+                    100% { background-position: 0% 50%; }
+                  }
+                  .free-shipping-container-celebrate {
+                    animation: celebratePulse 2s infinite ease-in-out;
+                    border-color: #10B981 !important;
+                  }
+                  .free-shipping-bar-celebrate {
+                    background: linear-gradient(270deg, #10B981, #34D399, #059669, #10B981) !important;
+                    background-size: 400% 400% !important;
+                    animation: shinyGreen 3s infinite ease-in-out !important;
+                  }
+                `}</style>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, fontWeight: 700 }}>
                   {isFreeShippingEligible ? (
-                    <span style={{ color: 'var(--clr-accent)' }}>🎉 مبروك! لقد حصلت على توصيل مجاني!</span>
+                    <span style={{ color: 'var(--clr-accent)', fontWeight: 800 }}>🎉 مبروك! لقد حصلت على توصيل مجاني!</span>
                   ) : (
                     <span>يتبقى لك <strong style={{ color: 'var(--clr-primary)' }}>{remaining.toFixed(0)} {currency}</strong> للحصول على شحن مجاني 🚚</span>
                   )}
@@ -774,13 +851,16 @@ function CartDrawer({
                 </div>
                 {/* Progress bar track */}
                 <div style={{ width: '100%', height: 8, background: 'var(--clr-border)', borderRadius: 4, overflow: 'hidden' }}>
-                  <div style={{
-                    width: `${percent}%`, height: '100%',
-                    background: isFreeShippingEligible
-                      ? 'linear-gradient(90deg, #10B981, #34D399)'
-                      : 'linear-gradient(90deg, var(--clr-primary), var(--clr-accent))',
-                    borderRadius: 4, transition: 'width 0.4s ease-out'
-                  }} />
+                  <div
+                    className={isFreeShippingEligible ? 'free-shipping-bar-celebrate' : ''}
+                    style={{
+                      width: `${percent}%`, height: '100%',
+                      background: isFreeShippingEligible
+                        ? 'linear-gradient(90deg, #10B981, #34D399)'
+                        : 'linear-gradient(90deg, var(--clr-primary), var(--clr-accent))',
+                      borderRadius: 4, transition: 'width 0.4s ease-out'
+                    }}
+                  />
                 </div>
               </div>
             )}
