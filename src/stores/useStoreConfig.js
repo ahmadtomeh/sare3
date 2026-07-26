@@ -24,6 +24,8 @@ const getDemoStore = (slug) => {
     slug,
     primary_color: preset.color,
     _presetKey: presetKey,
+    working_hours_start: preset.store.working_hours_start || '09:00',
+    working_hours_end: preset.store.working_hours_end || '23:00',
   }
 }
 

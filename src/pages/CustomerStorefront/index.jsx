@@ -27,15 +27,125 @@ export default function CustomerStorefront({ previewSlug }) {
   const [orderOpen, setOrderOpen] = useState(false)
   const [selectedProduct, setSelectedProduct] = useState(null)
   const [myOrdersOpen, setMyOrdersOpen] = useState(false)
+  const [trackedOrder, setTrackedOrder] = useState(null) // New state for tracking order details
 
   // ── Coupon & Shipping States ──
   const [couponCode, setCouponCode] = useState('')
   const [appliedCoupon, setAppliedCoupon] = useState(null)
   const [selectedShippingZone, setSelectedShippingZone] = useState(null)
 
+  // ── Audio Feedback (Web Audio API) ──
+  const playAudioPop = () => {
+    try {
+      const audioCtx = new (window.AudioContext || window.webkitAudioContext)()
+      const osc = audioCtx.createOscillator()
+      const gain = audioCtx.createGain()
+      osc.connect(gain)
+      gain.connect(audioCtx.destination)
+      
+      osc.type = 'sine'
+      osc.frequency.setValueAtTime(400, audioCtx.currentTime)
+      osc.frequency.exponentialRampToValueAtTime(800, audioCtx.currentTime + 0.1)
+      
+      gain.gain.setValueAtTime(0.08, audioCtx.currentTime)
+      gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.12)
+      
+      osc.start(audioCtx.currentTime)
+      osc.stop(audioCtx.currentTime + 0.12)
+    } catch (e) {
+      console.warn('Audio Context not supported or blocked:', e)
+    }
+  }
+
+  // ── Confetti Effect (Vanilla Canvas) ──
+  const triggerConfetti = () => {
+    const canvas = document.createElement('canvas')
+    canvas.style.position = 'fixed'
+    canvas.style.top = 0
+    canvas.style.left = 0
+    canvas.style.width = '100vw'
+    canvas.style.height = '100vh'
+    canvas.style.zIndex = 9999
+    canvas.style.pointerEvents = 'none'
+    document.body.appendChild(canvas)
+
+    const ctx = canvas.getContext('2d')
+    const colors = ['#f43f5e', '#3b82f6', '#10b981', '#eab308', '#8b5cf6', '#ff7849']
+    const particles = []
+    
+    // Resize canvas
+    canvas.width = window.innerWidth
+    canvas.height = window.innerHeight
+
+    for (let i = 0; i < 150; i++) {
+      particles.push({
+        x: canvas.width / 2,
+        y: canvas.height * 0.8,
+        r: Math.random() * 6 + 4,
+        d: Math.random() * 360,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        tilt: Math.random() * 15 - 7,
+        tiltAngleIncremental: Math.random() * 0.07 + 0.02,
+        tiltAngle: 0,
+        speed: Math.random() * 12 + 6,
+        slowdown: 0.98,
+        gravity: 0.25
+      })
+    }
+
+    let animationFrame
+    const updateConfetti = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height)
+      let active = false
+
+      particles.forEach((p) => {
+        p.speed *= p.slowdown
+        p.x += Math.cos(p.d * Math.PI / 180) * p.speed
+        p.y += Math.sin(p.d * Math.PI / 180) * p.speed + p.gravity
+        p.tiltAngle += p.tiltAngleIncremental
+        p.tilt = Math.sin(p.tiltAngle - (particles.indexOf(p) / 3)) * 12
+
+        ctx.beginPath()
+        ctx.lineWidth = p.r / 2
+        ctx.strokeStyle = p.color
+        ctx.moveTo(p.x + p.tilt + p.r / 2, p.y)
+        ctx.lineTo(p.x + p.tilt, p.y + p.tilt + p.r / 2)
+        ctx.stroke()
+
+        if (p.y < canvas.height + 20) {
+          active = true
+        }
+      })
+
+      if (active) {
+        animationFrame = requestAnimationFrame(updateConfetti)
+      } else {
+        document.body.removeChild(canvas)
+      }
+    }
+    updateConfetti()
+  }
+
+  // ── Store Open / Hours Check ──
+  const isStoreOpen = useMemo(() => {
+    if (!store) return true
+    const start = store.working_hours_start || '09:00'
+    const end = store.working_hours_end || '23:00'
+    
+    const now = new Date()
+    const currentStr = now.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' })
+    
+    if (start <= end) {
+      return currentStr >= start && currentStr <= end
+    } else {
+      // Handles overnight hours (e.g. 18:00 to 02:00)
+      return currentStr >= start || currentStr <= end
+    }
+  }, [store])
+
   // ── Mobile Hardware Back Button / Gesture Management ──
   // Check if any modal/sheet is open
-  const isAnyModalOpen = !!(cartOpen || orderOpen || selectedProduct || myOrdersOpen || searchOpen)
+  const isAnyModalOpen = !!(cartOpen || orderOpen || selectedProduct || myOrdersOpen || searchOpen || trackedOrder)
 
   // Close all open modals helper
   const closeAllModals = () => {
@@ -44,6 +154,7 @@ export default function CustomerStorefront({ previewSlug }) {
     setSelectedProduct(null)
     setMyOrdersOpen(false)
     setSearchOpen(false)
+    setTrackedOrder(null)
   }
 
   // Push state to browser history when a modal opens so back button pops it instead of navigating away
@@ -221,7 +332,11 @@ export default function CustomerStorefront({ previewSlug }) {
             <h1 style={{ fontSize: 14, fontWeight: 800, color: 'var(--clr-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', lineHeight: 1.2 }}>
               {store.name}
             </h1>
-            <span style={{ fontSize: 10, color: 'var(--clr-accent)', fontWeight: 700 }}>مفتوح للطلب 🟢</span>
+            {isStoreOpen ? (
+              <span style={{ fontSize: 10, color: 'var(--clr-accent)', fontWeight: 700 }}>مفتوح للطلب 🟢</span>
+            ) : (
+              <span style={{ fontSize: 10, color: 'var(--clr-danger)', fontWeight: 700 }}>مغلق الآن 🔴</span>
+            )}
           </div>
         </div>
 
@@ -329,6 +444,7 @@ export default function CustomerStorefront({ previewSlug }) {
                     setSelectedProduct(product)
                   } else {
                     addItem(product)
+                    playAudioPop()
                     toast.success(`أضيف للسلة 🛒`, { duration: 1000 })
                   }
                 }}
@@ -374,6 +490,7 @@ export default function CustomerStorefront({ previewSlug }) {
           onClose={() => setSelectedProduct(null)}
           onAdd={(opts) => {
             addItem(selectedProduct, opts)
+            playAudioPop()
             setSelectedProduct(null)
             toast.success('أضيف للسلة 🛒', { duration: 1000 })
           }}
@@ -413,12 +530,29 @@ export default function CustomerStorefront({ previewSlug }) {
           customerInfo={customerInfo}
           onSaveCustomer={setCustomerInfo}
           onClose={() => setOrderOpen(false)}
+          triggerConfetti={triggerConfetti}
         />
       )}
 
       {/* ── My Orders Sheet ── */}
       {myOrdersOpen && (
-        <MyOrdersSheet store={store} onClose={() => setMyOrdersOpen(false)} />
+        <MyOrdersSheet
+          store={store}
+          onClose={() => setMyOrdersOpen(false)}
+          onTrack={(order) => {
+            setMyOrdersOpen(false)
+            setTrackedOrder(order)
+          }}
+        />
+      )}
+
+      {/* ── Order Status Tracker Sheet ── */}
+      {trackedOrder && (
+        <OrderStatusTracker
+          store={store}
+          order={trackedOrder}
+          onClose={() => setTrackedOrder(null)}
+        />
       )}
 
     </div>
@@ -697,7 +831,7 @@ function CartDrawer({
 function OrderFormSheet({
   store, items, currency, cartTotal,
   appliedCoupon, discountAmount, selectedShippingZone, setSelectedShippingZone,
-  finalTotal, customerInfo, onSaveCustomer, onClose
+  finalTotal, customerInfo, onSaveCustomer, onClose, triggerConfetti
 }) {
   const { clearCart, setCustomerInfo } = useCartStore()
   const [form, setForm] = useState({
@@ -809,7 +943,10 @@ function OrderFormSheet({
       localStorage.setItem(key, JSON.stringify([orderRecord, ...prev].slice(0, 30)))
     } catch {}
 
-    await new Promise(r => setTimeout(r, 400))
+    // Trigger local confetti explosion!
+    if (triggerConfetti) triggerConfetti()
+
+    await new Promise(r => setTimeout(r, 600))
     window.open(url, '_blank')
     clearCart()
     setSending(false)
@@ -818,10 +955,23 @@ function OrderFormSheet({
   }
 
   const shippingOptions = store?.shipping_options || []
+  const hasSavedInfo = !!(customerInfo?.name)
 
   return (
     <BottomSheet title="بيانات التوصيل 📍" onClose={onClose}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        {hasSavedInfo && (
+          <div className="glass" style={{
+            padding: 10, background: 'var(--clr-primary-glow)',
+            border: '1px solid var(--clr-primary)', borderRadius: 10,
+            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+          }}>
+            <div style={{ fontSize: 11, fontWeight: 700 }}>
+              👋 مرحباً بعودتك يا {customerInfo.name}! تم استرجاع بيانات التوصيل تلقائياً.
+            </div>
+          </div>
+        )}
+
         <div className="input-group">
           <label className="input-label"><User size={12} /> الاسم الكامل *</label>
           <input className="input" style={{ minHeight: 38, fontSize: 13 }} value={form.name} onChange={e => set('name', e.target.value)} placeholder="محمد أحمد" required id="cust-order-name" />
@@ -875,7 +1025,7 @@ function OrderFormSheet({
   )
 }
 
-function MyOrdersSheet({ store, onClose }) {
+function MyOrdersSheet({ store, onClose, onTrack }) {
   const { addItem } = useCartStore()
   const [orders, setOrders] = useState([])
 
@@ -936,13 +1086,22 @@ function MyOrdersSheet({ store, onClose }) {
                   </div>
                 ))}
               </div>
-              <button
-                className="btn btn-ghost btn-sm btn-full"
-                onClick={() => handleReorder(order)}
-                style={{ fontSize: 11 }}
-              >
-                🔄 إعادة الطلب
-              </button>
+              <div style={{ display: 'flex', gap: 6 }}>
+                <button
+                  className="btn btn-primary btn-sm"
+                  onClick={() => onTrack(order)}
+                  style={{ fontSize: 11, flex: 1, gap: 4 }}
+                >
+                  🚚 تتبع الطلب
+                </button>
+                <button
+                  className="btn btn-ghost btn-sm"
+                  onClick={() => handleReorder(order)}
+                  style={{ fontSize: 11, flex: 1 }}
+                >
+                  🔄 إعادة طلب
+                </button>
+              </div>
             </div>
           ))}
           <button
@@ -954,6 +1113,207 @@ function MyOrdersSheet({ store, onClose }) {
           </button>
         </div>
       )}
+    </BottomSheet>
+  )
+}
+
+/* ── Live Order Tracker Component ── */
+function OrderStatusTracker({ store, order, onClose }) {
+  const [status, setStatus] = useState('new')
+  const [loading, setLoading] = useState(true)
+
+  // Clean numerical ID if it starts with #
+  const orderNumberStr = order.id.replace('#', '')
+  const orderNumber = parseInt(orderNumberStr, 10)
+
+  useEffect(() => {
+    let active = true
+
+    const fetchInitialStatus = async () => {
+      if (isNaN(orderNumber)) {
+        // Fallback for mocked local storage IDs without Supabase mapping
+        setStatus('new')
+        setLoading(false)
+        return
+      }
+      try {
+        const { data, error } = await supabase
+          .from('orders')
+          .select('status')
+          .eq('store_id', store.id)
+          .eq('order_number', orderNumber)
+          .single()
+        if (error) throw error
+        if (data && active) {
+          setStatus(data.status || 'new')
+        }
+      } catch (err) {
+        console.warn('Could not fetch real order status, defaulting:', err.message)
+      } finally {
+        if (active) setLoading(false)
+      }
+    }
+
+    fetchInitialStatus()
+
+    // ── Live Supabase Realtime Subscription ──
+    let channel
+    if (!isNaN(orderNumber) && supabase && typeof supabase.channel === 'function') {
+      channel = supabase
+        .channel(`order-tracker-${orderNumber}`)
+        .on(
+          'postgres_changes',
+          {
+            event: 'UPDATE',
+            schema: 'public',
+            table: 'orders',
+            filter: `store_id=eq.${store.id}`,
+          },
+          (payload) => {
+            if (payload.new && payload.new.order_number === orderNumber && active) {
+              setStatus(payload.new.status)
+              toast.success(`⚡ تحديث حالة الطلب: ${getStatusLabel(payload.new.status)}`)
+            }
+          }
+        )
+        .subscribe()
+    }
+
+    // ── Local Simulation for Demo Stores/Offline Testing ──
+    let demoTimer
+    if (store.id.startsWith('demo-store-') || isNaN(orderNumber)) {
+      setLoading(false)
+      const stages = ['new', 'preparing', 'shipping', 'done']
+      let currentStageIdx = 0
+      
+      demoTimer = setInterval(() => {
+        currentStageIdx++
+        if (currentStageIdx < stages.length) {
+          if (active) {
+            setStatus(stages[currentStageIdx])
+            toast.success(`⚡ (تحديث تجريبي) حالة الطلب: ${getStatusLabel(stages[currentStageIdx])}`)
+          }
+        } else {
+          clearInterval(demoTimer)
+        }
+      }, 7000) // Advances order stage every 7 seconds in demo mode
+    }
+
+    return () => {
+      active = false
+      if (channel) supabase.removeChannel(channel)
+      if (demoTimer) clearInterval(demoTimer)
+    }
+  }, [order.id, store.id, orderNumber])
+
+  const getStatusLabel = (s) => {
+    switch (s) {
+      case 'new': return 'تم الاستلام 📝'
+      case 'preparing': return 'قيد التجهيز 🍳'
+      case 'shipping':
+      case 'delivering': return 'جاري التوصيل 🚚'
+      case 'completed':
+      case 'done': return 'تم التسليم 🎉'
+      default: return 'تم الاستلام 📝'
+    }
+  }
+
+  const stages = [
+    { key: 'new', label: 'تم الاستلام', desc: 'تم استلام الطلب وبانتظار الموافقة', icon: '📝' },
+    { key: 'preparing', label: 'قيد التجهيز', desc: 'يتم تحضير طلبك الآن في المتجر', icon: '🍳' },
+    { key: 'shipping', label: 'جاري التوصيل', desc: 'طلبك في الطريق مع سائق التوصيل', icon: '🚚' },
+    { key: 'done', label: 'تم التسليم', desc: 'استلمت طلبك بنجاح، بالهناء والشفاء!', icon: '🎉' }
+  ]
+
+  // Map database status string to stage keys
+  const getActiveStageIndex = () => {
+    if (status === 'preparing') return 1
+    if (status === 'shipping' || status === 'delivering') return 2
+    if (status === 'completed' || status === 'done') return 3
+    return 0 // default 'new'
+  }
+
+  const activeIdx = getActiveStageIndex()
+
+  return (
+    <BottomSheet title={`تتبع الطلب ${order.id} 🚚`} onClose={onClose}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 16, padding: '4px 0' }}>
+        
+        {loading ? (
+          <div style={{ textAlign: 'center', padding: 20 }}>⏳ جاري تحميل حالة الطلب...</div>
+        ) : (
+          <>
+            {/* Visual Header Summary */}
+            <div className="glass" style={{
+              padding: 14, borderRadius: 12, textAlign: 'center',
+              background: 'var(--glass-bg-2)', border: '1px solid var(--clr-border)',
+            }}>
+              <span style={{ fontSize: 11, color: 'var(--clr-text-3)' }}>الحالة الحالية</span>
+              <h3 style={{ fontSize: 18, fontWeight: 900, color: 'var(--clr-accent)', marginTop: 4 }}>
+                {getStatusLabel(status)}
+              </h3>
+              {store.id.startsWith('demo-store-') && (
+                <div style={{ fontSize: 10, color: 'var(--clr-text-3)', marginTop: 6 }}>
+                  💡 (محاكاة تلقائية نشطة للطلب التجريبي)
+                </div>
+              )}
+            </div>
+
+            {/* Stepper Timeline */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16, padding: '10px 6px', position: 'relative' }}>
+              {/* Connecting line behind icons */}
+              <div style={{
+                position: 'absolute', right: 23, top: 24, bottom: 24, width: 2,
+                background: 'var(--clr-border)', zIndex: 0
+              }} />
+
+              {stages.map((stage, idx) => {
+                const isPassed = idx <= activeIdx
+                const isCurrent = idx === activeIdx
+                
+                return (
+                  <div key={stage.key} style={{ display: 'flex', gap: 14, alignItems: 'flex-start', zIndex: 1 }}>
+                    {/* Circle Indicator */}
+                    <div style={{
+                      width: 36, height: 36, borderRadius: '50%',
+                      background: isCurrent
+                        ? 'linear-gradient(135deg, var(--clr-primary), var(--clr-accent))'
+                        : isPassed
+                          ? 'var(--clr-accent)'
+                          : 'var(--clr-bg-surface)',
+                      border: isPassed ? 'none' : '2px solid var(--clr-border)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontSize: 16, flexShrink: 0,
+                      boxShadow: isCurrent ? '0 0 12px var(--clr-accent-glow)' : 'none',
+                      transition: 'all 0.3s ease',
+                    }}>
+                      {stage.icon}
+                    </div>
+                    
+                    {/* Label Details */}
+                    <div>
+                      <h4 style={{
+                        fontSize: 13, fontWeight: 800,
+                        color: isCurrent ? 'var(--clr-accent)' : isPassed ? 'var(--clr-text)' : 'var(--clr-text-3)'
+                      }}>
+                        {stage.label}
+                      </h4>
+                      <p style={{ fontSize: 11, color: 'var(--clr-text-3)', marginTop: 2, lineHeight: 1.4 }}>
+                        {stage.desc}
+                      </p>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+            
+            {/* Close Button */}
+            <button className="btn btn-ghost btn-full" onClick={onClose} style={{ marginTop: 6 }}>
+              إغلاق
+            </button>
+          </>
+        )}
+      </div>
     </BottomSheet>
   )
 }

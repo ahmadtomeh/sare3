@@ -30,6 +30,7 @@ export default function StoreSettings() {
     name: '', description: '', whatsapp: '', country_code: '+972',
     currency: '₪', primary_color: '#8B5CF6', accent_color: '#10B981',
     shipping_options: [], selected_theme: 'neon',
+    working_hours_start: '09:00', working_hours_end: '23:00',
   })
   const [loading, setLoading] = useState(false)
   const [saved, setSaved] = useState(false)
@@ -50,6 +51,8 @@ export default function StoreSettings() {
         slug: store.slug || '',
         shipping_options: store.shipping_options || [],
         selected_theme: store.selected_theme || 'neon',
+        working_hours_start: store.working_hours_start || '09:00',
+        working_hours_end: store.working_hours_end || '23:00',
       })
     }
   }, [store])
@@ -199,6 +202,24 @@ export default function StoreSettings() {
               <span style={{ color: 'var(--clr-text-3)', fontSize: 'var(--text-sm)', flexShrink: 0, whiteSpace: 'nowrap' }}>sare3.app/store/</span>
             </div>
             <p style={{ fontSize: 'var(--text-xs)', color: 'var(--clr-text-muted)' }}>أحرف إنجليزية وأرقام وشرطات فقط</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Working Hours Settings */}
+      <div className="glass" style={{ padding: 'var(--sp-xl)' }}>
+        <h2 style={{ fontWeight: 700, marginBottom: 'var(--sp-lg)', fontSize: 'var(--text-lg)' }}>ساعات العمل ⏰</h2>
+        <p style={{ fontSize: 'var(--text-xs)', color: 'var(--clr-text-3)', marginBottom: 'var(--sp-md)' }}>
+          حدد ساعات فتح وإغلاق المتجر ليتم إشعار الزبائن تلقائياً بحالة عمل متجرك
+        </p>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--sp-md)' }}>
+          <div className="input-group">
+            <label className="input-label">من الساعة (الافتتاح)</label>
+            <input type="time" className="input" value={form.working_hours_start} onChange={e => setForm(prev => ({ ...prev, working_hours_start: e.target.value }))} id="working-hours-start" />
+          </div>
+          <div className="input-group">
+            <label className="input-label">إلى الساعة (الإغلاق)</label>
+            <input type="time" className="input" value={form.working_hours_end} onChange={e => setForm(prev => ({ ...prev, working_hours_end: e.target.value }))} id="working-hours-end" />
           </div>
         </div>
       </div>
