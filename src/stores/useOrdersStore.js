@@ -49,6 +49,13 @@ export const useOrdersStore = create((set, get) => ({
     return data
   },
 
+  addLiveOrder: (order) => {
+    set((s) => {
+      if (s.orders.some((o) => o.id === order.id)) return s
+      return { orders: [order, ...s.orders] }
+    })
+  },
+
   updateStatus: async (orderId, status) => {
     const isDemo = checkDemo()
     if (isDemo) {

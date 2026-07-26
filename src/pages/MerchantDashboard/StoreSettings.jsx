@@ -169,7 +169,8 @@ export default function StoreSettings() {
 
 
   return (
-    <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sp-xl)', maxWidth: 680 }}>
+    <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start', flexWrap: 'wrap' }}>
+      <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sp-xl)', flex: 1, minWidth: 280, maxWidth: 680 }}>
       <div className="page-header">
         <div>
           <h1 className="page-title">إعدادات المتجر ⚙️</h1>
@@ -512,5 +513,165 @@ export default function StoreSettings() {
         </button>
       </div>
     </form>
+
+    {/* Sticky Mock Phone Preview Column */}
+    <div className="settings-preview-col" style={{
+      position: 'sticky',
+      top: 'calc(var(--header-h, 54px) + 16px)',
+      width: 320,
+      flexShrink: 0,
+      display: 'flex',
+      flexDirection: 'column',
+      gap: 12,
+    }}>
+      <div style={{ fontWeight: 800, fontSize: 13, color: 'var(--clr-text-3)', display: 'flex', alignItems: 'center', gap: 6 }}>
+        <span>👁️ معاينة مباشرة للتغييرات</span>
+      </div>
+      
+      {/* Mock Phone Body */}
+      <div style={{
+        width: 320, height: 580,
+        background: form.selected_theme === 'classic' ? '#f9fafb' : (form.selected_theme === 'luxury' ? '#09090b' : '#0a0a14'),
+        border: '10px solid #1f2937',
+        borderRadius: 36,
+        boxShadow: '0 20px 40px rgba(0,0,0,0.3)',
+        overflow: 'hidden',
+        display: 'flex', flexDirection: 'column',
+        position: 'relative',
+        color: form.selected_theme === 'classic' ? '#111827' : '#fafafa',
+        fontFamily: 'system-ui, sans-serif',
+        direction: 'rtl'
+      }}>
+        {/* Speaker Notch */}
+        <div style={{
+          position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)',
+          width: 110, height: 16, background: '#1f2937',
+          borderBottomLeftRadius: 12, borderBottomRightRadius: 12,
+          zIndex: 100, display: 'flex', justifyContent: 'center', alignItems: 'center'
+        }}>
+          <div style={{ width: 40, height: 3, background: '#4b5563', borderRadius: 2 }} />
+        </div>
+
+        {/* Status Bar */}
+        <div style={{ height: 26, display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 18px 0', fontSize: 10, fontWeight: 700, opacity: 0.7, zIndex: 10 }}>
+          <span>9:41</span>
+          <div style={{ display: 'flex', gap: 4, direction: 'ltr' }}>
+            <span>📶</span>
+            <span>🔋</span>
+          </div>
+        </div>
+
+        {/* Miniature Store Header */}
+        <div style={{
+          height: 48, borderBottom: `1px solid ${form.selected_theme === 'classic' ? '#e5e7eb' : '#27272a'}`,
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '0 12px',
+          background: form.selected_theme === 'classic' ? 'rgba(255,255,255,0.8)' : (form.selected_theme === 'luxury' ? 'rgba(24,24,27,0.8)' : 'rgba(15,15,25,0.85)'),
+          backdropFilter: 'blur(10px)',
+          zIndex: 5
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <div style={{
+              width: 24, height: 24, borderRadius: 6,
+              background: `linear-gradient(135deg, ${form.primary_color}, ${form.accent_color})`,
+              display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, color: '#fff', fontWeight: 800
+            }}>
+              🏪
+            </div>
+            <div style={{ overflow: 'hidden', maxWidth: 110 }}>
+              <div style={{ fontSize: 11, fontWeight: 800, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{form.name || 'اسم المتجر'}</div>
+              <div style={{ fontSize: 7, color: form.accent_color, fontWeight: 700 }}>مفتوح 🟢</div>
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: 8, fontSize: 12 }}>
+            <span>🔍</span>
+            <span style={{ position: 'relative' }}>
+              🛒
+              <span style={{
+                position: 'absolute', top: -4, right: -4, background: form.accent_color, color: '#fff',
+                fontSize: 7, padding: '0 3px', borderRadius: '50%', fontWeight: 900
+              }}>2</span>
+            </span>
+          </div>
+        </div>
+
+        {/* Mini Banner/Info */}
+        <div style={{ padding: '12px 12px 8px', textAlign: 'center' }}>
+          <div style={{ fontSize: 10, color: form.selected_theme === 'classic' ? '#6b7280' : '#a1a1aa', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {form.description || 'وصف المتجر هنا...'}
+          </div>
+        </div>
+
+        {/* Category List Mockup */}
+        <div style={{ display: 'flex', gap: 6, padding: '0 12px 6px', overflowX: 'hidden' }}>
+          <span style={{
+            fontSize: 9, padding: '4px 10px', borderRadius: 20,
+            background: `linear-gradient(135deg, ${form.primary_color}, ${form.accent_color})`, color: '#fff', fontWeight: 800
+          }}>الكل</span>
+          {['جديد 🔥', 'الأكثر طلباً'].map(cat => (
+            <span key={cat} style={{
+              fontSize: 9, padding: '4px 10px', borderRadius: 20,
+              background: form.selected_theme === 'classic' ? '#e5e7eb' : '#27272a',
+              color: form.selected_theme === 'classic' ? '#374151' : '#d4d4d8',
+              fontWeight: 700
+            }}>{cat}</span>
+          ))}
+        </div>
+
+        {/* Mini Product Grid */}
+        <div style={{
+          display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, padding: 12, flex: 1, overflowY: 'hidden', alignContent: 'start'
+        }}>
+          {[
+            { id: 1, name: 'منتج تجريبي 1', price: 99 },
+            { id: 2, name: 'منتج تجريبي 2', price: 150 }
+          ].map(prod => (
+            <div key={prod.id} style={{
+              borderRadius: 10, overflow: 'hidden',
+              background: form.selected_theme === 'classic' ? '#fff' : (form.selected_theme === 'luxury' ? '#18181b' : 'rgba(255,255,255,0.03)'),
+              border: `1px solid ${form.selected_theme === 'classic' ? '#e5e7eb' : '#27272a'}`,
+              display: 'flex', flexDirection: 'column', padding: 6
+            }}>
+              <div style={{ width: '100%', aspectRatio: '1/1', background: form.selected_theme === 'classic' ? '#f3f4f6' : '#27272a', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>
+                🛍️
+              </div>
+              <div style={{ fontSize: 10, fontWeight: 700, margin: '4px 0 2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{prod.name}</div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'auto' }}>
+                <span style={{ fontSize: 10, fontWeight: 900, color: form.accent_color }}>{prod.price} {form.currency}</span>
+                <span style={{
+                  width: 18, height: 18, borderRadius: 5,
+                  background: `linear-gradient(135deg, ${form.primary_color}, ${form.accent_color})`,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 10, fontWeight: 900
+                }}>+</span>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Sticky Checkout Bar */}
+        <div style={{
+          padding: '8px 12px 16px',
+          borderTop: `1px solid ${form.selected_theme === 'classic' ? '#e5e7eb' : '#27272a'}`,
+          background: form.selected_theme === 'classic' ? '#fff' : (form.selected_theme === 'luxury' ? '#18181b' : 'rgba(10,10,20,0.9)')
+        }}>
+          <div style={{
+            height: 32, borderRadius: 8,
+            background: `linear-gradient(135deg, ${form.primary_color}, ${form.accent_color})`,
+            display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 10px',
+            color: '#fff', fontSize: 10, fontWeight: 900, boxShadow: '0 4px 12px rgba(0,0,0,0.2)'
+          }}>
+            <span>السلة (2)</span>
+            <span>249 {form.currency} ←</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <style>{`
+      @media (max-width: 1024px) {
+        .settings-preview-col { display: none !important; }
+      }
+    `}</style>
+  </div>
   )
 }

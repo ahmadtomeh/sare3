@@ -786,8 +786,31 @@ function CartDrawer({
   couponCode, setCouponCode, appliedCoupon, setAppliedCoupon,
   discountAmount, finalTotal, freeShippingLimit, isFreeShippingEligible, onClose, onCheckout
 }) {
-  const { updateQty, removeItem } = useCartStore()
+  const { addItem, updateQty, removeItem } = useCartStore()
+  const { products } = useProductsStore()
   const [checkingCoupon, setCheckingCoupon] = useState(false)
+
+  const inCartIds = new Set(items.map((i) => i.product.id))
+  const recommendations = products
+    .filter((p) => !inCartIds.has(p.id) && p.is_active !== false)
+    .slice(0, 3)
+
+  const playPopSound = () => {
+    try {
+      const audioCtx = new (window.AudioContext || window.webkitAudioContext)()
+      const osc = audioCtx.createOscillator()
+      const gain = audioCtx.createGain()
+      osc.connect(gain)
+      gain.connect(audioCtx.destination)
+      osc.type = 'sine'
+      osc.frequency.setValueAtTime(400, audioCtx.currentTime)
+      osc.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.1)
+      gain.gain.setValueAtTime(0.05, audioCtx.currentTime)
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1)
+      osc.start()
+      osc.stop(audioCtx.currentTime + 0.1)
+    } catch {}
+  }
 
   const handleApplyCoupon = async () => {
     if (!couponCode.trim()) return
@@ -911,6 +934,69 @@ function CartDrawer({
                 </div>
               ))}
             </div>
+
+            {/* Recommendations / Upsell Carousel */}
+            {recommendations.length > 0 && (
+              <div style={{
+                marginTop: 8, padding: '12px 0 4px', borderTop: '1px solid var(--clr-border)',
+                direction: 'rtl'
+              }}>
+                <div style={{ fontWeight: 800, fontSize: 12, marginBottom: 8, color: 'var(--clr-text)' }}>
+                  قد يعجبك أيضاً ✨
+                </div>
+                <div style={{
+                  display: 'flex', gap: 10, overflowX: 'auto', paddingBottom: 6,
+                  scrollbarWidth: 'none', msOverflowStyle: 'none'
+                }}>
+                  {recommendations.map((prod) => (
+                    <div
+                      key={prod.id}
+                      style={{
+                        flex: '0 0 130px', background: 'var(--glass-bg-2)', borderRadius: 10,
+                        border: '1px solid var(--clr-border)', padding: 8,
+                        display: 'flex', flexDirection: 'column', gap: 6, position: 'relative'
+                      }}
+                    >
+                      {prod.image_url ? (
+                        <img src={prod.image_url} style={{ width: '100%', height: 74, objectFit: 'cover', borderRadius: 6 }} />
+                      ) : (
+                        <div style={{ width: '100%', height: 74, background: 'var(--clr-bg-surface)', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24 }}>
+                          📦
+                        </div>
+                      )}
+                      <div style={{
+                        fontSize: 10, fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                        color: 'var(--clr-text)'
+                      }}>
+                        {prod.name}
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'auto' }}>
+                        <span style={{ fontSize: 11, fontWeight: 900, color: 'var(--clr-accent)' }}>
+                          {parseFloat(prod.price).toFixed(0)} {currency}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            addItem(prod)
+                            playPopSound()
+                            toast.success(`➕ تم إضافة ${prod.name}`, { duration: 1200 })
+                          }}
+                          style={{
+                            width: 22, height: 22, borderRadius: 6,
+                            background: 'linear-gradient(135deg, var(--clr-primary), var(--clr-accent))',
+                            color: '#fff', border: 'none', fontSize: 11, fontWeight: 900,
+                            display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
+                            boxShadow: '0 2px 5px rgba(0,0,0,0.15)'
+                          }}
+                        >
+                          +
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Coupon Section */}
             <div style={{ padding: '8px 0', borderTop: '1px solid var(--clr-border)', display: 'flex', gap: 8, alignItems: 'center' }}>

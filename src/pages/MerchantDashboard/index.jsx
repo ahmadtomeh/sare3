@@ -10,6 +10,8 @@ import { useOrdersStore } from '../../stores/useOrdersStore'
 import { useProductsStore } from '../../stores/useProductsStore'
 import ThemeToggle from '../../components/ThemeToggle'
 import LiveViewSwitcher from '../../components/LiveViewSwitcher'
+import { supabase } from '../../lib/supabase'
+import toast from 'react-hot-toast'
 
 import DashboardHome     from './DashboardHome'
 import ProductManager    from './ProductManager'
@@ -53,6 +55,107 @@ export default function MerchantDashboard() {
     }
     loadData()
   }, [user?.id])
+
+  // Subscribe to real-time order notifications
+  useEffect(() => {
+    if (!store?.id) return
+
+    const playCashRegisterSound = () => {
+      try {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)()
+        const playTone = (freq, startTime, duration, type = 'sine') => {
+          const osc = audioCtx.createOscillator()
+          const gain = audioCtx.createGain()
+          osc.connect(gain)
+          gain.connect(audioCtx.destination)
+          osc.type = type
+          osc.frequency.setValueAtTime(freq, startTime)
+          gain.gain.setValueAtTime(0.08, startTime)
+          gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration)
+          osc.start(startTime)
+          osc.stop(startTime + duration)
+        }
+        const now = audioCtx.currentTime
+        playTone(987.77, now, 0.08, 'sine') // B5
+        playTone(1318.51, now + 0.08, 0.08, 'sine') // E6
+        playTone(1975.53, now + 0.16, 0.25, 'sine') // B6
+      } catch (e) {
+        console.warn('Audio feedback failed:', e)
+      }
+    }
+
+    const channel = supabase
+      .channel(`live-orders-${store.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'orders',
+          filter: `store_id=eq.${store.id}`,
+        },
+        (payload) => {
+          const newOrder = payload.new
+          if (!newOrder) return
+
+          // Append to state
+          useOrdersStore.getState().addLiveOrder(newOrder)
+
+          // Play Sound
+          playCashRegisterSound()
+
+          // Show beautiful custom toast
+          toast.custom((t) => (
+            <div
+              className={`${t.visible ? 'animate-enter' : 'animate-leave'} glass`}
+              style={{
+                padding: '12px 16px',
+                background: 'linear-gradient(135deg, var(--clr-primary, #8B5CF6), var(--clr-accent, #10B981))',
+                color: '#fff',
+                borderRadius: 14,
+                boxShadow: '0 8px 30px rgba(0, 0, 0, 0.35)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 12,
+                border: '1px solid var(--clr-border, rgba(255, 255, 255, 0.15))',
+                direction: 'rtl',
+                minWidth: 280,
+              }}
+            >
+              <div style={{ fontSize: 24 }}>💰</div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontWeight: 800, fontSize: 13 }}>طلب جديد وارد! #{newOrder.order_number}</div>
+                <div style={{ fontSize: 11, opacity: 0.9 }}>من: {newOrder.customer_name} • بقيمة {parseFloat(newOrder.total).toFixed(0)} {store.currency || '₪'}</div>
+              </div>
+              <button
+                onClick={() => {
+                  toast.dismiss(t.id)
+                  setActive('orders')
+                }}
+                style={{
+                  background: '#fff',
+                  color: 'var(--clr-primary, #8B5CF6)',
+                  border: 'none',
+                  borderRadius: 8,
+                  padding: '6px 12px',
+                  fontSize: 11,
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                  boxShadow: '0 2px 6px rgba(0,0,0,0.1)'
+                }}
+              >
+                عرض
+              </button>
+            </div>
+          ), { duration: 6000 })
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [store?.id])
 
   const stats = getStats()
   const newOrdersCount = stats.newOrders
