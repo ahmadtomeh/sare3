@@ -165,3 +165,46 @@ CREATE TRIGGER stores_updated_at
 CREATE TRIGGER products_updated_at
   BEFORE UPDATE ON products
   FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+
+-- ── Coupons ───────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS coupons (
+  id             UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  store_id       UUID REFERENCES stores(id) ON DELETE CASCADE,
+  code           TEXT NOT NULL,
+  discount_type  TEXT NOT NULL DEFAULT 'percentage',  -- percentage | fixed
+  discount_value NUMERIC(10,2) NOT NULL DEFAULT 0,
+  is_active      BOOLEAN DEFAULT true,
+  created_at     TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(store_id, code)
+);
+
+ALTER TABLE coupons ENABLE ROW LEVEL SECURITY;
+
+-- Store owners manage their coupons
+CREATE POLICY "owners_manage_coupons" ON coupons
+  FOR ALL USING (
+    store_id IN (SELECT id FROM stores WHERE owner_id = auth.uid())
+  );
+
+-- Anyone (customers) can read active coupons to validate them at checkout
+CREATE POLICY "public_read_active_coupons" ON coupons
+  FOR SELECT USING (
+    is_active = true AND
+    store_id IN (SELECT id FROM stores WHERE is_active = true)
+  );
+
+CREATE INDEX IF NOT EXISTS idx_coupons_store ON coupons(store_id);
+CREATE INDEX IF NOT EXISTS idx_coupons_code ON coupons(store_id, code);
+
+-- ── Storage Bucket Policies ───────────────────────────────────
+-- Run in Supabase Dashboard → Storage → New Bucket:
+--   Name: "store-assets"
+--   Public: YES (check the public box)
+-- Then run these policies:
+
+-- Allow authenticated users to upload product images
+-- (In Supabase Dashboard → Storage → store-assets → Policies)
+-- INSERT Policy: (auth.role() = 'authenticated')
+-- SELECT Policy: true  (public read)
+-- UPDATE Policy: (auth.uid() IS NOT NULL)
+-- DELETE Policy: (auth.uid() IS NOT NULL)

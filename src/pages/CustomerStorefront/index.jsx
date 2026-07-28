@@ -250,6 +250,39 @@ export default function CustomerStorefront({ previewSlug }) {
     }
   }, [slug])
 
+  // ── SEO + Open Graph ديناميكي ──
+  useEffect(() => {
+    if (!store) return
+
+    const title = `${store.name} — اطلب عبر الواتساب ⚡`
+    const desc = store.description || `تسوق من ${store.name} واطلب منتجاتك مباشرة عبر الواتساب بسهولة وسرعة.`
+    const img = store.logo_url || 'https://sare-nine.vercel.app/og-default.png'
+    const url = window.location.href
+
+    document.title = title
+
+    const setMeta = (prop, content, attr = 'name') => {
+      let el = document.querySelector(`meta[${attr}="${prop}"]`)
+      if (!el) { el = document.createElement('meta'); el.setAttribute(attr, prop); document.head.appendChild(el) }
+      el.setAttribute('content', content)
+    }
+
+    setMeta('description', desc)
+    setMeta('og:title', title, 'property')
+    setMeta('og:description', desc, 'property')
+    setMeta('og:image', img, 'property')
+    setMeta('og:url', url, 'property')
+    setMeta('og:type', 'website', 'property')
+    setMeta('twitter:card', 'summary_large_image')
+    setMeta('twitter:title', title)
+    setMeta('twitter:description', desc)
+    setMeta('twitter:image', img)
+
+    return () => {
+      document.title = 'سريع — نظام المتجر السريع والطلب عبر الواتساب'
+    }
+  }, [store?.name, store?.description, store?.logo_url])
+
   useEffect(() => {
     if (!store) return
     const theme = store.selected_theme || 'neon'
@@ -1574,11 +1607,44 @@ function OrderStatusTracker({ store, order, onClose }) {
 
 function StoreNotFound() {
   return (
-    <div style={{ minHeight: '100dvh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
-      <div className="glass empty-state" style={{ maxWidth: 360, width: '100%', padding: 24 }}>
-        <div style={{ fontSize: '3rem' }}>🔍</div>
-        <div className="empty-state-title">المتجر غير موجود</div>
-        <a href="/" className="btn btn-primary" style={{ marginTop: 12 }}>العودة للرئيسية</a>
+    <div style={{
+      minHeight: '100dvh', display: 'flex', alignItems: 'center', justifyContent: 'center',
+      padding: 20, background: 'var(--clr-bg)', direction: 'rtl', position: 'relative', overflow: 'hidden',
+    }}>
+      {/* Ambient Orbs */}
+      <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', overflow: 'hidden' }}>
+        <div style={{ position: 'absolute', top: '-10%', right: '-5%', width: 350, height: 350, borderRadius: '50%', background: 'radial-gradient(circle, rgba(139,92,246,0.12) 0%, transparent 70%)', filter: 'blur(40px)' }} />
+        <div style={{ position: 'absolute', bottom: '-10%', left: '-5%', width: 300, height: 300, borderRadius: '50%', background: 'radial-gradient(circle, rgba(16,185,129,0.1) 0%, transparent 70%)', filter: 'blur(40px)' }} />
+      </div>
+
+      <div className="glass" style={{ maxWidth: 420, width: '100%', padding: '40px 32px', textAlign: 'center', borderRadius: 24, position: 'relative' }}>
+        {/* Animated 404 */}
+        <div style={{ fontSize: 80, lineHeight: 1, marginBottom: 8, filter: 'drop-shadow(0 4px 24px rgba(139,92,246,0.3))' }}>
+          🔍
+        </div>
+        <div style={{ fontSize: 56, fontWeight: 900, background: 'linear-gradient(135deg, var(--clr-primary), var(--clr-accent))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', marginBottom: 16, lineHeight: 1 }}>
+          404
+        </div>
+
+        <h1 style={{ fontSize: 22, fontWeight: 900, color: 'var(--clr-text)', marginBottom: 8 }}>
+          المتجر غير موجود
+        </h1>
+        <p style={{ fontSize: 14, color: 'var(--clr-text-3)', lineHeight: 1.6, marginBottom: 28, maxWidth: 300, margin: '0 auto 28px' }}>
+          الرابط الذي فتحته غير صحيح أو أن هذا المتجر لم يعد متاحاً. تحقق من الرابط وحاول مرة أخرى.
+        </p>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <a href="/" className="btn btn-primary" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '12px 24px' }}>
+            🏠 العودة للصفحة الرئيسية
+          </a>
+          <a href="/auth?mode=signup" className="btn btn-ghost" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, fontSize: 13 }}>
+            ⚡ أنشئ متجرك الخاص مجاناً
+          </a>
+        </div>
+
+        <div style={{ marginTop: 20, fontSize: 11, color: 'var(--clr-text-muted)', paddingTop: 16, borderTop: '1px solid var(--clr-border)' }}>
+          سريع (Sare3) — المنصة الأولى للطلب عبر الواتساب ⚡
+        </div>
       </div>
     </div>
   )
