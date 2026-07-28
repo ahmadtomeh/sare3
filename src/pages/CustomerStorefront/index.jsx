@@ -1601,7 +1601,7 @@ function StoreExpired({ storeName }) {
           إذا كنت صاحب المتجر، يرجى تجديد اشتراكك للمتابعة.
         </p>
         <a
-          href="https://wa.me/970569922257?text=مرحبا، أريد تجديد اشتراك متجر: " + encodeURIComponent(storeName || '')
+          href={`https://wa.me/970569922257?text=مرحبا، أريد تجديد اشتراك متجر: ${encodeURIComponent(storeName || '')}`}
           target="_blank"
           rel="noreferrer"
           style={{
