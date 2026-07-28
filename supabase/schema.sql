@@ -180,6 +180,10 @@ CREATE TABLE IF NOT EXISTS coupons (
 
 ALTER TABLE coupons ENABLE ROW LEVEL SECURITY;
 
+-- Drop first to avoid "already exists" errors on re-run
+DROP POLICY IF EXISTS "owners_manage_coupons" ON coupons;
+DROP POLICY IF EXISTS "public_read_active_coupons" ON coupons;
+
 -- Store owners manage their coupons
 CREATE POLICY "owners_manage_coupons" ON coupons
   FOR ALL USING (
@@ -195,6 +199,12 @@ CREATE POLICY "public_read_active_coupons" ON coupons
 
 CREATE INDEX IF NOT EXISTS idx_coupons_store ON coupons(store_id);
 CREATE INDEX IF NOT EXISTS idx_coupons_code ON coupons(store_id, code);
+
+-- ── Extra columns (safe to run even if already exist) ─────────
+ALTER TABLE stores ADD COLUMN IF NOT EXISTS telegram_chat_id TEXT;
+ALTER TABLE stores ADD COLUMN IF NOT EXISTS logo_url TEXT;
+ALTER TABLE stores ADD COLUMN IF NOT EXISTS banner_url TEXT;
+
 
 -- ── Storage Bucket Policies ───────────────────────────────────
 -- Run in Supabase Dashboard → Storage → New Bucket:
