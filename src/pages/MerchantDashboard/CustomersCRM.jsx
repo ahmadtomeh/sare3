@@ -1,12 +1,20 @@
 import { useState, useMemo } from 'react'
 import { useOrdersStore } from '../../stores/useOrdersStore'
 import { useStoreConfig } from '../../stores/useStoreConfig'
-import { Users, Phone, ShoppingBag, DollarSign, Calendar, MessageCircle, Search } from 'lucide-react'
+import { Users, Phone, Calendar, MessageCircle, Search, ArrowUpDown, Star } from 'lucide-react'
+
+// تصنيف الزبون حسب عدد طلباته وإنفاقه
+const getCustomerTier = (ordersCount, totalSpent) => {
+  if (ordersCount >= 3 || totalSpent >= 200) return { label: 'VIP 🏆', color: '#f59e0b', bg: 'rgba(245,158,11,0.15)' }
+  if (ordersCount >= 2) return { label: 'منتظم ⭐', color: '#6366f1', bg: 'rgba(99,102,241,0.15)' }
+  return { label: 'جديد 🌱', color: '#10b981', bg: 'rgba(16,185,129,0.15)' }
+}
 
 export default function CustomersCRM() {
   const { orders } = useOrdersStore()
   const { store } = useStoreConfig()
   const [search, setSearch] = useState('')
+  const [sortBy, setSortBy] = useState('spent') // 'spent' | 'orders'
 
   // Aggregate customer details from all orders
   const customers = useMemo(() => {
@@ -58,17 +66,20 @@ export default function CustomersCRM() {
       }
     })
 
-    // Return as array sorted by total spent desc
+    // Return as array sorted by selected field
     return Object.values(customerMap).sort((a, b) => b.totalSpent - a.totalSpent)
   }, [orders])
 
   const filteredCustomers = useMemo(() => {
-    return customers.filter(c => 
+    const filtered = customers.filter(c =>
       c.name.toLowerCase().includes(search.toLowerCase()) ||
       c.phone.includes(search) ||
       c.address.toLowerCase().includes(search.toLowerCase())
     )
-  }, [customers, search])
+    return [...filtered].sort((a, b) =>
+      sortBy === 'orders' ? b.ordersCount - a.ordersCount : b.totalSpent - a.totalSpent
+    )
+  }, [customers, search, sortBy])
 
   const handleWhatsAppChat = (phone) => {
     if (!phone) return
@@ -100,7 +111,7 @@ export default function CustomersCRM() {
       </div>
 
       {/* Analytics Summary */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 'var(--sp-md)' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 'var(--sp-md)' }}>
         <div className="glass" style={{ padding: 'var(--sp-md) var(--sp-lg)', borderRadius: 'var(--radius-md)' }}>
           <span style={{ fontSize: 'var(--text-xs)', color: 'var(--clr-text-3)' }}>إجمالي عدد الزبائن</span>
           <div style={{ fontSize: 'var(--text-xl)', fontWeight: 900, marginTop: 4 }}>{customers.length} 👤</div>
@@ -111,18 +122,40 @@ export default function CustomersCRM() {
             {customers.length > 0 ? (customers.reduce((sum, c) => sum + c.totalSpent, 0) / customers.length).toFixed(0) : 0} {currency}
           </div>
         </div>
+        <div className="glass" style={{ padding: 'var(--sp-md) var(--sp-lg)', borderRadius: 'var(--radius-md)' }}>
+          <span style={{ fontSize: 'var(--text-xs)', color: 'var(--clr-text-3)' }}>زبائن VIP</span>
+          <div style={{ fontSize: 'var(--text-xl)', fontWeight: 900, marginTop: 4, color: '#f59e0b' }}>
+            {customers.filter(c => c.ordersCount >= 3 || c.totalSpent >= 200).length} 🏆
+          </div>
+        </div>
       </div>
 
-      {/* Filter / Search bar */}
-      <div className="glass" style={{ padding: 12, display: 'flex', alignItems: 'center', gap: 8, borderRadius: 12 }}>
-        <Search size={18} style={{ color: 'var(--clr-text-3)', marginRight: 4 }} />
-        <input
-          className="input"
-          style={{ border: 'none', background: 'transparent', padding: '4px 0', fontSize: 13, minHeight: 'auto', boxShadow: 'none' }}
-          placeholder="ابحث باسم الزبون، هاتفه، أو عنوانه..."
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-        />
+      {/* Filter / Search + Sort bar */}
+      <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+        <div className="glass" style={{ padding: 12, display: 'flex', alignItems: 'center', gap: 8, borderRadius: 12, flex: 1 }}>
+          <Search size={18} style={{ color: 'var(--clr-text-3)', marginRight: 4 }} />
+          <input
+            className="input"
+            style={{ border: 'none', background: 'transparent', padding: '4px 0', fontSize: 13, minHeight: 'auto', boxShadow: 'none' }}
+            placeholder="ابحث باسم الزبون، هاتفه، أو عنوانه..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+          />
+        </div>
+        <button
+          className={sortBy === 'spent' ? 'btn btn-primary btn-sm' : 'btn btn-ghost btn-sm'}
+          onClick={() => setSortBy('spent')}
+          style={{ fontSize: 11, gap: 4, display: 'flex', alignItems: 'center' }}
+        >
+          <ArrowUpDown size={12} /> الإنفاق
+        </button>
+        <button
+          className={sortBy === 'orders' ? 'btn btn-primary btn-sm' : 'btn btn-ghost btn-sm'}
+          onClick={() => setSortBy('orders')}
+          style={{ fontSize: 11, gap: 4, display: 'flex', alignItems: 'center' }}
+        >
+          <ArrowUpDown size={12} /> الطلبات
+        </button>
       </div>
 
       {/* Customers List / Table */}
@@ -152,12 +185,19 @@ export default function CustomersCRM() {
                   <td style={{ padding: '12px 8px', fontWeight: 700, fontSize: 13 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                       <div style={{
-                        width: 28, height: 28, borderRadius: '50%',
-                        background: 'var(--glass-bg-2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12
+                        width: 32, height: 32, borderRadius: '50%',
+                        background: 'var(--clr-primary-glow)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, flexShrink: 0
                       }}>
-                        👤
+                        {cust.ordersCount >= 3 || cust.totalSpent >= 200 ? '🏆' : cust.ordersCount >= 2 ? '⭐' : '👤'}
                       </div>
-                      {cust.name}
+                      <div>
+                        <div>{cust.name}</div>
+                        {(() => { const tier = getCustomerTier(cust.ordersCount, cust.totalSpent); return (
+                          <span style={{ fontSize: 10, fontWeight: 700, color: tier.color, background: tier.bg, padding: '1px 6px', borderRadius: 6 }}>
+                            {tier.label}
+                          </span>
+                        )})()}
+                      </div>
                     </div>
                   </td>
                   <td style={{ padding: 12, fontSize: 12, direction: 'ltr', textAlign: 'right' }}>

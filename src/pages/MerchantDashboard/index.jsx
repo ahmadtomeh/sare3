@@ -56,7 +56,14 @@ export default function MerchantDashboard() {
     loadData()
   }, [user?.id])
 
-  // Subscribe to real-time order notifications
+  // طلب إذن الإشعارات عند فتح اللوحة
+  useEffect(() => {
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission()
+    }
+  }, [])
+
+
   useEffect(() => {
     if (!store?.id) return
 
@@ -103,6 +110,22 @@ export default function MerchantDashboard() {
 
           // Play Sound
           playCashRegisterSound()
+
+          // Browser Notification (even when tab is in background)
+          if ('Notification' in window && Notification.permission === 'granted') {
+            const notif = new Notification(`💰 طلب جديد — ${store.name}`, {
+              body: `من: ${newOrder.customer_name} • بقيمة ${parseFloat(newOrder.total || 0).toFixed(0)} ${store.currency || '₪'}`,
+              icon: store.logo_url || '/favicon.ico',
+              badge: '/favicon.ico',
+              tag: `order-${newOrder.id}`,
+              requireInteraction: true,
+            })
+            notif.onclick = () => {
+              window.focus()
+              setActive('orders')
+              notif.close()
+            }
+          }
 
           // Show beautiful custom toast
           toast.custom((t) => (
