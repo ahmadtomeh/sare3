@@ -516,6 +516,16 @@ export default function CustomerStorefront({ previewSlug }) {
         </div>
       </header>
 
+      {/* ── Store Banner (if configured) ── */}
+      {store.banner_url && (
+        <div style={{ width: '100%', maxHeight: 160, overflow: 'hidden' }}>
+          <img
+            src={store.banner_url}
+            alt={`${store.name} banner`}
+            style={{ width: '100%', height: 160, objectFit: 'cover', display: 'block' }}
+          />
+        </div>
+      )}
 
       {/* ── Expandable Search Bar (Only when toggled) ── */}
       {searchOpen && (

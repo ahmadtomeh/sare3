@@ -2,7 +2,8 @@ import { useState, useEffect, useRef } from 'react'
 import { useStoreConfig } from '../../stores/useStoreConfig'
 import { useProductsStore } from '../../stores/useProductsStore'
 import { useAuthStore } from '../../stores/useAuthStore'
-import { Download, Upload, Plus, Trash2 } from 'lucide-react'
+import { supabase } from '../../lib/supabase'
+import { Download, Upload, Plus, Trash2, X, Image } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 const CURRENCIES = [
@@ -32,6 +33,8 @@ export default function StoreSettings() {
     shipping_options: [], selected_theme: 'neon',
     working_hours_start: '09:00', working_hours_end: '23:00',
     free_shipping_limit: '',
+    logo_url: '', banner_url: '',
+    telegram_chat_id: '',
   })
   const [loading, setLoading] = useState(false)
   const [saved, setSaved] = useState(false)
@@ -58,6 +61,9 @@ export default function StoreSettings() {
         shipping_options: cleanOptions,
         selected_theme: store.selected_theme || 'neon',
         working_hours_start: store.working_hours_start || '09:00',
+        logo_url: store.logo_url || '',
+        banner_url: store.banner_url || '',
+        telegram_chat_id: store.telegram_chat_id || '',
         working_hours_end: store.working_hours_end || '23:00',
         free_shipping_limit: limitOpt ? limitOpt.cost : '',
       })
@@ -83,6 +89,34 @@ export default function StoreSettings() {
   }
 
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }))
+
+  const logoRef = useRef()
+  const bannerRef = useRef()
+  const [uploadingLogo, setUploadingLogo] = useState(false)
+  const [uploadingBanner, setUploadingBanner] = useState(false)
+
+  const handleImageUpload = async (file, field, setUploading) => {
+    if (!file) return
+    setUploading(true)
+    try {
+      const ext = file.name.split('.').pop()
+      const path = `${field}/${store?.id || 'unknown'}/${Date.now()}.${ext}`
+      const { error } = await supabase.storage.from('store-assets').upload(path, file, { upsert: true })
+      if (!error) {
+        const { data: urlData } = supabase.storage.from('store-assets').getPublicUrl(path)
+        set(field, urlData.publicUrl)
+        toast.success('✅ تم رفع الصورة — اضغط حفظ للتأكيد')
+      } else {
+        // fallback: local object URL
+        set(field, URL.createObjectURL(file))
+        toast('تم اختيار الصورة محلياً — قد لا تُحفظ بعد إعادة التحميل', { icon: '⚠️' })
+      }
+    } catch {
+      set(field, URL.createObjectURL(file))
+    } finally {
+      setUploading(false)
+    }
+  }
 
   const handleSave = async (e) => {
     e.preventDefault()
@@ -231,6 +265,88 @@ export default function StoreSettings() {
         </div>
       </div>
 
+      {/* ── هوية المتجر البصرية ── */}
+      <div className="glass" style={{ padding: 'var(--sp-xl)' }}>
+        <h2 style={{ fontWeight: 700, marginBottom: 'var(--sp-lg)', fontSize: 'var(--text-lg)' }}>هوية المتجر البصرية 🎨</h2>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sp-lg)' }}>
+
+          {/* Logo */}
+          <div>
+            <label className="input-label" style={{ marginBottom: 8, display: 'block' }}>شعار المتجر (Logo)</label>
+            <div style={{ display: 'flex', gap: 'var(--sp-md)', alignItems: 'flex-start', flexWrap: 'wrap' }}>
+              <div
+                className="upload-area"
+                onClick={() => logoRef.current?.click()}
+                style={{ width: 120, height: 120, minHeight: 'unset', cursor: 'pointer', flexShrink: 0, borderRadius: '50%', overflow: 'hidden', padding: 0 }}
+              >
+                {form.logo_url ? (
+                  <img src={form.logo_url} alt="logo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--clr-text-3)', gap: 4 }}>
+                    <Image size={28} />
+                    <span style={{ fontSize: 10 }}>الشعار</span>
+                  </div>
+                )}
+                {uploadingLogo && (
+                  <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%' }}>
+                    <span style={{ width: 24, height: 24, border: '3px solid rgba(255,255,255,0.3)', borderTop: '3px solid #fff', borderRadius: '50%', display: 'inline-block', animation: 'spin 0.8s linear infinite' }} />
+                  </div>
+                )}
+              </div>
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <p style={{ fontSize: 'var(--text-xs)', color: 'var(--clr-text-3)', lineHeight: 1.5 }}>
+                  يظهر في واجهة متجرك وعلى معاينة الرابط (WhatsApp/Facebook).
+                  <br />مقاس مثالي: 400×400 بكسل، PNG أو JPG.
+                </p>
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                  <button type="button" className="btn btn-ghost btn-sm" onClick={() => logoRef.current?.click()}>
+                    <Upload size={14} /> رفع شعار
+                  </button>
+                  {form.logo_url && (
+                    <button type="button" className="btn btn-ghost btn-sm" style={{ color: 'var(--clr-danger)' }} onClick={() => set('logo_url', '')}>
+                      <X size={14} /> إزالة
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+            <input ref={logoRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={e => handleImageUpload(e.target.files[0], 'logo_url', setUploadingLogo)} />
+          </div>
+
+          {/* Banner */}
+          <div>
+            <label className="input-label" style={{ marginBottom: 8, display: 'block' }}>صورة غلاف المتجر (Banner)</label>
+            <div
+              className="upload-area"
+              onClick={() => bannerRef.current?.click()}
+              style={{ cursor: 'pointer', width: '100%', minHeight: 120, position: 'relative' }}
+            >
+              {form.banner_url ? (
+                <img src={form.banner_url} alt="banner" style={{ width: '100%', height: 120, objectFit: 'cover', borderRadius: 'var(--radius-md)' }} />
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', color: 'var(--clr-text-3)', gap: 6 }}>
+                  <Image size={28} />
+                  <span style={{ fontSize: 'var(--text-xs)' }}>صورة الغلاف — تظهر في أعلى صفحة متجرك</span>
+                  <span style={{ fontSize: 10, color: 'var(--clr-text-muted)' }}>1200×300 بكسل مثالي</span>
+                </div>
+              )}
+              {uploadingBanner && (
+                <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 'inherit' }}>
+                  <span style={{ width: 28, height: 28, border: '3px solid rgba(255,255,255,0.3)', borderTop: '3px solid #fff', borderRadius: '50%', display: 'inline-block', animation: 'spin 0.8s linear infinite' }} />
+                </div>
+              )}
+            </div>
+            {form.banner_url && (
+              <button type="button" className="btn btn-ghost btn-sm" style={{ marginTop: 6, color: 'var(--clr-danger)' }} onClick={() => set('banner_url', '')}>
+                <X size={14} /> إزالة الغلاف
+              </button>
+            )}
+            <input ref={bannerRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={e => handleImageUpload(e.target.files[0], 'banner_url', setUploadingBanner)} />
+          </div>
+
+        </div>
+      </div>
+
       {/* Working Hours Settings */}
       <div className="glass" style={{ padding: 'var(--sp-xl)' }}>
         <h2 style={{ fontWeight: 700, marginBottom: 'var(--sp-lg)', fontSize: 'var(--text-lg)' }}>ساعات العمل ⏰</h2>
@@ -287,6 +403,31 @@ export default function StoreSettings() {
           >
             ✅ اختبر الرقم
           </a>
+        )}
+      </div>
+
+      {/* Telegram Notifications */}
+      <div className="glass" style={{ padding: 'var(--sp-xl)' }}>
+        <h2 style={{ fontWeight: 700, marginBottom: 4, fontSize: 'var(--text-lg)' }}>إشعارات تيليجرام ✈️</h2>
+        <p style={{ fontSize: 'var(--text-xs)', color: 'var(--clr-text-3)', marginBottom: 'var(--sp-md)', lineHeight: 1.6 }}>
+          احصل على إشعار فوري على تيليجرام عند ورود كل طلب جديد — حتى بدون فتح المتصفح!<br />
+          أرسل رسالة لـ <a href="https://t.me/userinfobot" target="_blank" rel="noreferrer" style={{ color: 'var(--clr-accent)' }}>@userinfobot</a> على تيليجرام لمعرفة رقم Chat ID الخاص بك.
+        </p>
+        <div className="input-group">
+          <label className="input-label">Telegram Chat ID</label>
+          <input
+            className="input"
+            value={form.telegram_chat_id || ''}
+            onChange={e => set('telegram_chat_id', e.target.value.trim())}
+            placeholder="مثال: 123456789"
+            style={{ direction: 'ltr' }}
+            id="telegram-chat-id-input"
+          />
+        </div>
+        {form.telegram_chat_id && (
+          <div className="glass" style={{ padding: '10px 14px', marginTop: 10, borderRadius: 10, background: 'rgba(0,136,204,0.1)', border: '1px solid rgba(0,136,204,0.3)', fontSize: 12 }}>
+            ✅ سيتم إرسال إشعارات الطلبات الجديدة إلى تيليجرام ID: <strong style={{ direction: 'ltr', display: 'inline-block' }}>{form.telegram_chat_id}</strong>
+          </div>
         )}
       </div>
 

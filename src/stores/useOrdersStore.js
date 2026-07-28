@@ -46,6 +46,50 @@ export const useOrdersStore = create((set, get) => ({
       .single()
     if (error) throw error
     set((s) => ({ orders: [data, ...s.orders] }))
+
+    // ── إشعار تيليجرام فوري ──
+    try {
+      const { data: storeData } = await supabase
+        .from('stores')
+        .select('telegram_chat_id, name, currency')
+        .eq('id', orderData.store_id)
+        .single()
+
+      if (storeData?.telegram_chat_id) {
+        const items = (data.items || [])
+          .filter(i => !i.isSpecial)
+          .map(i => `• ${i.quantity}x ${i.product?.name}`)
+          .join('\n')
+
+        const msg = [
+          `🛒 *طلب جديد #${data.order_number}*`,
+          `🏪 ${storeData.name}`,
+          ``,
+          `👤 *${data.customer_name}*`,
+          data.customer_phone ? `📞 ${data.customer_phone}` : null,
+          data.customer_address ? `📍 ${data.customer_address}` : null,
+          ``,
+          items,
+          ``,
+          `💰 *الإجمالي: ${data.total} ${storeData.currency || '₪'}*`,
+          data.notes ? `📝 ${data.notes}` : null,
+        ].filter(Boolean).join('\n')
+
+        const BOT_TOKEN = '7770225613:AAFVHJsM_7-SoovCJmA-WkyidZ-jwMFBZbE'
+        await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            chat_id: storeData.telegram_chat_id,
+            text: msg,
+            parse_mode: 'Markdown',
+          }),
+        })
+      }
+    } catch {
+      // إشعار تيليجرام اختياري — لا يوقف العملية
+    }
+
     return data
   },
 
