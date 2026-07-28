@@ -22,6 +22,7 @@ export default function AdminPanel() {
   const [search, setSearch] = useState('')
   const [generatedCode, setGeneratedCode] = useState('')
   const [codes, setCodes] = useState([])
+  const [codePlan, setCodePlan] = useState('monthly') // monthly | yearly
   const [stats, setStats] = useState({ total: 0, active: 0, trial: 0, revenue: 0 })
 
   // بسيط: فحص إذا كان المستخدم أدمن أو في وضع التجربة
@@ -75,8 +76,11 @@ export default function AdminPanel() {
     const code = generateCode()
     setGeneratedCode(code)
     try {
-      await supabase.from('activation_codes').insert({ code, used: false, plan: 'monthly', created_by: user?.id })
-      toast.success(`✅ تم توليد الكود: ${code}`)
+      const { error } = await supabase
+        .from('activation_codes')
+        .insert({ code, used: false, plan: codePlan, created_by: user?.id })
+      if (error) throw error
+      toast.success(`✅ تم توليد الكود: ${code} (${codePlan === 'yearly' ? 'سنوي' : 'شهري'})`)
       loadCodes()
     } catch {
       toast.success(`✅ الكود: ${code} (سيُحفظ عند توفر الجدول)`)
@@ -255,6 +259,25 @@ export default function AdminPanel() {
               <div style={{ fontSize: 32, marginBottom: 8 }}>🔑</div>
               <div style={{ fontWeight: 800, fontSize: 16, marginBottom: 4 }}>توليد كود تفعيل جديد</div>
               <div style={{ fontSize: 12, color: 'var(--clr-text-3)', marginBottom: 16 }}>يُعطى للتاجر بعد استلام الدفعة</div>
+              
+              {/* Plan Selector */}
+              <div style={{ display: 'flex', gap: 8, justifyContent: 'center', marginBottom: 16 }}>
+                <button
+                  onClick={() => setCodePlan('monthly')}
+                  className={codePlan === 'monthly' ? 'btn btn-primary btn-sm' : 'btn btn-ghost btn-sm'}
+                  style={{ fontSize: 12 }}
+                >
+                  📅 شهري (30₪)
+                </button>
+                <button
+                  onClick={() => setCodePlan('yearly')}
+                  className={codePlan === 'yearly' ? 'btn btn-primary btn-sm' : 'btn btn-ghost btn-sm'}
+                  style={{ fontSize: 12 }}
+                >
+                  ⭐ سنوي (250₪)
+                </button>
+              </div>
+
               <button className="btn btn-primary" onClick={handleGenerateCode} style={{ minWidth: 160 }}>
                 <Key size={16} /> توليد كود
               </button>
@@ -278,8 +301,11 @@ export default function AdminPanel() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 <div style={{ fontWeight: 700, fontSize: 14, color: 'var(--clr-text-2)' }}>آخر الأكواد المولّدة:</div>
                 {codes.map((c, i) => (
-                  <div key={i} className="glass" style={{ padding: '10px 14px', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <span style={{ fontFamily: 'monospace', fontWeight: 700, fontSize: 14, color: c.used ? 'var(--clr-text-3)' : 'var(--clr-accent)' }}>{c.code}</span>
+                  <div key={i} className="glass" style={{ padding: '10px 14px', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                      <span style={{ fontFamily: 'monospace', fontWeight: 700, fontSize: 14, color: c.used ? 'var(--clr-text-3)' : 'var(--clr-accent)' }}>{c.code}</span>
+                      <span style={{ fontSize: 10, color: 'var(--clr-text-3)' }}>{c.plan === 'yearly' ? '⭐ سنوي' : '📅 شهري'}</span>
+                    </div>
                     <span style={{ fontSize: 11, color: c.used ? 'var(--clr-danger)' : 'var(--clr-success)', fontWeight: 700 }}>
                       {c.used ? '❌ مستخدم' : '✅ متاح'}
                     </span>

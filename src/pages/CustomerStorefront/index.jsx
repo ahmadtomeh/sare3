@@ -369,6 +369,19 @@ export default function CustomerStorefront({ previewSlug }) {
   if (storeLoading) return <CompactSkeleton />
   if (!store) return <StoreNotFound />
 
+  // ── فحص انتهاء الاشتراك ──────────────────────────────────────
+  const isExpired = (() => {
+    if (!store.is_active) return true
+    if (store.subscription_status === 'expired') return true
+    if (store.subscription_status === 'trial') {
+      const trialEnd = store.trial_ends_at ? new Date(store.trial_ends_at) : null
+      if (trialEnd && new Date() > trialEnd) return true
+    }
+    return false
+  })()
+
+  if (isExpired) return <StoreExpired storeName={store.name} />
+
   return (
     <div style={{ minHeight: '100dvh', background: 'var(--clr-bg)', paddingBottom: cartCount > 0 ? 84 : 20 }}>
 
@@ -1566,6 +1579,43 @@ function StoreNotFound() {
         <div style={{ fontSize: '3rem' }}>🔍</div>
         <div className="empty-state-title">المتجر غير موجود</div>
         <a href="/" className="btn btn-primary" style={{ marginTop: 12 }}>العودة للرئيسية</a>
+      </div>
+    </div>
+  )
+}
+
+function StoreExpired({ storeName }) {
+  return (
+    <div style={{
+      minHeight: '100dvh', display: 'flex', alignItems: 'center', justifyContent: 'center',
+      padding: 16, background: 'var(--clr-bg)', direction: 'rtl',
+    }}>
+      <div className="glass" style={{ maxWidth: 360, width: '100%', padding: 32, textAlign: 'center', borderRadius: 20 }}>
+        <div style={{ fontSize: '3.5rem', marginBottom: 16 }}>⏸️</div>
+        <h2 style={{ fontSize: 20, fontWeight: 900, color: 'var(--clr-text)', marginBottom: 8 }}>
+          {storeName || 'المتجر'} معطّل مؤقتاً
+        </h2>
+        <p style={{ fontSize: 13, color: 'var(--clr-text-3)', lineHeight: 1.7, marginBottom: 24 }}>
+          انتهت فترة الاشتراك لهذا المتجر.
+          <br />
+          إذا كنت صاحب المتجر، يرجى تجديد اشتراكك للمتابعة.
+        </p>
+        <a
+          href="https://wa.me/970569922257?text=مرحبا، أريد تجديد اشتراك متجر: " + encodeURIComponent(storeName || '')
+          target="_blank"
+          rel="noreferrer"
+          style={{
+            display: 'inline-flex', alignItems: 'center', gap: 8,
+            background: 'linear-gradient(135deg, #25D366, #128C7E)',
+            color: '#fff', padding: '12px 24px', borderRadius: 12,
+            fontWeight: 700, fontSize: 14, textDecoration: 'none',
+          }}
+        >
+          📱 تواصل للتجديد
+        </a>
+        <div style={{ marginTop: 16 }}>
+          <a href="/" style={{ fontSize: 12, color: 'var(--clr-text-3)' }}>العودة للرئيسية</a>
+        </div>
       </div>
     </div>
   )

@@ -1,14 +1,13 @@
 import { useState } from 'react'
-import { Check, Star, Zap, Phone, Upload } from 'lucide-react'
+import { Check, Star, Zap, Phone } from 'lucide-react'
 import { useStoreConfig } from '../../stores/useStoreConfig'
-import { generateLicenseKey } from '../../utils/export'
+import { supabase } from '../../lib/supabase'
 import toast from 'react-hot-toast'
 
 export default function SubscriptionPanel() {
-  const { store } = useStoreConfig()
+  const { store, setStore } = useStoreConfig()
   const [licenseKey, setLicenseKey] = useState('')
   const [activating, setActivating] = useState(false)
-  const [uploadedReceipt, setUploadedReceipt] = useState(null)
   const [tab, setTab] = useState('plans') // 'plans' | 'activate'
 
   const daysLeft = store?.trial_ends_at
@@ -17,13 +16,71 @@ export default function SubscriptionPanel() {
 
   const handleActivate = async () => {
     if (!licenseKey.trim()) { toast.error('يرجى إدخال كود التفعيل'); return }
-    if (!licenseKey.startsWith('SARE-')) { toast.error('كود التفعيل غير صالح — يجب أن يبدأ بـ SARE-'); return }
+    const key = licenseKey.trim().toUpperCase()
+    if (!key.startsWith('SARE-')) { toast.error('كود التفعيل غير صالح — يجب أن يبدأ بـ SARE-'); return }
+
     setActivating(true)
-    // Simulate activation
-    await new Promise(r => setTimeout(r, 1500))
-    toast.success('🎉 تم تفعيل الاشتراك بنجاح!')
+    try {
+      // 1. ابحث عن الكود في قاعدة البيانات
+      const { data: keyData, error: keyError } = await supabase
+        .from('activation_codes')
+        .select('*')
+        .eq('code', key)
+        .single()
+
+      if (keyError || !keyData) {
+        toast.error('❌ الكود غير موجود — تأكد من صحة الكود أو تواصل معنا')
+        setActivating(false)
+        return
+      }
+
+      if (keyData.used) {
+        toast.error('❌ هذا الكود تم استخدامه مسبقاً')
+        setActivating(false)
+        return
+      }
+
+      if (!store?.id) {
+        toast.error('خطأ: لم يتم العثور على متجرك')
+        setActivating(false)
+        return
+      }
+
+      // 2. احسب تاريخ انتهاء الاشتراك
+      const durationDays = keyData.plan === 'yearly' ? 365 : 30
+      const expiresAt = new Date()
+      expiresAt.setDate(expiresAt.getDate() + durationDays)
+
+      // 3. حدّث المتجر في قاعدة البيانات
+      const { data: updatedStore, error: storeError } = await supabase
+        .from('stores')
+        .update({
+          subscription_status: 'active',
+          trial_ends_at: expiresAt.toISOString(),
+        })
+        .eq('id', store.id)
+        .select()
+        .single()
+
+      if (storeError) throw storeError
+
+      // 4. اعلّم الكود كمستخدم
+      await supabase
+        .from('activation_codes')
+        .update({ used: true, used_by: store.id, used_at: new Date().toISOString() })
+        .eq('id', keyData.id)
+
+      // 5. حدّث الحالة في الـ store محلياً
+      setStore(updatedStore)
+
+      toast.success(`🎉 تم تفعيل الاشتراك! ينتهي في ${expiresAt.toLocaleDateString('ar-EG')}`, { duration: 5000 })
+      setLicenseKey('')
+      setTab('plans')
+    } catch (err) {
+      console.error('Activation error:', err)
+      toast.error('حدث خطأ أثناء التفعيل — حاول مرة أخرى')
+    }
     setActivating(false)
-    setLicenseKey('')
   }
 
   return (
@@ -139,7 +196,7 @@ export default function SubscriptionPanel() {
             </div>
 
             <a
-              href="https://wa.me/970599000000?text=مرحبا، أريد الاشتراك في سريع"
+              href="https://wa.me/970569922257?text=مرحبا، أريد الاشتراك في سريع"
               target="_blank"
               rel="noreferrer"
               className="btn btn-full"

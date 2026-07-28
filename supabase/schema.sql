@@ -69,16 +69,29 @@ CREATE TABLE IF NOT EXISTS orders (
   created_at      TIMESTAMPTZ DEFAULT NOW()
 );
 
--- ── Subscriptions / License Keys ──────────────────────────────
-CREATE TABLE IF NOT EXISTS license_keys (
+-- ── Activation Codes (License Keys) ─────────────────────────
+CREATE TABLE IF NOT EXISTS activation_codes (
   id          UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  key         TEXT UNIQUE NOT NULL,
-  plan        TEXT NOT NULL,  -- monthly | yearly
-  duration_days INTEGER NOT NULL,
+  code        TEXT UNIQUE NOT NULL,              -- e.g. SARE-XXXX-XXXX
+  plan        TEXT NOT NULL DEFAULT 'monthly',   -- monthly | yearly
+  used        BOOLEAN DEFAULT false,
   used_by     UUID REFERENCES stores(id),
   used_at     TIMESTAMPTZ,
+  created_by  UUID REFERENCES auth.users(id),
   created_at  TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- Activation Codes RLS
+ALTER TABLE activation_codes ENABLE ROW LEVEL SECURITY;
+
+-- Admins can do everything (service role bypasses RLS anyway)
+-- Authenticated users can read codes to validate them
+CREATE POLICY "auth_read_codes" ON activation_codes
+  FOR SELECT USING (auth.role() = 'authenticated');
+
+-- Authenticated users can update codes (mark as used)
+CREATE POLICY "auth_update_codes" ON activation_codes
+  FOR UPDATE USING (auth.role() = 'authenticated');
 
 -- ── Indexes ───────────────────────────────────────────────────
 CREATE INDEX IF NOT EXISTS idx_products_store ON products(store_id);
