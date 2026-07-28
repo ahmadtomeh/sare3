@@ -171,6 +171,36 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* ── Testimonials Section ── */}
+      <section style={{ padding: 'var(--sp-xl) var(--sp-md)', maxWidth: 1140, margin: '0 auto' }}>
+        <div style={{ textAlign: 'center', marginBottom: 'var(--sp-lg)' }}>
+          <h2 style={{ fontSize: 'var(--text-xl)', fontWeight: 900 }}>تجار يثقون بسريع ❤️</h2>
+          <p style={{ color: 'var(--clr-text-3)', fontSize: 'var(--text-xs)', marginTop: 4 }}>آلاف التجار يستخدمون سريع لإدارة طلباتهم يومياً</p>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 'var(--sp-md)' }}>
+          {[
+            { name: 'محمد أبو سليم', store: 'كافيه النخيل', location: 'رام الله', emoji: '☕', quote: 'كنت بستقبل طلباتي على ورقة. مع سريع بقي كل شي مرتب والطلب وصلني كاملاً على الواتساب!', rating: 5 },
+            { name: 'سارة الخطيب', store: 'متجر الأناقة', location: 'نابلس', emoji: '👗', quote: 'ما توقعت كمية الطلبات اللي رحت بتجييها بعد ما شاركت رابط المتجر على الواتساب. مشكور!', rating: 5 },
+            { name: 'يوسف عبد الهادي', store: 'مخبز البيت', location: 'القدس', emoji: '🥐', quote: 'الفكرة بسيطة لكن تنفيذها ذكي جداً. الزبون يختار مطلوباته والطلب يصلني جاهز بدون أي جهد مني.', rating: 5 },
+            { name: 'خالد العمري', store: 'سوبر ماركت الجوار', location: 'أريحا', emoji: '🛒', quote: 'الدعم سريع جداً والسعر مناسب. أفضل من أي منصة تجربتها بسعر سعرهم عالي وبيأخذوا عمولة.', rating: 5 },
+          ].map((t, i) => (
+            <div key={i} className="glass glass-interactive" style={{ padding: 'var(--sp-md)', display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <div style={{ display: 'flex', gap: 2 }}>
+                {[1,2,3,4,5].map(s => <span key={s} style={{ color: '#f59e0b', fontSize: 12 }}>★</span>)}
+              </div>
+              <p style={{ fontSize: 'var(--text-xs)', color: 'var(--clr-text-2)', lineHeight: 1.6, fontStyle: 'italic', margin: 0 }}>"{t.quote}"</p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 'auto', paddingTop: 8, borderTop: '1px solid var(--clr-border)' }}>
+                <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'linear-gradient(135deg, var(--clr-primary), var(--clr-accent))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, flexShrink: 0 }}>{t.emoji}</div>
+                <div>
+                  <div style={{ fontWeight: 800, fontSize: 12 }}>{t.name}</div>
+                  <div style={{ fontSize: 10, color: 'var(--clr-text-3)' }}>{t.store} • {t.location}</div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
       {/* ── Live Demo Stores Showcase ── */}
       <section id="demo-showcase" style={{ padding: 'var(--sp-xl) var(--sp-md)', maxWidth: 1140, margin: '0 auto' }}>
         <div style={{ textAlign: 'center', marginBottom: 'var(--sp-lg)' }}>
@@ -294,6 +324,29 @@ export default function LandingPage() {
               اشترك بـ 30 ₪ فقط
             </button>
           </div>
+
+          {/* Yearly */}
+          <div className="glass" style={{ padding: 'var(--sp-lg)', display: 'flex', flexDirection: 'column', gap: 12, border: '1px solid rgba(139,92,246,0.4)' }}>
+            <div style={{ display: 'flex', gap: 6 }}>
+              <span className="badge badge-primary" style={{ fontSize: 9 }}>⭐ سنوي</span>
+              <span className="badge" style={{ fontSize: 9, background: 'rgba(16,185,129,0.2)', color: 'var(--clr-accent)' }}>+ شهرين مجاناً</span>
+            </div>
+            <div>
+              <div style={{ fontSize: 'var(--text-sm)', fontWeight: 700, color: 'var(--clr-primary)' }}>الاشتراك السنوي</div>
+              <div style={{ fontSize: 'var(--text-2xl)', fontWeight: 900, color: 'var(--clr-text)', marginTop: 4 }}>
+                250 ₪ <span style={{ fontSize: 12, fontWeight: 400, color: 'var(--clr-text-3)' }}>/ سنة</span>
+              </div>
+              <div style={{ fontSize: 10, color: 'var(--clr-accent)', fontWeight: 700, marginTop: 2 }}>وفّر 110 ₪ مقارنةً بالشهري</div>
+            </div>
+            <ul style={{ display: 'flex', flexDirection: 'column', gap: 6, fontSize: 'var(--text-xs)', color: 'var(--clr-text-2)', padding: 0, margin: 0, listStyle: 'none' }}>
+              <li style={{ display: 'flex', gap: 6, alignItems: 'center' }}><Check size={14} style={{ color: 'var(--clr-primary)' }} /> كل مميزات الشهري</li>
+              <li style={{ display: 'flex', gap: 6, alignItems: 'center' }}><Check size={14} style={{ color: 'var(--clr-primary)' }} /> أولوية دعم فني</li>
+              <li style={{ display: 'flex', gap: 6, alignItems: 'center' }}><Check size={14} style={{ color: 'var(--clr-primary)' }} /> مميزات قادمة مجاناً</li>
+            </ul>
+            <button className="btn btn-full btn-sm" style={{ background: 'linear-gradient(135deg, var(--clr-primary), #5b21b6)', color: '#fff' }} onClick={() => navigate('/auth?mode=signup')}>
+              اشترك بـ 250 ₪ / سنة
+            </button>
+          </div>
         </div>
       </section>
 
@@ -324,9 +377,34 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── Compact Footer ── */}
-      <footer style={{ padding: '16px var(--sp-md)', borderTop: '1px solid var(--clr-border)', textAlign: 'center', fontSize: 11, color: 'var(--clr-text-3)' }}>
-        © 2026 سريع (Sare3) • جميع الحقوق محفوظة — المنصة الأولى للتجار ⚡
+      {/* ── Enhanced Footer ── */}
+      <footer style={{ padding: '24px var(--sp-md)', borderTop: '1px solid var(--clr-border)', direction: 'rtl' }}>
+        <div style={{ maxWidth: 1140, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div style={{ width: 28, height: 28, borderRadius: 8, background: 'linear-gradient(135deg, var(--clr-primary), var(--clr-accent))', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Zap size={14} style={{ color: '#fff' }} />
+              </div>
+              <span className="gradient-text" style={{ fontWeight: 900, fontSize: 16 }}>سريع</span>
+            </div>
+            <div style={{ display: 'flex', gap: 'var(--sp-lg)', flexWrap: 'wrap' }}>
+              {[{ val: '0%', label: 'عمولات' }, { val: '7 أيام', label: 'تجربة مجانية' }, { val: '24/7', label: 'دعم فني' }].map((s, i) => (
+                <div key={i} style={{ textAlign: 'center' }}>
+                  <div style={{ fontWeight: 900, fontSize: 14, color: 'var(--clr-primary)' }}>{s.val}</div>
+                  <div style={{ fontSize: 10, color: 'var(--clr-text-3)' }}>{s.label}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8, borderTop: '1px solid var(--clr-border)', paddingTop: 12 }}>
+            <span style={{ fontSize: 11, color: 'var(--clr-text-3)' }}>© 2026 سريع (Sare3) • جميع الحقوق محفوظة</span>
+            <div style={{ display: 'flex', gap: 'var(--sp-md)', fontSize: 11, color: 'var(--clr-text-3)' }}>
+              <span style={{ cursor: 'pointer' }}>سياسة الخصوصية</span>
+              <span style={{ cursor: 'pointer' }}>شروط الاستخدام</span>
+              <a href="https://wa.me/970569922257" target="_blank" rel="noreferrer" style={{ color: 'var(--clr-accent)', textDecoration: 'none', fontWeight: 700 }}>تواصل معنا</a>
+            </div>
+          </div>
+        </div>
       </footer>
 
     </div>

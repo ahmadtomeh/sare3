@@ -24,6 +24,45 @@ export default function DashboardHome({ onNavigate }) {
   const stats = useOrdersStore.getState().getStats()
   const recentOrders = orders.slice(0, 5)
 
+  // حساب إحصائيات إضافية حقيقية
+  const yesterday = new Date()
+  yesterday.setDate(yesterday.getDate() - 1)
+  const yesterdayStr = yesterday.toDateString()
+
+  const yesterdayOrders = orders.filter(o => new Date(o.created_at).toDateString() === yesterdayStr)
+  const yesterdayRevenue = yesterdayOrders.reduce((s, o) => s + (parseFloat(o.total) || 0), 0)
+  const todayRevenue = stats.todayRevenue
+
+  const revenueTrend = yesterdayRevenue > 0
+    ? `${todayRevenue >= yesterdayRevenue ? '+' : ''}${Math.round(((todayRevenue - yesterdayRevenue) / yesterdayRevenue) * 100)}% عن أمس`
+    : stats.todayRevenue > 0 ? 'مبيعات جديدة 🔥' : 'المبيعات تبدأ'
+  const ordersTrend = yesterdayOrders.length > 0
+    ? `${stats.todayOrders >= yesterdayOrders.length ? '+' : ''}${Math.round(((stats.todayOrders - yesterdayOrders.length) / yesterdayOrders.length) * 100)}% عن أمس`
+    : stats.todayOrders > 0 ? 'طلبات جديدة ✨' : 'انتظر أول طلب'
+
+  const avgOrderValue = orders.length > 0
+    ? (stats.totalRevenue / orders.length).toFixed(0)
+    : 0
+
+  // أفضل المنتجات مبيعاً
+  const productSales = {}
+  orders.forEach(o => {
+    try {
+      const items = Array.isArray(o.items) ? o.items : JSON.parse(o.items || '[]')
+      items.forEach(item => {
+        if (!item.isSpecial && item.name) {
+          if (!productSales[item.name]) productSales[item.name] = { qty: 0, revenue: 0 }
+          productSales[item.name].qty += (item.quantity || 1)
+          productSales[item.name].revenue += (item.price || 0) * (item.quantity || 1)
+        }
+      })
+    } catch {}
+  })
+  const topProducts = Object.entries(productSales)
+    .sort((a, b) => b[1].qty - a[1].qty)
+    .slice(0, 5)
+  const maxQty = topProducts[0]?.[1]?.qty || 1
+
   // ── تجهيز بيانات الرسومات البيانية ──
   const salesData = Array.from({ length: 7 }, (_, i) => {
     const d = new Date()
@@ -137,7 +176,7 @@ export default function DashboardHome({ onNavigate }) {
           clr="var(--clr-primary)"
           label="إجمالي الطلبات"
           value={stats.totalOrders}
-          trend="+18%"
+          trend={stats.totalOrders > 0 ? `منذ البداية` : 'لا توجد بعد'}
           sparklinePath="M0,25 Q20,15 40,20 T80,5 T120,18 T160,2 T200,10"
         />
 
@@ -147,27 +186,27 @@ export default function DashboardHome({ onNavigate }) {
           clr="var(--clr-accent)"
           label="الإيرادات"
           value={`${stats.totalRevenue.toFixed(0)} ${store?.currency || '₪'}`}
-          trend="+24%"
+          trend={revenueTrend}
           sparklinePath="M0,28 Q30,20 60,24 T120,10 T180,4 T200,2"
         />
 
         <MetricCard
-          icon="🕐"
+          icon="🔐"
           bg="rgba(245,158,11,0.15)"
           clr="var(--clr-warning)"
           label="طلبات اليوم"
           value={stats.todayOrders}
-          trend="ممتاز 🔥"
+          trend={ordersTrend}
           sparklinePath="M0,20 Q40,10 80,18 T140,5 T200,12"
         />
 
         <MetricCard
-          icon="🛍️"
+          icon="📈"
           bg="rgba(59,130,246,0.15)"
           clr="var(--clr-info)"
-          label="عدد المنتجات"
-          value={products.length}
-          trend="نشط"
+          label="متوسط قيمة الطلب"
+          value={`${avgOrderValue} ${store?.currency || '₪'}`}
+          trend={orders.length > 0 ? `من ${orders.length} طلب` : 'لا طلبات بعد'}
           sparklinePath="M0,15 Q50,22 100,12 T150,18 T200,8"
         />
       </div>
@@ -386,6 +425,38 @@ export default function DashboardHome({ onNavigate }) {
           </div>
         )}
       </div>
+
+      {/* ── أفضل المنتجات مبيعاً ── */}
+      {topProducts.length > 0 && (
+        <div className="glass" style={{ padding: 'var(--sp-md)' }}>
+          <h3 style={{ fontWeight: 800, fontSize: 'var(--text-sm)', marginBottom: 'var(--sp-md)' }}>🏆 أفضل المنتجات مبيعاً</h3>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {topProducts.map(([name, data], i) => (
+              <div key={name}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 'var(--text-xs)', marginBottom: 4 }}>
+                  <span style={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span style={{ fontSize: 16 }}>{i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}.`}</span>
+                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 180 }}>{name}</span>
+                  </span>
+                  <span style={{ color: 'var(--clr-text-3)', fontWeight: 700, flexShrink: 0 }}>
+                    {data.qty} وحدة • {data.revenue.toFixed(0)} {store?.currency || '₪'}
+                  </span>
+                </div>
+                <div style={{ height: 6, background: 'var(--glass-bg-2)', borderRadius: 'var(--radius-full)', overflow: 'hidden' }}>
+                  <div style={{
+                    height: '100%',
+                    width: `${(data.qty / maxQty) * 100}%`,
+                    background: i === 0 ? 'linear-gradient(90deg, var(--clr-accent), #34d399)' : 'var(--clr-primary)',
+                    borderRadius: 'inherit',
+                    transition: 'width 0.8s cubic-bezier(0.4,0,0.2,1)',
+                    opacity: Math.max(0.4, 1 - i * 0.12),
+                  }} />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
     </div>
   )
