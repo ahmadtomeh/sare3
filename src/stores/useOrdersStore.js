@@ -3,6 +3,10 @@ import { supabase, isConfigured } from '../lib/supabase'
 import { DEMO_ORDERS } from '../utils/demoData'
 import { useAuthStore } from './useAuthStore'
 
+// Always use the correct hardcoded Supabase URL for edge function calls
+const CORRECT_SUPABASE_URL = 'https://aewutaqpjigaqpdnfrwu.supabase.co'
+const CORRECT_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFld3V0YXFwamlnYXFwZG5mcnd1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ5MDk2MjYsImV4cCI6MjEwMDQ4NTYyNn0.Nc8stbQBls4fFC7gXtSZDYoj6ByrQ87EvWQrMwEk_G0'
+
 const checkDemo = () => {
   return !isConfigured || 
          useAuthStore.getState().isDemoMode || 
@@ -94,31 +98,28 @@ export const useOrdersStore = create((set, get) => ({
 
     // ── إشعار Web Push (حتى لو الهاتف مقفل) ──
     try {
-      const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL
-      if (SUPABASE_URL) {
-        const items = (data.items || [])
-          .filter(i => !i.isSpecial)
-          .map(i => `${i.quantity}x ${i.product?.name}`)
-          .join('، ')
+      const items = (data.items || [])
+        .filter(i => !i.isSpecial)
+        .map(i => `${i.quantity}x ${i.product?.name}`)
+        .join('، ')
 
-        await fetch(`${SUPABASE_URL}/functions/v1/send-push-notification`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+      await fetch(`${CORRECT_SUPABASE_URL}/functions/v1/send-push-notification`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${CORRECT_ANON_KEY}`,
+        },
+        body: JSON.stringify({
+          store_id: orderData.store_id,
+          notification: {
+            title: `🛒 طلب جديد #${data.order_number}`,
+            body: `${data.customer_name} — ${items} — ${data.total} ₪`,
+            tag: `order-${data.id}`,
+            url: '/dashboard',
+            orderId: data.id,
           },
-          body: JSON.stringify({
-            store_id: orderData.store_id,
-            notification: {
-              title: `🛒 طلب جديد #${data.order_number}`,
-              body: `${data.customer_name} — ${items} — ${data.total} ₪`,
-              tag: `order-${data.id}`,
-              url: '/dashboard',
-              orderId: data.id,
-            },
-          }),
-        })
-      }
+        }),
+      })
     } catch {
       // Web Push اختياري — لا يوقف العملية
     }
@@ -131,6 +132,24 @@ export const useOrdersStore = create((set, get) => ({
       if (s.orders.some((o) => o.id === order.id)) return s
       return { orders: [order, ...s.orders] }
     })
+  },
+
+  subscribeToOrders: (storeId) => {
+    const channel = supabase
+      .channel(`orders-${storeId}`)
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'orders',
+        filter: `store_id=eq.${storeId}`,
+      }, (payload) => {
+        set((s) => {
+          if (s.orders.some((o) => o.id === payload.new.id)) return s
+          return { orders: [payload.new, ...s.orders] }
+        })
+      })
+      .subscribe()
+    return () => supabase.removeChannel(channel)
   },
 
   updateStatus: async (orderId, status) => {

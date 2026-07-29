@@ -55,12 +55,16 @@ export default function MerchantDashboard() {
       if (s?.id) {
         fetchOrders(s.id)
         fetchAll(s.id)
+        // Subscribe to real-time order updates
+        const unsubscribe = useOrdersStore.getState().subscribeToOrders(s.id)
+        return unsubscribe
       } else if (!useAuthStore.getState().isDemoMode) {
         // No store found — redirect to onboarding wizard
         navigate('/onboarding')
       }
     }
-    loadData()
+    const cleanup = loadData()
+    return () => { cleanup?.then?.(fn => fn?.()) }
   }, [user?.id])
 
   // طلب إذن الإشعارات عند فتح اللوحة
