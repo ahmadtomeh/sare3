@@ -149,6 +149,10 @@ CREATE POLICY "owners_manage_orders" ON orders
 CREATE POLICY "public_insert_orders" ON orders
   FOR INSERT WITH CHECK (true);
 
+-- Public can select orders (needed for order creation returning row & tracking)
+CREATE POLICY "public_select_orders" ON orders
+  FOR SELECT USING (true);
+
 -- ── Storage Bucket ────────────────────────────────────────────
 -- Run this separately in Supabase dashboard → Storage:
 -- Create bucket "store-assets" with public access enabled
