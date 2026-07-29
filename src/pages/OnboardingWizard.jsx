@@ -32,7 +32,16 @@ export default function OnboardingWizard() {
   const handleStep1 = (e) => {
     e.preventDefault()
     if (!form.name || !form.whatsapp) { toast.error('يرجى تعبئة الاسم والواتساب'); return }
-    const slug = form.slug || form.name.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').slice(0, 30) + '-' + Date.now().toString().slice(-4)
+    const suffix = '-' + Date.now().toString().slice(-4)
+    let base = form.slug || form.name
+      .toLowerCase()
+      .replace(/[\u0600-\u06FF\s]+/g, '-')  // replace Arabic chars and spaces with dash
+      .replace(/[^a-z0-9-]/g, '')            // remove anything else
+      .replace(/-+/g, '-')                    // collapse multiple dashes
+      .replace(/^-+|-+$/g, '')               // trim leading/trailing dashes
+      .slice(0, 25)
+    if (!base || base.length < 2) base = 'store'
+    const slug = base + suffix
     set('slug', slug)
     setStep(2)
   }
