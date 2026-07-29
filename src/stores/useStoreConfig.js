@@ -56,13 +56,22 @@ export const useStoreConfig = create(
           set({ store: demoStore, loading: false })
           return demoStore
         }
-        set({ loading: true, error: null })
-        const { data, error } = await supabase
+        // Clear old store state immediately to avoid showing stale cached data
+        set({ store: null, loading: true, error: null })
+        // Try slug first, then id
+        let { data, error } = await supabase
           .from('stores')
           .select('*')
-          .or(`slug.eq.${slugOrId},id.eq.${slugOrId}`)
-          .single()
+          .eq('slug', slugOrId)
+          .maybeSingle()
+        if (!data && !error) {
+          // Try by id if slug not found
+          const res = await supabase.from('stores').select('*').eq('id', slugOrId).maybeSingle()
+          data = res.data
+          error = res.error
+        }
         if (error) { set({ error: error.message, loading: false }); return null }
+        if (!data) { set({ error: 'المتجر غير موجود', loading: false }); return null }
         set({ store: data, loading: false })
         return data
       },
