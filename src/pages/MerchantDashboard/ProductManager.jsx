@@ -389,6 +389,9 @@ function ProductFormModal({ product, categories, storeId, currency, onClose, onS
             </div>
           )}
         </div>
+
+        {/* Availability */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: 'var(--sp-md)', background: 'var(--glass-bg-2)', borderRadius: 'var(--radius-md)', border: '1px solid var(--clr-border)' }}>
           <div>
             <div style={{ fontWeight: 600 }}>حالة التوفر</div>
             <div style={{ fontSize: 'var(--text-xs)', color: 'var(--clr-text-3)' }}>
