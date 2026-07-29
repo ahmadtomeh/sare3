@@ -107,9 +107,13 @@ ALTER TABLE categories ENABLE ROW LEVEL SECURITY;
 ALTER TABLE products ENABLE ROW LEVEL SECURITY;
 ALTER TABLE orders ENABLE ROW LEVEL SECURITY;
 
--- Stores: Owners can manage their own store
+-- Stores: Owners can manage their own store (SELECT, UPDATE, DELETE)
 CREATE POLICY "owners_manage_store" ON stores
   FOR ALL USING (owner_id = auth.uid());
+
+-- Stores: Authenticated users can INSERT (create) their own store
+CREATE POLICY "authenticated_insert_store" ON stores
+  FOR INSERT WITH CHECK (auth.uid() IS NOT NULL AND owner_id = auth.uid());
 
 -- Stores: Anyone can read active stores (for customer storefront)
 CREATE POLICY "public_read_stores" ON stores

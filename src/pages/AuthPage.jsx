@@ -25,8 +25,15 @@ export default function AuthPage() {
     try {
       if (mode === 'signup') {
         await signUp({ email: form.email, password: form.password, name: form.name })
-        toast.success('تم إنشاء حسابك! تفقد بريدك الإلكتروني للتفعيل 📧')
-        setMode('signin')
+        // Auto sign-in immediately after signup (email confirmation is disabled)
+        try {
+          await signIn({ email: form.email, password: form.password })
+          toast.success('مرحباً بك! أنشئ متجرك الآن ⚡')
+          navigate('/dashboard')
+        } catch {
+          toast.success('تم إنشاء حسابك — سجّل دخولك الآن')
+          setMode('signin')
+        }
       } else {
         await signIn({ email: form.email, password: form.password })
         toast.success('أهلاً بك مجدداً! 👋')
@@ -36,7 +43,7 @@ export default function AuthPage() {
       const msgMap = {
         'Invalid login credentials': 'البريد أو كلمة المرور غير صحيحة',
         'Email not confirmed': 'يرجى تفعيل حسابك من البريد الإلكتروني',
-        'User already registered': 'البريد الإلكتروني مسجل بالفعل',
+        'User already registered': 'البريد الإلكتروني مسجّل بالفعل',
       }
       toast.error(msgMap[err.message] || err.message || 'حدث خطأ ما')
     } finally {
