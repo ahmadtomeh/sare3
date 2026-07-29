@@ -50,10 +50,14 @@ export default function MerchantDashboard() {
   // Load merchant store on mount
   useEffect(() => {
     const loadData = async () => {
+      if (!user?.id) return
       const s = await fetchMyStore(user?.id)
       if (s?.id) {
         fetchOrders(s.id)
         fetchAll(s.id)
+      } else if (!useAuthStore.getState().isDemoMode) {
+        // No store found — redirect to onboarding wizard
+        navigate('/onboarding')
       }
     }
     loadData()
