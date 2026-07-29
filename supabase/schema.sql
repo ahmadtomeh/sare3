@@ -204,7 +204,14 @@ CREATE INDEX IF NOT EXISTS idx_coupons_code ON coupons(store_id, code);
 ALTER TABLE stores ADD COLUMN IF NOT EXISTS telegram_chat_id TEXT;
 ALTER TABLE stores ADD COLUMN IF NOT EXISTS logo_url TEXT;
 ALTER TABLE stores ADD COLUMN IF NOT EXISTS banner_url TEXT;
+ALTER TABLE stores ADD COLUMN IF NOT EXISTS working_hours_start TEXT DEFAULT '09:00';
+ALTER TABLE stores ADD COLUMN IF NOT EXISTS working_hours_end TEXT DEFAULT '23:00';
+ALTER TABLE stores ADD COLUMN IF NOT EXISTS selected_theme TEXT DEFAULT 'neon';
+ALTER TABLE stores ADD COLUMN IF NOT EXISTS free_shipping_limit NUMERIC;
 
+-- Product inventory tracking
+ALTER TABLE products ADD COLUMN IF NOT EXISTS track_stock BOOLEAN DEFAULT false;
+ALTER TABLE products ADD COLUMN IF NOT EXISTS stock_count INTEGER DEFAULT 0;
 
 -- ── Storage Bucket Policies ───────────────────────────────────
 -- Run in Supabase Dashboard → Storage → New Bucket:
@@ -218,3 +225,28 @@ ALTER TABLE stores ADD COLUMN IF NOT EXISTS banner_url TEXT;
 -- SELECT Policy: true  (public read)
 -- UPDATE Policy: (auth.uid() IS NOT NULL)
 -- DELETE Policy: (auth.uid() IS NOT NULL)
+
+-- ── Push Subscriptions (Web Push Notifications) ───────────────
+CREATE TABLE IF NOT EXISTS push_subscriptions (
+  id         UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  store_id   UUID REFERENCES stores(id) ON DELETE CASCADE,
+  endpoint   TEXT UNIQUE NOT NULL,
+  p256dh     TEXT NOT NULL,
+  auth       TEXT NOT NULL,
+  user_agent TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE push_subscriptions ENABLE ROW LEVEL SECURITY;
+
+-- Store owners can see/delete their subscriptions
+CREATE POLICY "owners_manage_push_subs" ON push_subscriptions
+  FOR ALL USING (
+    store_id IN (SELECT id FROM stores WHERE owner_id = auth.uid())
+  );
+
+-- Allow any browser to INSERT a subscription (needed for subscribing without login)
+CREATE POLICY "public_insert_push_sub" ON push_subscriptions
+  FOR INSERT WITH CHECK (true);
+
+CREATE INDEX IF NOT EXISTS idx_push_subs_store ON push_subscriptions(store_id);

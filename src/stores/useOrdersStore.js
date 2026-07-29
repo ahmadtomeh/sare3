@@ -75,7 +75,9 @@ export const useOrdersStore = create((set, get) => ({
           data.notes ? `📝 ${data.notes}` : null,
         ].filter(Boolean).join('\n')
 
-        const BOT_TOKEN = '7770225613:AAFVHJsM_7-SoovCJmA-WkyidZ-jwMFBZbE'
+        const BOT_TOKEN = import.meta.env.VITE_TELEGRAM_BOT_TOKEN
+        if (!BOT_TOKEN) return // No bot configured — skip silently
+
         await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -88,6 +90,37 @@ export const useOrdersStore = create((set, get) => ({
       }
     } catch {
       // إشعار تيليجرام اختياري — لا يوقف العملية
+    }
+
+    // ── إشعار Web Push (حتى لو الهاتف مقفل) ──
+    try {
+      const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL
+      if (SUPABASE_URL) {
+        const items = (data.items || [])
+          .filter(i => !i.isSpecial)
+          .map(i => `${i.quantity}x ${i.product?.name}`)
+          .join('، ')
+
+        await fetch(`${SUPABASE_URL}/functions/v1/send-push-notification`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          },
+          body: JSON.stringify({
+            store_id: orderData.store_id,
+            notification: {
+              title: `🛒 طلب جديد #${data.order_number}`,
+              body: `${data.customer_name} — ${items} — ${data.total} ₪`,
+              tag: `order-${data.id}`,
+              url: '/dashboard',
+              orderId: data.id,
+            },
+          }),
+        })
+      }
+    } catch {
+      // Web Push اختياري — لا يوقف العملية
     }
 
     return data

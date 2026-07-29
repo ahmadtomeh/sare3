@@ -196,6 +196,15 @@ function ProductCard({ product, category, currency, onEdit, onDelete, onToggle }
             {product.is_available ? '🟢 متوفر' : '🔴 غير متوفر'}
           </span>
           {category && <span className="badge badge-ghost" style={{ fontSize: 10 }}>{category.emoji} {category.name}</span>}
+          {product.track_stock && (
+            <span className="badge" style={{
+              fontSize: 10,
+              background: product.stock_count === 0 ? 'rgba(239,68,68,0.15)' : product.stock_count <= 5 ? 'rgba(234,179,8,0.15)' : 'rgba(16,185,129,0.15)',
+              color: product.stock_count === 0 ? 'var(--clr-danger)' : product.stock_count <= 5 ? '#ca8a04' : 'var(--clr-success)',
+            }}>
+              {product.stock_count === 0 ? '🔴 نفذ المخزون' : product.stock_count <= 5 ? `🟡 ${product.stock_count} قطعة فقط` : `📦 ${product.stock_count} قطعة`}
+            </span>
+          )}
         </div>
         <div className="product-card-name">{product.name}</div>
         <div className="product-card-price">{parseFloat(product.price).toFixed(2)} {currency}</div>
@@ -243,6 +252,8 @@ function ProductFormModal({ product, categories, storeId, currency, onClose, onS
     image_url: product?.image_url || '',
     is_available: product?.is_available ?? true,
     options: normalizeOptions(product?.options),
+    track_stock: product?.track_stock ?? false,
+    stock_count: product?.stock_count ?? 0,
   })
   const [imagePreview, setImagePreview] = useState(product?.image_url || '')
   const [uploading, setUploading] = useState(false)
@@ -350,8 +361,34 @@ function ProductFormModal({ product, categories, storeId, currency, onClose, onS
           </div>
         </div>
 
-        {/* Availability */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: 'var(--sp-md)', background: 'var(--glass-bg-2)', borderRadius: 'var(--radius-md)', border: '1px solid var(--clr-border)' }}>
+        {/* Stock / Inventory */}
+        <div style={{ padding: 'var(--sp-md)', background: 'var(--glass-bg-2)', borderRadius: 'var(--radius-md)', border: '1px solid var(--clr-border)', display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div>
+              <div style={{ fontWeight: 600 }}>تتبع المخزون 📦</div>
+              <div style={{ fontSize: 'var(--text-xs)', color: 'var(--clr-text-3)' }}>تفعيل لتحديد عدد القطع المتاحة</div>
+            </div>
+            <label className="toggle">
+              <input type="checkbox" checked={form.track_stock} onChange={(e) => set('track_stock', e.target.checked)} id="track-stock-toggle" />
+              <span className="toggle-track" />
+              <span className="toggle-thumb" />
+            </label>
+          </div>
+          {form.track_stock && (
+            <div className="input-group" style={{ margin: 0 }}>
+              <label className="input-label">عدد القطع المتاحة</label>
+              <input
+                className="input"
+                type="number"
+                min="0"
+                value={form.stock_count}
+                onChange={(e) => set('stock_count', parseInt(e.target.value) || 0)}
+                placeholder="0"
+                id="stock-count-input"
+              />
+            </div>
+          )}
+        </div>
           <div>
             <div style={{ fontWeight: 600 }}>حالة التوفر</div>
             <div style={{ fontSize: 'var(--text-xs)', color: 'var(--clr-text-3)' }}>

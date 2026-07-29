@@ -1,8 +1,9 @@
 import { useEffect } from 'react'
-import { TrendingUp, Package, ShoppingCart, Users, ArrowUpRight, Plus, Eye, ClipboardList, Zap, Clock } from 'lucide-react'
+import { TrendingUp, Package, ShoppingCart, Users, ArrowUpRight, Plus, Eye, ClipboardList, Zap, Clock, Copy } from 'lucide-react'
 import { useStoreConfig } from '../../stores/useStoreConfig'
 import { useOrdersStore } from '../../stores/useOrdersStore'
 import { useProductsStore } from '../../stores/useProductsStore'
+import toast from 'react-hot-toast'
 
 const STATUS_CONFIG = {
   new:              { label: 'جديد',          color: '#f59e0b', bg: 'rgba(245,158,11,0.12)' },
@@ -132,8 +133,17 @@ export default function DashboardHome({ onNavigate }) {
       }).catch(() => {})
     } else {
       navigator.clipboard.writeText(storeUrl)
-      alert('📋 تم نسخ رابط متجرك بنجاح!')
+      toast.success('📋 تم نسخ رابط متجرك!')
     }
+  }
+
+  const handleCopyLink = () => {
+    const storeUrl = `${window.location.origin}/store/${store?.slug || 'demo'}`
+    navigator.clipboard.writeText(storeUrl).then(() => {
+      toast.success(`📋 تم نسخ رابط المتجر: ${storeUrl}`, { duration: 3000 })
+    }).catch(() => {
+      toast.error('فشل النسخ — انسخ يدوياً: ' + storeUrl)
+    })
   }
 
   return (
@@ -161,9 +171,12 @@ export default function DashboardHome({ onNavigate }) {
             <Plus size={16} />
             إضافة منتج
           </button>
-          <button className="btn btn-ghost btn-sm" onClick={handleShareStore} id="dash-share-store" style={{ flex: 1 }}>
+          <button className="btn btn-ghost btn-sm" onClick={handleCopyLink} id="dash-copy-link" style={{ flex: 1 }} title="نسخ رابط المتجر">
+            <Copy size={16} />
+            نسخ الرابط
+          </button>
+          <button className="btn btn-ghost btn-sm" onClick={handleShareStore} id="dash-share-store" title="مشاركة المتجر">
             <Eye size={16} />
-            مشاركة المتجر
           </button>
         </div>
       </div>

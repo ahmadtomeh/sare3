@@ -11,6 +11,7 @@ import { useProductsStore } from '../../stores/useProductsStore'
 import ThemeToggle from '../../components/ThemeToggle'
 import LiveViewSwitcher from '../../components/LiveViewSwitcher'
 import { supabase } from '../../lib/supabase'
+import { subscribeToPush, isPushSubscribed, getNotificationPermission } from '../../lib/pushNotifications'
 import toast from 'react-hot-toast'
 
 import DashboardHome     from './DashboardHome'
@@ -37,6 +38,8 @@ export default function MerchantDashboard() {
   const [active, setActive] = useState('home')
   const [view, setView] = useState('dashboard')
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [pushEnabled, setPushEnabled] = useState(false)
+  const [pushLoading, setPushLoading] = useState(false)
 
   const { user, signOut } = useAuthStore()
   const { store, fetchMyStore } = useStoreConfig()
@@ -58,10 +61,37 @@ export default function MerchantDashboard() {
 
   // طلب إذن الإشعارات عند فتح اللوحة
   useEffect(() => {
+    isPushSubscribed().then(setPushEnabled)
     if ('Notification' in window && Notification.permission === 'default') {
       Notification.requestPermission()
     }
   }, [])
+
+  const handleEnablePush = async () => {
+    if (!store?.id) return
+    if (pushEnabled) {
+      toast('🔔 الإشعارات مفعّلة بالفعل على هذا الجهاز', { icon: '✅' })
+      return
+    }
+    if (getNotificationPermission() === 'denied') {
+      toast.error('تم حظر الإشعارات في هذا المتصفح — افتح إعدادات المتصفح وأعد التفعيل')
+      return
+    }
+    const hasVapid = !!import.meta.env.VITE_VAPID_PUBLIC_KEY
+    if (!hasVapid) {
+      toast.error('⚙️ VITE_VAPID_PUBLIC_KEY غير مضبوط في Vercel — راجع خطوات الإعداد')
+      return
+    }
+    setPushLoading(true)
+    try {
+      await subscribeToPush(store.id)
+      setPushEnabled(true)
+      toast.success('🔔 تم تفعيل الإشعارات! ستصلك إشعارات الطلبات حتى لو الهاتف مقفل', { duration: 5000 })
+    } catch (err) {
+      toast.error(err.message || 'فشل تفعيل الإشعارات')
+    }
+    setPushLoading(false)
+  }
 
 
   useEffect(() => {
@@ -260,6 +290,25 @@ export default function MerchantDashboard() {
           </button>
 
           <ThemeToggle/>
+
+          {/* Push Notifications Toggle */}
+          <button
+            onClick={handleEnablePush}
+            className="btn btn-ghost btn-sm"
+            style={{ padding: 6, minHeight: 34, position: 'relative' }}
+            title={pushEnabled ? 'الإشعارات مفعّلة ✅' : 'فعّل الإشعارات الفورية 🔔'}
+            id="push-enable-btn"
+            disabled={pushLoading}
+          >
+            <Bell size={16} style={{ color: pushEnabled ? 'var(--clr-success)' : 'var(--clr-text-3)' }} />
+            {pushEnabled && (
+              <span style={{
+                position: 'absolute', top: 2, right: 2,
+                width: 6, height: 6, borderRadius: '50%',
+                background: 'var(--clr-success)',
+              }} />
+            )}
+          </button>
 
           {newOrdersCount > 0 && (
             <div style={{ position: 'relative' }}>
