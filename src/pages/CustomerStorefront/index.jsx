@@ -9,6 +9,7 @@ import { useOrdersStore } from '../../stores/useOrdersStore'
 import { BottomSheet } from '../../components/ui/Modal'
 import ThemeToggle from '../../components/ThemeToggle'
 import { supabase } from '../../lib/supabase'
+import InstallPWA from '../../components/InstallPWA'
 import toast from 'react-hot-toast'
 import InstallPWA from '../../components/InstallPWA'
 
