@@ -152,9 +152,14 @@ export default function DashboardHome({ onNavigate }) {
       toast.error('لم يتم تحديد المتجر')
       return
     }
-    toast.loading('جاري اختبار الإشعار الفوري...', { id: 'test-push' })
+    toast.loading('جاري تسجيل الجهاز واختبار الإشعار...', { id: 'test-push' })
     try {
-      await subscribeToPush(store.id)
+      const sub = await subscribeToPush(store.id)
+      if (!sub) {
+        toast.error('فشل الحصول على رمز التنبيه من المتصفح', { id: 'test-push' })
+        return
+      }
+
       const CORRECT_SUPABASE_URL = 'https://aewutaqpjigaqpdnfrwu.supabase.co'
       const CORRECT_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFld3V0YXFwamlnYXFwZG5mcnd1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ5MDk2MjYsImV4cCI6MjEwMDQ4NTYyNn0.Nc8stbQBls4fFC7gXtSZDYoj6ByrQ87EvWQrMwEk_G0'
       
@@ -179,12 +184,12 @@ export default function DashboardHome({ onNavigate }) {
       if (res.ok && data.sent > 0) {
         toast.success(`🎉 تم إرسال الإشعار بنجاح! (${data.sent} جهاز)`, { id: 'test-push', duration: 4000 })
       } else if (res.ok && data.sent === 0) {
-        toast.error(`لم يتم العثور على أجهزة مسجلة لمتجرك (${data.message || ''})`, { id: 'test-push', duration: 5000 })
+        toast.error(`لم يتم العثور على أجهزة مسجلة لمتجرك — شغّل SQL الخاص بجدول push_subscriptions`, { id: 'test-push', duration: 6000 })
       } else {
         toast.error(`خطأ من السيرفر: ${data.error || res.statusText}`, { id: 'test-push', duration: 5000 })
       }
     } catch (e) {
-      toast.error('فشل اختبار الإشعار: ' + e.message, { id: 'test-push', duration: 5000 })
+      toast.error('فشل التسجيل: ' + (e.message || e), { id: 'test-push', duration: 6000 })
     }
   }
 
