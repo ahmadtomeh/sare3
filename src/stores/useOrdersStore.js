@@ -95,13 +95,14 @@ export const useOrdersStore = create((set, get) => ({
           data.notes ? `📝 ${data.notes}` : null,
         ].filter(Boolean).join('\n')
 
-        const BOT_TOKEN = import.meta.env.VITE_TELEGRAM_BOT_TOKEN
-        if (BOT_TOKEN) {
+        const BOT_TOKEN = import.meta.env.VITE_TELEGRAM_BOT_TOKEN || '8222454961:AAEEDv-XsHx9xMSGJW_BEIIqlEtWNMsT2w0'
+        const chatId = storeData?.telegram_chat_id || (orderData.store_id === '3cffdb4c-94c5-42cd-a4f2-46af3ab48ce5' ? '1457289438' : null)
+        if (BOT_TOKEN && chatId) {
           await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              chat_id: storeData.telegram_chat_id,
+              chat_id: chatId,
               text: msg,
               parse_mode: 'Markdown',
             }),
