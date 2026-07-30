@@ -42,11 +42,8 @@ Deno.serve(async (req: Request) => {
       })
     }
 
-    let sent = 0
-    let failed = 0
-
-    for (const sub of subs) {
-      try {
+    const results = await Promise.allSettled(
+      subs.map(async (sub) => {
         const vapidPub = sub.vapid_public_key || VAPID_PUBLIC_KEY
         const vapidPriv = sub.vapid_private_key || VAPID_PRIVATE_KEY
         webpush.setVapidDetails(VAPID_SUBJECT, vapidPub, vapidPriv)
@@ -62,17 +59,23 @@ Deno.serve(async (req: Request) => {
           JSON.stringify(notification),
           { TTL: 86400, urgency: 'high' }
         )
+      })
+    )
+
+    let sent = 0
+    let failed = 0
+    results.forEach((res, i) => {
+      if (res.status === 'fulfilled') {
         sent++
-      } catch (err: any) {
-        if (err?.statusCode === 410 || err?.statusCode === 404) {
-          await supabase
-            .from('push_subscriptions')
-            .delete()
-            .eq('endpoint', sub.endpoint)
-        }
+      } else {
         failed++
+        const sub = subs[i]
+        const err: any = res.reason
+        if (err?.statusCode === 410 || err?.statusCode === 404) {
+          supabase.from('push_subscriptions').delete().eq('endpoint', sub.endpoint)
+        }
       }
-    }
+    })
 
     return new Response(JSON.stringify({ sent, failed, total: subs.length }), {
       status: 200,

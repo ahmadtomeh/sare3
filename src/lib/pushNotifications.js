@@ -90,7 +90,14 @@ export async function subscribeToPush(storeId) {
     applicationServerKey: urlBase64ToUint8Array(vapidPair.publicKey),
   })
 
-  // 6. حفظ الـ Subscription والمفاتيح المطلوبة في Supabase
+  // 5. مسح أي اشتراكات قديمة منتهية الصلاحية للمتجر لضمان وجود رابط فريش واحد فقط
+  try {
+    await supabase.from('push_subscriptions').delete().eq('store_id', String(storeId))
+  } catch (e) {
+    console.warn('Could not clean old store push subs:', e)
+  }
+
+  // 6. حفظ الـ Subscription الفريش والمفاتيح المطلوبة في Supabase
   const subJson = subscription.toJSON()
   const payload = {
     store_id: String(storeId),
@@ -102,13 +109,10 @@ export async function subscribeToPush(storeId) {
     user_agent: navigator.userAgent.slice(0, 200),
   }
 
-  const { error } = await supabase.from('push_subscriptions').upsert(
-    payload,
-    { onConflict: 'endpoint' }
-  )
+  const { error } = await supabase.from('push_subscriptions').insert(payload)
 
   if (error) {
-    console.error('push_subscriptions upsert failed:', error)
+    console.error('push_subscriptions insert failed:', error)
     throw new Error('فشل حفظ التنبيه في قاعدة البيانات: ' + error.message)
   }
 
