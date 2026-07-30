@@ -2,7 +2,7 @@
 // Network-First for HTML/Documents, Cache-Fallback for Offline
 // + Web Push Notifications support
 
-const CACHE_NAME = 'sare3-v5'
+const CACHE_NAME = 'sare3-v6'
 
 self.addEventListener('install', (event) => {
   self.skipWaiting()
