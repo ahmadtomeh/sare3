@@ -60,7 +60,7 @@ Deno.serve(async (req: Request) => {
             },
           },
           JSON.stringify(notification),
-          { TTL: 86400 }
+          { TTL: 86400, urgency: 'high' }
         )
         sent++
       } catch (err: any) {
