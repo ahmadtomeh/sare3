@@ -59,8 +59,12 @@ export async function subscribeToPush(storeId) {
     throw new Error('لم يُمنح إذن الإشعارات')
   }
 
-  // 2. الحصول على Service Worker
-  const reg = await navigator.serviceWorker.ready
+  // 2. تسجيل والحصول على Service Worker
+  let reg = await navigator.serviceWorker.getRegistration('/sw.js')
+  if (!reg) {
+    reg = await navigator.serviceWorker.register('/sw.js')
+  }
+  await navigator.serviceWorker.ready
 
   // 3. إلغاء أي اشتراك قديم تالف لضمان تجديد مفتاح VAPID في خوادم Google Push
   try {
