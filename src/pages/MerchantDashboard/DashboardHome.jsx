@@ -214,6 +214,26 @@ export default function DashboardHome({ onNavigate }) {
         </div>
 
         <div className="dash-welcome-actions" style={{ display: 'flex', gap: 'var(--sp-sm)', flexWrap: 'wrap' }}>
+          <a
+            href={`https://t.me/Sare3_Order_Bot?start=${store?.id || 'demo'}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="btn btn-sm"
+            style={{
+              flex: 1,
+              textDecoration: 'none',
+              background: 'linear-gradient(135deg, #0088cc, #00a0f0)',
+              color: '#fff',
+              fontWeight: 700,
+              display: 'inline-flex',
+              alignItems: 'center',
+              justify: 'center',
+              gap: 6
+            }}
+          >
+            <Send size={16} />
+            ربط Telegram بنقرة واحدة ⚡
+          </a>
           <button className="btn btn-accent btn-sm" onClick={handleTestPush} id="dash-test-push" style={{ flex: 1 }}>
             <Bell size={16} />
             اختبار الإشعار 🔔
