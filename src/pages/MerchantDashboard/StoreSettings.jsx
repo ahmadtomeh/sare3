@@ -136,9 +136,10 @@ export default function StoreSettings() {
       })
     }
 
-    // Prepare clean form payload
+    // Prepare clean form payload (strip form-only state fields)
+    const { free_shipping_limit, ...cleanForm } = form
     const payload = {
-      ...form,
+      ...cleanForm,
       shipping_options: finalShipping
     }
 
