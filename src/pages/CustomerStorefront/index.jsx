@@ -439,23 +439,9 @@ export default function CustomerStorefront({ previewSlug }) {
     })
   }, [products, activeCategory, search])
 
-  const [isRefreshing, setIsRefreshing] = useState(true)
-
-  useEffect(() => {
-    // Display skeleton loading screen on page refresh for noticeable duration (~450ms)
-    const timer = setTimeout(() => {
-      setIsRefreshing(false)
-    }, 450)
-    return () => clearTimeout(timer)
-  }, [])
-
   if (!store) {
-    if (!storeLoading) return <StoreNotFound />
-    return <CompactSkeleton logoUrl={store?.logo_url} storeName={store?.name} />
-  }
-
-  if (isRefreshing && (storeLoading || productsLoading)) {
-    return <CompactSkeleton logoUrl={store?.logo_url} storeName={store?.name} />
+    if (storeLoading) return <CompactSkeleton logoUrl={null} storeName="" />
+    return <StoreNotFound />
   }
 
   // ── فحص انتهاء الاشتراك ──────────────────────────────────────
@@ -619,7 +605,13 @@ export default function CustomerStorefront({ previewSlug }) {
 
       {/* ── Ultra-Compact 2-Column Mobile Product Grid ── */}
       <div style={{ padding: '4px 12px' }}>
-        {filteredProducts.length === 0 ? (
+        {(productsLoading && filteredProducts.length === 0) ? (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8 }}>
+            {[1, 2, 3, 4].map(i => (
+              <div key={i} className="skeleton" style={{ height: 160, borderRadius: 14 }} />
+            ))}
+          </div>
+        ) : filteredProducts.length === 0 ? (
           <div className="glass empty-state" style={{ padding: '32px 16px' }}>
             <div style={{ fontSize: '2.5rem', opacity: 0.4 }}>🔍</div>
             <div className="empty-state-title" style={{ fontSize: 14 }}>لا توجد منتجات</div>

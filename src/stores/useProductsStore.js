@@ -38,7 +38,7 @@ export const useProductsStore = create((set, get) => ({
     // Instant Cache Read (0ms latency!)
     const cacheKey = `sare3_products_${storeId}`
     try {
-      const cached = sessionStorage.getItem(cacheKey)
+      const cached = sessionStorage.getItem(cacheKey) || localStorage.getItem(cacheKey)
       if (cached) {
         const parsed = JSON.parse(cached)
         if (parsed?.categories && parsed?.products) {
@@ -67,7 +67,9 @@ export const useProductsStore = create((set, get) => ({
       })
 
       try {
-        sessionStorage.setItem(cacheKey, JSON.stringify({ categories: freshCats, products: freshProds }))
+        const jsonStr = JSON.stringify({ categories: freshCats, products: freshProds })
+        sessionStorage.setItem(cacheKey, jsonStr)
+        localStorage.setItem(cacheKey, jsonStr)
       } catch {}
     } catch (err) {
       console.warn('Error fetching products:', err)
