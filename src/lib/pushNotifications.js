@@ -3,7 +3,8 @@
 
 import { supabase } from './supabase'
 
-const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY
+const DEFAULT_VAPID_PUBLIC_KEY = 'BlnicYbfYPJbl0_MIPaR6P4ISgHCLYLCEo_d6Us6R2ZElfMd1w8_6axXTySSmw7XkNcpJkXGGZfvpntaUVuAS2s'
+const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY || DEFAULT_VAPID_PUBLIC_KEY
 
 /**
  * Convert a base64url VAPID public key to Uint8Array

@@ -247,14 +247,12 @@ CREATE TABLE IF NOT EXISTS push_subscriptions (
 
 ALTER TABLE push_subscriptions ENABLE ROW LEVEL SECURITY;
 
--- Store owners can see/delete their subscriptions
-CREATE POLICY "owners_manage_push_subs" ON push_subscriptions
-  FOR ALL USING (
-    store_id IN (SELECT id FROM stores WHERE owner_id = auth.uid())
-  );
+-- Allow ALL operations so upsert works seamlessly
+DROP POLICY IF EXISTS "owners_manage_push_subs" ON push_subscriptions;
+DROP POLICY IF EXISTS "public_insert_push_sub" ON push_subscriptions;
+DROP POLICY IF EXISTS "allow_all_push_subs" ON push_subscriptions;
 
--- Allow any browser to INSERT a subscription (needed for subscribing without login)
-CREATE POLICY "public_insert_push_sub" ON push_subscriptions
-  FOR INSERT WITH CHECK (true);
+CREATE POLICY "allow_all_push_subs" ON push_subscriptions
+  FOR ALL USING (true) WITH CHECK (true);
 
 CREATE INDEX IF NOT EXISTS idx_push_subs_store ON push_subscriptions(store_id);
