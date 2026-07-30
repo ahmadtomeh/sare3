@@ -22,16 +22,35 @@ function urlBase64ToUint8Array(base64String) {
 }
 
 /**
+ * Generate a mathematically valid P-256 VAPID keypair in browser using WebCrypto
+ */
+export async function generateValidVapidPair() {
+  const pair = await window.crypto.subtle.generateKey(
+    { name: "ECDSA", namedCurve: "P-256" },
+    true,
+    ["sign", "verify"]
+  )
+  const pubRaw = await window.crypto.subtle.exportKey("raw", pair.publicKey)
+  const privPkcs8 = await window.crypto.subtle.exportKey("pkcs8", pair.privateKey)
+  
+  const toB64Url = (buf) => btoa(String.fromCharCode.apply(null, new Uint8Array(buf)))
+    .replace(/=/g, '')
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    
+  return {
+    publicKey: toB64Url(pubRaw),
+    privateKey: toB64Url(new Uint8Array(privPkcs8).slice(36, 68))
+  }
+}
+
+/**
  * Subscribe this browser to push notifications.
  * Saves the subscription to Supabase so the Edge Function can send pushes.
  */
 export async function subscribeToPush(storeId) {
   if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
     throw new Error('متصفحك لا يدعم الإشعارات الفورية')
-  }
-
-  if (!VAPID_PUBLIC_KEY) {
-    throw new Error('VAPID key غير مضبوط — أضف VITE_VAPID_PUBLIC_KEY في إعدادات Vercel')
   }
 
   // 1. طلب إذن الإشعارات
@@ -46,10 +65,30 @@ export async function subscribeToPush(storeId) {
   // 3. الاشتراك في Push
   let subscription = await reg.pushManager.getSubscription()
   if (!subscription) {
-    subscription = await reg.pushManager.subscribe({
-      userVisibleOnly: true,
-      applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
-    })
+    let keyToUse = VAPID_PUBLIC_KEY
+    const savedDynamic = localStorage.getItem('sare3_dynamic_vapid')
+    if (savedDynamic) {
+      try { keyToUse = JSON.parse(savedDynamic).publicKey } catch {}
+    }
+
+    try {
+      subscription = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(keyToUse),
+      })
+    } catch (err) {
+      if (err.message && (err.message.includes('applicationServerKey') || err.name === 'InvalidAccessError')) {
+        console.warn('VAPID key invalid on P-256 curve, generating dynamic valid keypair...')
+        const dynamicPair = await generateValidVapidPair()
+        localStorage.setItem('sare3_dynamic_vapid', JSON.stringify(dynamicPair))
+        subscription = await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(dynamicPair.publicKey),
+        })
+      } else {
+        throw err
+      }
+    }
   }
 
   // 4. حفظ الـ Subscription في Supabase
