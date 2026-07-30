@@ -56,8 +56,12 @@ export const useStoreConfig = create(
           set({ store: demoStore, loading: false })
           return demoStore
         }
-        // Clear old store state immediately to avoid showing stale cached data
-        set({ store: null, loading: true, error: null })
+        const currentStore = get().store
+        if (!currentStore || (currentStore.slug !== slugOrId && currentStore.id !== slugOrId)) {
+          set({ store: null, loading: true, error: null })
+        } else {
+          set({ loading: true, error: null })
+        }
         // Try slug first, then id
         let { data, error } = await supabase
           .from('stores')

@@ -242,6 +242,13 @@ export default function CustomerStorefront({ previewSlug }) {
 
   useEffect(() => {
     if (slug) {
+      // Parallel loading: fetch products immediately if store config is already cached
+      const cachedStore = useStoreConfig.getState().store
+      if (cachedStore && cachedStore.slug === slug) {
+        fetchAll(cachedStore.id)
+        setStoreId(cachedStore.id)
+      }
+
       fetchStore(slug).then((s) => {
         if (s?.id) {
           fetchAll(s.id)
