@@ -96,7 +96,28 @@ export const useOrdersStore = create((set, get) => ({
         ].filter(Boolean).join('\n')
 
         const BOT_TOKEN = import.meta.env.VITE_TELEGRAM_BOT_TOKEN || '8222454961:AAEEDv-XsHx9xMSGJW_BEIIqlEtWNMsT2w0'
-        const chatId = storeData?.telegram_chat_id || (orderData.store_id === '3cffdb4c-94c5-42cd-a4f2-46af3ab48ce5' ? '1457289438' : null)
+        let chatId = storeData?.telegram_chat_id
+
+        // إذا التاجر لم يحفظ Chat ID يدوياً، ابحث عنه تلقائياً في getUpdates برابط الـ 1-Click!
+        if (!chatId && BOT_TOKEN) {
+          try {
+            const updatesRes = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/getUpdates?offset=-20`)
+            const updatesData = await updatesRes.json()
+            if (updatesData.ok && Array.isArray(updatesData.result)) {
+              for (const update of [...updatesData.result].reverse()) {
+                const text = update.message?.text || ''
+                if (text.includes(orderData.store_id) || update.message?.chat?.id) {
+                  chatId = String(update.message.chat.id)
+                  supabase.from('stores').update({ telegram_chat_id: chatId }).eq('id', orderData.store_id).then(() => {})
+                  break
+                }
+              }
+            }
+          } catch (e) {
+            console.warn('Auto getUpdates check error:', e)
+          }
+        }
+
         if (BOT_TOKEN && chatId) {
           await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
             method: 'POST',
