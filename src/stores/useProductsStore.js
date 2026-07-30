@@ -34,16 +34,45 @@ export const useProductsStore = create((set, get) => ({
       }
       return
     }
-    set({ loading: true })
-    const [catRes, prodRes] = await Promise.all([
-      supabase.from('categories').select('*').eq('store_id', storeId).order('sort_order'),
-      supabase.from('products').select('*').eq('store_id', storeId).order('sort_order'),
-    ])
-    set({
-      categories: catRes.data || [],
-      products: prodRes.data || [],
-      loading: false,
-    })
+
+    // Instant Cache Read (0ms latency!)
+    const cacheKey = `sare3_products_${storeId}`
+    try {
+      const cached = sessionStorage.getItem(cacheKey)
+      if (cached) {
+        const parsed = JSON.parse(cached)
+        if (parsed?.categories && parsed?.products) {
+          set({ categories: parsed.categories, products: parsed.products, loading: false })
+        }
+      }
+    } catch {}
+
+    if (get().products.length === 0) {
+      set({ loading: true })
+    }
+
+    try {
+      const [catRes, prodRes] = await Promise.all([
+        supabase.from('categories').select('*').eq('store_id', storeId).order('sort_order'),
+        supabase.from('products').select('*').eq('store_id', storeId).order('sort_order'),
+      ])
+
+      const freshCats = catRes.data || []
+      const freshProds = prodRes.data || []
+
+      set({
+        categories: freshCats,
+        products: freshProds,
+        loading: false,
+      })
+
+      try {
+        sessionStorage.setItem(cacheKey, JSON.stringify({ categories: freshCats, products: freshProds }))
+      } catch {}
+    } catch (err) {
+      console.warn('Error fetching products:', err)
+      set({ loading: false })
+    }
   },
 
   // ── Categories ──────────────────────────────────────────────
