@@ -82,22 +82,25 @@ export const useOrdersStore = create((set, get) => ({
           .join('\n') || '└ لا توجد تفاصيل'
 
         const cleanPhone = (data.customer_phone || '').replace(/[^0-9]/g, '')
+        const orderTime = new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' })
 
         const msg = [
           `⚡ *طلب جديد واصل الآن!*`,
           `━━━━━━━━━━━━━━━━━━━`,
           `📦 *رقم الطلب:* \`#${data.order_number}\``,
           `🏪 *المتجر:* ${storeData.name || 'سريع'}`,
+          `⏰ *التوقيت:* \`${orderTime}\``,
           ``,
           `👤 *بيانات الزبون:*`,
           `├ 👤 *الاسم:* ${data.customer_name || 'غير محدد'}`,
           data.customer_phone ? `├ 📞 *الهاتف:* \`${data.customer_phone}\`` : null,
           data.customer_address ? `└ 📍 *العنوان:* ${data.customer_address}` : null,
           ``,
-          `🛍️ *المنتجات المطلوبة:*`,
+          `🛍️ *قائمة الطلبية (${(data.items || []).length} عناصر):*`,
           itemsList,
           ``,
-          `💰 *الإجمالي:* \`${data.total} ${storeData.currency || '₪'}\``,
+          `💰 *إجمالي الفاتورة:* \`${data.total} ${storeData.currency || '₪'}\``,
+          `💳 *طريقة الدفع:* الدفع عند الاستلام 💵`,
           data.notes ? `📝 *ملاحظات:* ${data.notes}` : null,
           `━━━━━━━━━━━━━━━━━━━`,
         ].filter(Boolean).join('\n')
@@ -125,11 +128,22 @@ export const useOrdersStore = create((set, get) => ({
           }
         }
 
-        const inlineButtons = []
+        const inlineKeyboard = []
+        const row1 = []
+        const row2 = []
+
         if (cleanPhone) {
-          inlineButtons.push({ text: '💬 مراسلة الزبون على الواتساب', url: `https://wa.me/${cleanPhone}` })
+          row1.push({ text: '💬 واتساب الزبون', url: `https://wa.me/${cleanPhone}` })
+          row1.push({ text: '📞 اتصال هاتفي', url: `tel:${cleanPhone}` })
         }
-        inlineButtons.push({ text: '📋 فتح لوحة التحكم', url: 'https://sare-nine.vercel.app/dashboard' })
+
+        if (data.customer_address) {
+          row2.push({ text: '📍 خرائط جوجل', url: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(data.customer_address)}` })
+        }
+        row2.push({ text: '📋 فتح لوحة التحكم', url: 'https://sare-nine.vercel.app/dashboard' })
+
+        if (row1.length > 0) inlineKeyboard.push(row1)
+        if (row2.length > 0) inlineKeyboard.push(row2)
 
         if (BOT_TOKEN && chatId) {
           await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
@@ -140,7 +154,7 @@ export const useOrdersStore = create((set, get) => ({
               text: msg,
               parse_mode: 'Markdown',
               reply_markup: {
-                inline_keyboard: [inlineButtons]
+                inline_keyboard: inlineKeyboard
               }
             }),
           })
