@@ -275,8 +275,9 @@ export default function CustomerStorefront({ previewSlug }) {
     setMeta('og:image', storeLogo, 'property')
     setMeta('og:url', url, 'property')
     setMeta('og:type', 'website', 'property')
+    setMeta('apple-mobile-web-app-title', storeName)
 
-    // ── Dynamic Store PWA Manifest Injection (Option 1: Multi-App Install) ──
+    // ── Dynamic Store PWA Manifest Injection (Data URI for Instant Chrome / iOS Recognition) ──
     try {
       const dynamicManifest = {
         name: storeName,
@@ -295,29 +296,26 @@ export default function CustomerStorefront({ previewSlug }) {
           {
             src: storeLogo,
             sizes: '192x192',
-            type: storeLogo.endsWith('.png') ? 'image/png' : 'image/svg+xml',
+            type: 'image/png',
             purpose: 'any'
           },
           {
             src: storeLogo,
             sizes: '512x512',
-            type: storeLogo.endsWith('.png') ? 'image/png' : 'image/svg+xml',
+            type: 'image/png',
             purpose: 'maskable'
           }
         ]
       }
 
-      const stringManifest = JSON.stringify(dynamicManifest)
-      const blob = new Blob([stringManifest], { type: 'application/json' })
-      const manifestUrl = URL.createObjectURL(blob)
-
+      const dataManifestUrl = 'data:application/manifest+json;charset=utf-8,' + encodeURIComponent(JSON.stringify(dynamicManifest))
       let manifestLink = document.querySelector('link[rel="manifest"]')
       if (!manifestLink) {
         manifestLink = document.createElement('link')
         manifestLink.rel = 'manifest'
         document.head.appendChild(manifestLink)
       }
-      manifestLink.href = manifestUrl
+      manifestLink.href = dataManifestUrl
     } catch (err) {
       console.warn('Could not inject dynamic PWA manifest:', err)
     }
