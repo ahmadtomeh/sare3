@@ -215,7 +215,7 @@ export default function DashboardHome({ onNavigate }) {
 
         <div className="dash-welcome-actions" style={{ display: 'flex', gap: 'var(--sp-sm)', flexWrap: 'wrap' }}>
           <a
-            href={`https://t.me/Sare3_Order_Bot?start=${store?.id || 'demo'}`}
+            href={`https://t.me/Sare3StoreOrders_bot?start=${store?.id || 'demo'}`}
             target="_blank"
             rel="noopener noreferrer"
             className="btn btn-sm"
