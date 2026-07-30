@@ -67,27 +67,29 @@ export default function MerchantDashboard() {
     return () => { cleanup?.then?.(fn => fn?.()) }
   }, [user?.id])
 
-  // طلب إذن الإشعارات عند فتح اللوحة
+  // طلب إذن الإشعارات والاشتراك تلقائياً عند فتح اللوحة
   useEffect(() => {
     isPushSubscribed().then(setPushEnabled)
-    if ('Notification' in window && Notification.permission === 'default') {
-      Notification.requestPermission()
+    if ('Notification' in window) {
+      if (Notification.permission === 'granted' && store?.id) {
+        subscribeToPush(store.id).then(() => setPushEnabled(true)).catch(() => {})
+      } else if (Notification.permission === 'default') {
+        Notification.requestPermission().then((perm) => {
+          if (perm === 'granted' && store?.id) {
+            subscribeToPush(store.id).then(() => setPushEnabled(true)).catch(() => {})
+          }
+        })
+      }
     }
-  }, [])
+  }, [store?.id])
 
   const handleEnablePush = async () => {
-    if (!store?.id) return
-    if (pushEnabled) {
-      toast('🔔 الإشعارات مفعّلة بالفعل على هذا الجهاز', { icon: '✅' })
+    if (!store?.id) {
+      toast.error('لم يتم العثور على المتجر')
       return
     }
     if (getNotificationPermission() === 'denied') {
       toast.error('تم حظر الإشعارات في هذا المتصفح — افتح إعدادات المتصفح وأعد التفعيل')
-      return
-    }
-    const hasVapid = !!import.meta.env.VITE_VAPID_PUBLIC_KEY
-    if (!hasVapid) {
-      toast.error('⚙️ VITE_VAPID_PUBLIC_KEY غير مضبوط في Vercel — راجع خطوات الإعداد')
       return
     }
     setPushLoading(true)
