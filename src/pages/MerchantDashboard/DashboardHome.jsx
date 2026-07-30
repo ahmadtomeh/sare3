@@ -4,6 +4,7 @@ import { useStoreConfig } from '../../stores/useStoreConfig'
 import { useOrdersStore } from '../../stores/useOrdersStore'
 import { useProductsStore } from '../../stores/useProductsStore'
 import { subscribeToPush } from '../../lib/pushNotifications'
+import { checkAndBindTelegram } from '../../lib/telegram'
 import toast from 'react-hot-toast'
 
 const STATUS_CONFIG = {
@@ -214,14 +215,23 @@ export default function DashboardHome({ onNavigate }) {
         </div>
 
         <div className="dash-welcome-actions" style={{ display: 'flex', gap: 'var(--sp-sm)', flexWrap: 'wrap' }}>
-          <a
-            href={`https://t.me/Sare3StoreOrders_bot?start=${store?.id || 'demo'}`}
-            target="_blank"
-            rel="noopener noreferrer"
+          <button
+            onClick={async () => {
+              if (!store?.id) return
+              window.open(`https://t.me/Sare3StoreOrders_bot?start=${store.id}`, '_blank')
+              toast.loading('جاري الربط مع Telegram والتحقق من اضغطك على Start...', { id: 'tg-bind' })
+              setTimeout(async () => {
+                const boundId = await checkAndBindTelegram(store.id)
+                if (boundId) {
+                  toast.success('🎉 تم ربط متجرك بـ Telegram بنجاح! وصلت رسالة التأكيد في محادثة البوت 🔔', { id: 'tg-bind', duration: 6000 })
+                } else {
+                  toast.dismiss('tg-bind')
+                }
+              }, 3000)
+            }}
             className="btn btn-sm"
             style={{
               flex: 1,
-              textDecoration: 'none',
               background: 'linear-gradient(135deg, #0088cc, #00a0f0)',
               color: '#fff',
               fontWeight: 700,
@@ -233,7 +243,7 @@ export default function DashboardHome({ onNavigate }) {
           >
             <Send size={16} />
             ربط Telegram بنقرة واحدة ⚡
-          </a>
+          </button>
           <button className="btn btn-accent btn-sm" onClick={handleTestPush} id="dash-test-push" style={{ flex: 1 }}>
             <Bell size={16} />
             اختبار الإشعار 🔔
