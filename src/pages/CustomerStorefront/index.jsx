@@ -11,7 +11,6 @@ import ThemeToggle from '../../components/ThemeToggle'
 import { supabase } from '../../lib/supabase'
 import InstallPWA from '../../components/InstallPWA'
 import toast from 'react-hot-toast'
-import InstallPWA from '../../components/InstallPWA'
 
 export default function CustomerStorefront({ previewSlug }) {
   const { slug: routeSlug } = useParams()
