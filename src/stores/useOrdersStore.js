@@ -133,12 +133,11 @@ export const useOrdersStore = create((set, get) => ({
         const row2 = []
 
         if (cleanPhone) {
-          row1.push({ text: '💬 واتساب الزبون', url: `https://wa.me/${cleanPhone}` })
-          row1.push({ text: '📞 اتصال هاتفي', url: `tel:${cleanPhone}` })
+          row1.push({ text: '💬 مراسلة الزبون واتساب', url: `https://wa.me/${cleanPhone}` })
         }
 
         if (data.customer_address) {
-          row2.push({ text: '📍 خرائط جوجل', url: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(data.customer_address)}` })
+          row2.push({ text: '📍 موقع التوصيل على الخريطة', url: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(data.customer_address)}` })
         }
         row2.push({ text: '📋 فتح لوحة التحكم', url: 'https://sare-nine.vercel.app/dashboard' })
 
