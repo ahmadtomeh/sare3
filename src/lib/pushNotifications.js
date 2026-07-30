@@ -97,20 +97,30 @@ export async function subscribeToPush(storeId) {
     }
   }
 
-  // 4. حفظ الـ Subscription في Supabase
+  if (!storeId) {
+    throw new Error('لم يتم الترفق برقم المتجر (storeId)')
+  }
+
+  // 5. حفظ الـ Subscription في Supabase
   const subJson = subscription.toJSON()
+  const payload = {
+    store_id: storeId,
+    endpoint: subJson.endpoint,
+    p256dh: subJson.keys?.p256dh,
+    auth: subJson.keys?.auth,
+    user_agent: navigator.userAgent.slice(0, 200),
+  }
+
   const { error } = await supabase.from('push_subscriptions').upsert(
-    {
-      store_id: storeId,
-      endpoint: subJson.endpoint,
-      p256dh: subJson.keys?.p256dh,
-      auth: subJson.keys?.auth,
-      user_agent: navigator.userAgent.slice(0, 200),
-    },
+    payload,
     { onConflict: 'endpoint' }
   )
 
-  if (error) throw error
+  if (error) {
+    console.error('push_subscriptions upsert failed:', error)
+    throw new Error('فشل حفظ التنبيه في قاعدة البيانات: ' + error.message)
+  }
+
   return subscription
 }
 
