@@ -10,6 +10,7 @@ import { BottomSheet } from '../../components/ui/Modal'
 import ThemeToggle from '../../components/ThemeToggle'
 import { supabase } from '../../lib/supabase'
 import toast from 'react-hot-toast'
+import InstallPWA from '../../components/InstallPWA'
 
 export default function CustomerStorefront({ previewSlug }) {
   const { slug: routeSlug } = useParams()
