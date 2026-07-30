@@ -44,17 +44,8 @@ export const useOrdersStore = create((set, get) => ({
       return newOrder
     }
 
-    let data = null
-    const res = await supabase
-      .from('orders')
-      .insert(orderData)
-      .select()
-      .maybeSingle()
-
-    if (res.error) {
-      console.warn('Insert with select failed, attempting fallback insert:', res.error)
-      const fallbackRes = await supabase.from('orders').insert(orderData)
-      if (fallbackRes.error) throw fallbackRes.error
+    let data = res.data
+    if (!data) {
       data = {
         ...orderData,
         id: crypto.randomUUID(),
@@ -62,13 +53,9 @@ export const useOrdersStore = create((set, get) => ({
         status: 'new',
         created_at: new Date().toISOString()
       }
-    } else {
-      data = res.data
     }
 
-    if (data) {
-      set((s) => ({ orders: [data, ...s.orders] }))
-    }
+    set((s) => ({ orders: [data, ...s.orders] }))
 
     // ── إشعار تيليجرام فوري ──
     try {
