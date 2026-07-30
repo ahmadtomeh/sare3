@@ -112,7 +112,6 @@ export default function App() {
       <BrowserRouter>
         <AppRoutes />
         <Toast />
-        <InstallPWA />
       </BrowserRouter>
     </ErrorBoundary>
   )
