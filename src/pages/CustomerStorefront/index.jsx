@@ -308,14 +308,15 @@ export default function CustomerStorefront({ previewSlug }) {
         ]
       }
 
+      // Remove any static manifest links first so Chrome does not fallback to static manifest.json
+      document.querySelectorAll('link[rel="manifest"]').forEach(el => el.remove())
+
       const dataManifestUrl = 'data:application/manifest+json;charset=utf-8,' + encodeURIComponent(JSON.stringify(dynamicManifest))
-      let manifestLink = document.querySelector('link[rel="manifest"]')
-      if (!manifestLink) {
-        manifestLink = document.createElement('link')
-        manifestLink.rel = 'manifest'
-        document.head.appendChild(manifestLink)
-      }
+      const manifestLink = document.createElement('link')
+      manifestLink.id = 'dynamic-store-manifest'
+      manifestLink.rel = 'manifest'
       manifestLink.href = dataManifestUrl
+      document.head.appendChild(manifestLink)
     } catch (err) {
       console.warn('Could not inject dynamic PWA manifest:', err)
     }
