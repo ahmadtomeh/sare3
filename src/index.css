@@ -226,13 +226,13 @@ body {
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, var(--clr-primary), HSL(var(--hue-primary), 90%, 55%));
+  background: linear-gradient(135deg, var(--clr-primary), rgba(0, 0, 0, 0.15));
   color: #ffffff;
   box-shadow: 0 4px 18px var(--clr-primary-glow);
 }
 
 .btn-accent {
-  background: linear-gradient(135deg, var(--clr-accent), HSL(var(--hue-accent), 84%, 40%));
+  background: linear-gradient(135deg, var(--clr-accent), rgba(0, 0, 0, 0.15));
   color: #ffffff;
   box-shadow: 0 4px 18px var(--clr-accent-glow);
 }
@@ -423,7 +423,7 @@ body {
 }
 
 .category-chip.active {
-  background: linear-gradient(135deg, var(--clr-primary), HSL(var(--hue-primary), 90%, 55%));
+  background: linear-gradient(135deg, var(--clr-primary), rgba(0, 0, 0, 0.15));
   color: #ffffff;
   border-color: transparent;
   box-shadow: 0 4px 14px var(--clr-primary-glow);

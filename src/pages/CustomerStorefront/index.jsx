@@ -361,6 +361,8 @@ export default function CustomerStorefront({ previewSlug }) {
     const aColor = theme === 'luxury' ? '#f59e0b' : (store.accent_color || '#10B981')
     root.style.setProperty('--clr-primary', pColor)
     root.style.setProperty('--clr-accent', aColor)
+    root.style.setProperty('--clr-primary-glow', pColor + '40')
+    root.style.setProperty('--clr-accent-glow', aColor + '40')
 
     if (theme === 'classic') {
       root.style.setProperty('--clr-bg', '#f9fafb')
@@ -397,6 +399,8 @@ export default function CustomerStorefront({ previewSlug }) {
     return () => {
       root.style.removeProperty('--clr-primary')
       root.style.removeProperty('--clr-accent')
+      root.style.removeProperty('--clr-primary-glow')
+      root.style.removeProperty('--clr-accent-glow')
       root.style.removeProperty('--clr-bg')
       root.style.removeProperty('--clr-bg-surface')
       root.style.removeProperty('--clr-text')
