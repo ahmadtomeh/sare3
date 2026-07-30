@@ -2,7 +2,7 @@
 // Network-First for HTML/Documents, Cache-Fallback for Offline
 // + Web Push Notifications support
 
-const CACHE_NAME = 'sare3-v4'
+const CACHE_NAME = 'sare3-v5'
 
 self.addEventListener('install', (event) => {
   self.skipWaiting()
@@ -54,8 +54,6 @@ self.addEventListener('push', (event) => {
   const title = data.title || 'طلب جديد على سريع 🛒'
   const options = {
     body: data.body || 'لديك طلب جديد — افتح لوحة التحكم',
-    icon: data.icon || '/icon-192.png',
-    badge: '/icon-192.png',
     tag: data.tag || `order-${Date.now()}`,
     renotify: true,                         // يهز الهاتف ويصدر صوت حتى لو فيه إشعار قديم
     requireInteraction: true,               // يثبّت الإشعار على الشاشة حتى يتفاعل معه التاجر
