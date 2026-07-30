@@ -86,20 +86,20 @@ export const useOrdersStore = create((set, get) => ({
         ].filter(Boolean).join('\n')
 
         const BOT_TOKEN = import.meta.env.VITE_TELEGRAM_BOT_TOKEN
-        if (!BOT_TOKEN) return // No bot configured — skip silently
-
-        await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            chat_id: storeData.telegram_chat_id,
-            text: msg,
-            parse_mode: 'Markdown',
-          }),
-        })
+        if (BOT_TOKEN) {
+          await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              chat_id: storeData.telegram_chat_id,
+              text: msg,
+              parse_mode: 'Markdown',
+            }),
+          })
+        }
       }
-    } catch {
-      // إشعار تيليجرام اختياري — لا يوقف العملية
+    } catch (e) {
+      console.warn('Telegram notification skipped/failed:', e)
     }
 
     // ── إشعار Web Push (حتى لو الهاتف مقفل) ──
