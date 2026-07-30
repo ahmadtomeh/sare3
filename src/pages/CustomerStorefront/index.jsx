@@ -250,15 +250,17 @@ export default function CustomerStorefront({ previewSlug }) {
     }
   }, [slug])
 
-  // ── SEO + Open Graph ديناميكي ──
+  // ── SEO + Open Graph + Dynamic White-Label Store PWA Manifest ──
   useEffect(() => {
     if (!store) return
 
-    const title = `${store.name} — اطلب عبر الواتساب ⚡`
-    const desc = store.description || `تسوق من ${store.name} واطلب منتجاتك مباشرة عبر الواتساب بسهولة وسرعة.`
-    const img = store.logo_url || 'https://sare-nine.vercel.app/og-default.png'
+    const storeSlug = store.slug || slug || 'demo'
+    const storeName = store.name || 'المتجر'
+    const storeDesc = store.description || `تسوق من ${storeName} واطلب منتجاتك مباشرة عبر الواتساب بسهولة وسرعة.`
+    const storeLogo = store.logo_url || 'https://sare-nine.vercel.app/og-default.png'
     const url = window.location.href
 
+    const title = `${storeName} — اطلب عبر الواتساب ⚡`
     document.title = title
 
     const setMeta = (prop, content, attr = 'name') => {
@@ -267,19 +269,57 @@ export default function CustomerStorefront({ previewSlug }) {
       el.setAttribute('content', content)
     }
 
-    setMeta('description', desc)
+    setMeta('description', storeDesc)
     setMeta('og:title', title, 'property')
-    setMeta('og:description', desc, 'property')
-    setMeta('og:image', img, 'property')
+    setMeta('og:description', storeDesc, 'property')
+    setMeta('og:image', storeLogo, 'property')
     setMeta('og:url', url, 'property')
     setMeta('og:type', 'website', 'property')
-    setMeta('twitter:card', 'summary_large_image')
-    setMeta('twitter:title', title)
-    setMeta('twitter:description', desc)
-    setMeta('twitter:image', img)
 
-    return () => {
-      document.title = 'سريع — نظام المتجر السريع والطلب عبر الواتساب'
+    // ── Dynamic Store PWA Manifest Injection (Option 1: Multi-App Install) ──
+    try {
+      const dynamicManifest = {
+        name: storeName,
+        short_name: storeName,
+        description: storeDesc,
+        start_url: `/store/${storeSlug}`,
+        scope: `/store/${storeSlug}`,
+        display: 'standalone',
+        background_color: '#0d0d12',
+        theme_color: '#7c3aed',
+        orientation: 'portrait-primary',
+        lang: 'ar',
+        dir: 'rtl',
+        gcm_sender_id: '103953800507',
+        icons: [
+          {
+            src: storeLogo,
+            sizes: '192x192',
+            type: storeLogo.endsWith('.png') ? 'image/png' : 'image/svg+xml',
+            purpose: 'any'
+          },
+          {
+            src: storeLogo,
+            sizes: '512x512',
+            type: storeLogo.endsWith('.png') ? 'image/png' : 'image/svg+xml',
+            purpose: 'maskable'
+          }
+        ]
+      }
+
+      const stringManifest = JSON.stringify(dynamicManifest)
+      const blob = new Blob([stringManifest], { type: 'application/json' })
+      const manifestUrl = URL.createObjectURL(blob)
+
+      let manifestLink = document.querySelector('link[rel="manifest"]')
+      if (!manifestLink) {
+        manifestLink = document.createElement('link')
+        manifestLink.rel = 'manifest'
+        document.head.appendChild(manifestLink)
+      }
+      manifestLink.href = manifestUrl
+    } catch (err) {
+      console.warn('Could not inject dynamic PWA manifest:', err)
     }
   }, [store?.name, store?.description, store?.logo_url])
 
