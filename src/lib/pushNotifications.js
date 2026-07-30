@@ -62,32 +62,34 @@ export async function subscribeToPush(storeId) {
   // 2. الحصول على Service Worker
   const reg = await navigator.serviceWorker.ready
 
-  // 3. الاشتراك في Push
-  let subscription = await reg.pushManager.getSubscription()
-  if (!subscription) {
-    let keyToUse = VAPID_PUBLIC_KEY
-    const savedDynamic = localStorage.getItem('sare3_dynamic_vapid')
-    if (savedDynamic) {
-      try { keyToUse = JSON.parse(savedDynamic).publicKey } catch {}
+  // 3. إلغاء أي اشتراك قديم تالف لضمان تجديد مفتاح VAPID في خوادم Google Push
+  try {
+    const oldSub = await reg.pushManager.getSubscription()
+    if (oldSub) {
+      await oldSub.unsubscribe()
     }
+  } catch (e) {
+    console.warn('Failed to unsubscribe old sub:', e)
+  }
 
-    try {
+  // 4. الاشتراك من جديد فريش بالمفتاح الحالي
+  let subscription
+  try {
+    subscription = await reg.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+    })
+  } catch (err) {
+    if (err.message && (err.message.includes('applicationServerKey') || err.name === 'InvalidAccessError')) {
+      console.warn('VAPID key invalid on P-256 curve, generating dynamic valid keypair...')
+      const dynamicPair = await generateValidVapidPair()
+      localStorage.setItem('sare3_dynamic_vapid', JSON.stringify(dynamicPair))
       subscription = await reg.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(keyToUse),
+        applicationServerKey: urlBase64ToUint8Array(dynamicPair.publicKey),
       })
-    } catch (err) {
-      if (err.message && (err.message.includes('applicationServerKey') || err.name === 'InvalidAccessError')) {
-        console.warn('VAPID key invalid on P-256 curve, generating dynamic valid keypair...')
-        const dynamicPair = await generateValidVapidPair()
-        localStorage.setItem('sare3_dynamic_vapid', JSON.stringify(dynamicPair))
-        subscription = await reg.pushManager.subscribe({
-          userVisibleOnly: true,
-          applicationServerKey: urlBase64ToUint8Array(dynamicPair.publicKey),
-        })
-      } else {
-        throw err
-      }
+    } else {
+      throw err
     }
   }
 
