@@ -174,6 +174,7 @@ export const useProductsStore = create((set, get) => ({
         schema: 'public',
         table: 'products',
       }, (payload) => {
+        console.log('⚡ Realtime products update received:', payload)
         const isTargetStore = (payload.new && payload.new.store_id === storeId) ||
                               (payload.old && get().products.some(p => p.id === payload.old.id))
         if (!isTargetStore) return
