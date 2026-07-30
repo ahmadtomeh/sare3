@@ -439,8 +439,23 @@ export default function CustomerStorefront({ previewSlug }) {
     })
   }, [products, activeCategory, search])
 
-  if (storeLoading) return <CompactSkeleton />
-  if (!store) return <StoreNotFound />
+  const [showNoticeableLoading, setShowNoticeableLoading] = useState(false)
+
+  useEffect(() => {
+    let timer
+    if (storeLoading && !store) {
+      // Only show loading screen if refresh duration is noticeable (> 250ms)
+      timer = setTimeout(() => {
+        setShowNoticeableLoading(true)
+      }, 250)
+    } else {
+      setShowNoticeableLoading(false)
+    }
+    return () => clearTimeout(timer)
+  }, [storeLoading, store])
+
+  if (storeLoading && !store && showNoticeableLoading) return <CompactSkeleton />
+  if (!storeLoading && !store) return <StoreNotFound />
 
   // ── فحص انتهاء الاشتراك ──────────────────────────────────────
   const isExpired = (() => {
