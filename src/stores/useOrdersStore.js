@@ -76,23 +76,30 @@ export const useOrdersStore = create((set, get) => ({
         .single()
 
       if (storeData?.telegram_chat_id) {
-        const items = (data.items || [])
+        const itemsList = (data.items || [])
           .filter(i => !i.isSpecial)
-          .map(i => `• ${i.quantity}x ${i.product?.name}`)
-          .join('\n')
+          .map((i, idx, arr) => `${idx === arr.length - 1 ? '└' : '├'} ${i.quantity}x ${i.product?.name}`)
+          .join('\n') || '└ لا توجد تفاصيل'
+
+        const cleanPhone = (data.customer_phone || '').replace(/[^0-9]/g, '')
 
         const msg = [
-          `🛒 *طلب جديد #${data.order_number}*`,
-          `🏪 ${storeData.name}`,
+          `⚡ *طلب جديد واصل الآن!*`,
+          `━━━━━━━━━━━━━━━━━━━`,
+          `📦 *رقم الطلب:* \`#${data.order_number}\``,
+          `🏪 *المتجر:* ${storeData.name || 'سريع'}`,
           ``,
-          `👤 *${data.customer_name}*`,
-          data.customer_phone ? `📞 ${data.customer_phone}` : null,
-          data.customer_address ? `📍 ${data.customer_address}` : null,
+          `👤 *بيانات الزبون:*`,
+          `├ 👤 *الاسم:* ${data.customer_name || 'غير محدد'}`,
+          data.customer_phone ? `├ 📞 *الهاتف:* \`${data.customer_phone}\`` : null,
+          data.customer_address ? `└ 📍 *العنوان:* ${data.customer_address}` : null,
           ``,
-          items,
+          `🛍️ *المنتجات المطلوبة:*`,
+          itemsList,
           ``,
-          `💰 *الإجمالي: ${data.total} ${storeData.currency || '₪'}*`,
-          data.notes ? `📝 ${data.notes}` : null,
+          `💰 *الإجمالي:* \`${data.total} ${storeData.currency || '₪'}\``,
+          data.notes ? `📝 *ملاحظات:* ${data.notes}` : null,
+          `━━━━━━━━━━━━━━━━━━━`,
         ].filter(Boolean).join('\n')
 
         const BOT_TOKEN = import.meta.env.VITE_TELEGRAM_BOT_TOKEN || '8222454961:AAEEDv-XsHx9xMSGJW_BEIIqlEtWNMsT2w0'
@@ -118,6 +125,12 @@ export const useOrdersStore = create((set, get) => ({
           }
         }
 
+        const inlineButtons = []
+        if (cleanPhone) {
+          inlineButtons.push({ text: '💬 مراسلة الزبون على الواتساب', url: `https://wa.me/${cleanPhone}` })
+        }
+        inlineButtons.push({ text: '📋 فتح لوحة التحكم', url: 'https://sare-nine.vercel.app/dashboard' })
+
         if (BOT_TOKEN && chatId) {
           await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
             method: 'POST',
@@ -126,6 +139,9 @@ export const useOrdersStore = create((set, get) => ({
               chat_id: chatId,
               text: msg,
               parse_mode: 'Markdown',
+              reply_markup: {
+                inline_keyboard: [inlineButtons]
+              }
             }),
           })
         }
