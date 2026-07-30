@@ -454,8 +454,11 @@ export default function CustomerStorefront({ previewSlug }) {
     return () => clearTimeout(timer)
   }, [storeLoading, store])
 
-  if (storeLoading && !store && showNoticeableLoading) return <CompactSkeleton />
-  if (!storeLoading && !store) return <StoreNotFound />
+  if (!store) {
+    if (!storeLoading) return <StoreNotFound />
+    if (showNoticeableLoading) return <CompactSkeleton />
+    return <CompactSkeleton />
+  }
 
   // ── فحص انتهاء الاشتراك ──────────────────────────────────────
   const isExpired = (() => {
