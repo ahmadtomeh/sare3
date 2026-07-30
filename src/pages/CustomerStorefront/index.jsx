@@ -18,7 +18,7 @@ export default function CustomerStorefront({ previewSlug }) {
   const navigate = useNavigate()
 
   const { store, fetchStore, loading: storeLoading } = useStoreConfig()
-  const { categories, products, fetchAll } = useProductsStore()
+  const { categories, products, fetchAll, loading: productsLoading } = useProductsStore()
   const { items, addItem, count, total, setStoreId, customerInfo, setCustomerInfo } = useCartStore()
 
   const [activeCategory, setActiveCategory] = useState('all')
@@ -439,24 +439,22 @@ export default function CustomerStorefront({ previewSlug }) {
     })
   }, [products, activeCategory, search])
 
-  const [showNoticeableLoading, setShowNoticeableLoading] = useState(false)
+  const [isRefreshing, setIsRefreshing] = useState(true)
 
   useEffect(() => {
-    let timer
-    if (storeLoading && !store) {
-      // Only show loading screen if refresh duration is noticeable (> 250ms)
-      timer = setTimeout(() => {
-        setShowNoticeableLoading(true)
-      }, 250)
-    } else {
-      setShowNoticeableLoading(false)
-    }
+    // Display skeleton loading screen on page refresh for noticeable duration (~450ms)
+    const timer = setTimeout(() => {
+      setIsRefreshing(false)
+    }, 450)
     return () => clearTimeout(timer)
-  }, [storeLoading, store])
+  }, [])
 
   if (!store) {
     if (!storeLoading) return <StoreNotFound />
-    if (showNoticeableLoading) return <CompactSkeleton />
+    return <CompactSkeleton />
+  }
+
+  if (isRefreshing && (storeLoading || productsLoading)) {
     return <CompactSkeleton />
   }
 
