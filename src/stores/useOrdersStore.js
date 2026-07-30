@@ -44,7 +44,17 @@ export const useOrdersStore = create((set, get) => ({
       return newOrder
     }
 
-    let data = res.data
+    const { data: insertedData, error: insertError } = await supabase
+      .from('orders')
+      .insert(orderData)
+      .select()
+      .maybeSingle()
+
+    if (insertError) {
+      console.warn('Insert error:', insertError)
+    }
+
+    let data = insertedData
     if (!data) {
       data = {
         ...orderData,
