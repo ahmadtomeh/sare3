@@ -259,7 +259,24 @@ export default function CustomerStorefront({ previewSlug }) {
 
   useEffect(() => {
     if (store?.id && subscribeToProducts) {
-      return subscribeToProducts(store.id)
+      const unsubscribe = subscribeToProducts(store.id)
+
+      // Add a status tracker to show a connection toast directly on the mobile screen
+      const testChannel = supabase
+        .channel(`rt-status-${store.id}`)
+        .subscribe((status) => {
+          console.log(`⚡ Realtime connection status: ${status}`)
+          if (status === 'SUBSCRIBED') {
+            toast.success('🟢 تم الاتصال بالبث المباشر (Realtime Active)', { id: 'rt-toast', duration: 1500 })
+          } else if (status === 'CHANNEL_ERROR') {
+            toast.error('🔴 فشل اتصال البث المباشر', { id: 'rt-toast' })
+          }
+        })
+
+      return () => {
+        unsubscribe()
+        supabase.removeChannel(testChannel)
+      }
     }
   }, [store?.id, subscribeToProducts])
 
