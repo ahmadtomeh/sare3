@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { TrendingUp, Package, ShoppingCart, Users, ArrowUpRight, Plus, Eye, ClipboardList, Zap, Clock, Copy, Bell } from 'lucide-react'
+import { TrendingUp, Package, ShoppingCart, Users, ArrowUpRight, Plus, Eye, ClipboardList, Zap, Clock, Copy, Bell, Send } from 'lucide-react'
 import { useStoreConfig } from '../../stores/useStoreConfig'
 import { useOrdersStore } from '../../stores/useOrdersStore'
 import { useProductsStore } from '../../stores/useProductsStore'
