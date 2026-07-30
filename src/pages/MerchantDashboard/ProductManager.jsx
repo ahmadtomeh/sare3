@@ -261,29 +261,34 @@ function ProductFormModal({ product, categories, storeId, currency, onClose, onS
 
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }))
 
-  const handleImageUpload = async (file) => {
+  const handleFileChange = async (e) => {
+    const file = e.target.files[0]
     if (!file) return
-    const preview = URL.createObjectURL(file)
-    setImagePreview(preview)
+    setUploading(true)
 
-    // Upload to Supabase Storage if configured
-    try {
-      setUploading(true)
-      const ext = file.name.split('.').pop()
-      const path = `products/${storeId}/${Date.now()}.${ext}`
-      const { data, error } = await supabase.storage.from('store-assets').upload(path, file)
-      if (!error) {
-        const { data: urlData } = supabase.storage.from('store-assets').getPublicUrl(path)
-        set('image_url', urlData.publicUrl)
-      } else {
-        // Fallback: use object URL (won't persist across sessions)
-        set('image_url', preview)
+    const reader = new FileReader()
+    reader.onload = async (event) => {
+      const base64Url = event.target.result
+      setImagePreview(base64Url)
+      set('image_url', base64Url)
+
+      try {
+        const ext = file.name.split('.').pop()
+        const path = `products/${storeId}/${Date.now()}.${ext}`
+        const { error } = await supabase.storage.from('store-assets').upload(path, file)
+        if (!error) {
+          const { data: urlData } = supabase.storage.from('store-assets').getPublicUrl(path)
+          if (urlData?.publicUrl) {
+            set('image_url', urlData.publicUrl)
+          }
+        }
+      } catch (err) {
+        console.warn('Product image storage upload fallback:', err)
+      } finally {
+        setUploading(false)
       }
-    } catch {
-      set('image_url', preview)
-    } finally {
-      setUploading(false)
     }
+    reader.readAsDataURL(file)
   }
 
   const addOption = () => set('options', [...form.options, { label: '', values: [] }])
@@ -327,7 +332,7 @@ function ProductFormModal({ product, categories, storeId, currency, onClose, onS
             type="file"
             accept="image/*"
             style={{ display: 'none' }}
-            onChange={(e) => handleImageUpload(e.target.files[0])}
+            onChange={handleFileChange}
           />
           {imagePreview && (
             <button type="button" className="btn btn-ghost btn-sm" style={{ marginTop: 6 }} onClick={() => { setImagePreview(''); set('image_url', '') }}>

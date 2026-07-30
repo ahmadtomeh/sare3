@@ -99,21 +99,37 @@ export default function StoreSettings() {
     if (!file) return
     setUploading(true)
     try {
-      const ext = file.name.split('.').pop()
-      const path = `${field}/${store?.id || 'unknown'}/${Date.now()}.${ext}`
-      const { error } = await supabase.storage.from('store-assets').upload(path, file, { upsert: true })
-      if (!error) {
-        const { data: urlData } = supabase.storage.from('store-assets').getPublicUrl(path)
-        set(field, urlData.publicUrl)
-        toast.success('✅ تم رفع الصورة — اضغط حفظ للتأكيد')
-      } else {
-        // fallback: local object URL
-        set(field, URL.createObjectURL(file))
-        toast('تم اختيار الصورة محلياً — قد لا تُحفظ بعد إعادة التحميل', { icon: '⚠️' })
+      // Convert image to permanent Base64 Data URL so it saves to database 100% reliably
+      const reader = new FileReader()
+      reader.onload = async (e) => {
+        const base64Url = e.target.result
+        set(field, base64Url)
+
+        // Try uploading to Supabase storage bucket if available
+        try {
+          const ext = file.name.split('.').pop()
+          const path = `${field}/${store?.id || 'unknown'}/${Date.now()}.${ext}`
+          const { error } = await supabase.storage.from('store-assets').upload(path, file, { upsert: true })
+          if (!error) {
+            const { data: urlData } = supabase.storage.from('store-assets').getPublicUrl(path)
+            if (urlData?.publicUrl) {
+              set(field, urlData.publicUrl)
+            }
+          }
+        } catch (storageErr) {
+          console.warn('Storage bucket upload fallback to Base64:', storageErr)
+        }
+
+        toast.success('✅ تم رفع الصورة بنجاح! اضغط حفظ التغييرات بالأسفل للتأكيد 💾')
+        setUploading(false)
       }
+      reader.onerror = () => {
+        toast.error('فشل قراءة ملف الصورة')
+        setUploading(false)
+      }
+      reader.readAsDataURL(file)
     } catch {
-      set(field, URL.createObjectURL(file))
-    } finally {
+      toast.error('فشل رفع الصورة')
       setUploading(false)
     }
   }
