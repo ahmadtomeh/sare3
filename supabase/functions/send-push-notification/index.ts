@@ -14,8 +14,8 @@ Deno.serve(async (req) => {
   try {
     const { store_id, notification } = await req.json()
 
-    const VAPID_PUBLIC_KEY = Deno.env.get('VAPID_PUBLIC_KEY')!
-    const VAPID_PRIVATE_KEY = Deno.env.get('VAPID_PRIVATE_KEY')!
+    const VAPID_PUBLIC_KEY = Deno.env.get('VAPID_PUBLIC_KEY') || 'BGsX0fLhLEJH-Lzm5WOkQPJ3A32BLezs-OShOVXYmMKWT-NC4v4af5uO5-tKfA-eFivOM1drMV7Oy7ZAaDe_UfU'
+    const VAPID_PRIVATE_KEY = Deno.env.get('VAPID_PRIVATE_KEY') || 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAE'
     const VAPID_SUBJECT = Deno.env.get('VAPID_SUBJECT') || 'https://sare-nine.vercel.app'
     const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
