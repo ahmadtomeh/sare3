@@ -46,11 +46,16 @@ export async function generateValidVapidPair() {
 
 /**
  * Subscribe this browser to push notifications.
- * Saves the subscription to Supabase so the Edge Function can send pushes.
+ * Generates a native WebCrypto P-256 VAPID keypair, subscribes via PushManager,
+ * and saves matching subscription + keys to Supabase.
  */
 export async function subscribeToPush(storeId) {
   if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
     throw new Error('متصفحك لا يدعم الإشعارات الفورية')
+  }
+
+  if (!storeId) {
+    throw new Error('لم يتم الترفق برقم المتجر (storeId)')
   }
 
   // 1. طلب إذن الإشعارات
@@ -66,7 +71,7 @@ export async function subscribeToPush(storeId) {
   }
   await navigator.serviceWorker.ready
 
-  // 3. إلغاء أي اشتراك قديم تالف لضمان تجديد مفتاح VAPID في خوادم Google Push
+  // 3. إلغاء أي اشتراك قديم لضمان تجديد مفتاح VAPID في خوادم Google Push
   try {
     const oldSub = await reg.pushManager.getSubscription()
     if (oldSub) {
@@ -76,38 +81,24 @@ export async function subscribeToPush(storeId) {
     console.warn('Failed to unsubscribe old sub:', e)
   }
 
-  // 4. الاشتراك من جديد فريش بالمفتاح الحالي
-  let subscription
-  try {
-    subscription = await reg.pushManager.subscribe({
-      userVisibleOnly: true,
-      applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
-    })
-  } catch (err) {
-    if (err.message && (err.message.includes('applicationServerKey') || err.name === 'InvalidAccessError')) {
-      console.warn('VAPID key invalid on P-256 curve, generating dynamic valid keypair...')
-      const dynamicPair = await generateValidVapidPair()
-      localStorage.setItem('sare3_dynamic_vapid', JSON.stringify(dynamicPair))
-      subscription = await reg.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(dynamicPair.publicKey),
-      })
-    } else {
-      throw err
-    }
-  }
+  // 4. توليد زوج مفاتيح VAPID حقيقي ومطابق 100% عبر WebCrypto
+  const vapidPair = await generateValidVapidPair()
 
-  if (!storeId) {
-    throw new Error('لم يتم الترفق برقم المتجر (storeId)')
-  }
+  // 5. الاشتراك فريش لدى خوادم التنبيه بالمفتاح الجديد
+  const subscription = await reg.pushManager.subscribe({
+    userVisibleOnly: true,
+    applicationServerKey: urlBase64ToUint8Array(vapidPair.publicKey),
+  })
 
-  // 5. حفظ الـ Subscription في Supabase
+  // 6. حفظ الـ Subscription والمفاتيح المطلوبة في Supabase
   const subJson = subscription.toJSON()
   const payload = {
-    store_id: storeId,
+    store_id: String(storeId),
     endpoint: subJson.endpoint,
     p256dh: subJson.keys?.p256dh,
     auth: subJson.keys?.auth,
+    vapid_public_key: vapidPair.publicKey,
+    vapid_private_key: vapidPair.privateKey,
     user_agent: navigator.userAgent.slice(0, 200),
   }
 

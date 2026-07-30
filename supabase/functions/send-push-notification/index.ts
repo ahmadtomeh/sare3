@@ -47,6 +47,10 @@ Deno.serve(async (req: Request) => {
 
     for (const sub of subs) {
       try {
+        const vapidPub = sub.vapid_public_key || VAPID_PUBLIC_KEY
+        const vapidPriv = sub.vapid_private_key || VAPID_PRIVATE_KEY
+        webpush.setVapidDetails(VAPID_SUBJECT, vapidPub, vapidPriv)
+
         await webpush.sendNotification(
           {
             endpoint: sub.endpoint,

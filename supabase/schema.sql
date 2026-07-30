@@ -247,12 +247,7 @@ CREATE TABLE IF NOT EXISTS push_subscriptions (
 
 ALTER TABLE push_subscriptions ENABLE ROW LEVEL SECURITY;
 
--- Allow ALL operations so upsert works seamlessly
-DROP POLICY IF EXISTS "owners_manage_push_subs" ON push_subscriptions;
-DROP POLICY IF EXISTS "public_insert_push_sub" ON push_subscriptions;
-DROP POLICY IF EXISTS "allow_all_push_subs" ON push_subscriptions;
-
-CREATE POLICY "allow_all_push_subs" ON push_subscriptions
-  FOR ALL USING (true) WITH CHECK (true);
+-- Disable RLS on push_subscriptions so Edge Functions can read push tokens without RLS block
+ALTER TABLE push_subscriptions DISABLE ROW LEVEL SECURITY;
 
 CREATE INDEX IF NOT EXISTS idx_push_subs_store ON push_subscriptions(store_id);
