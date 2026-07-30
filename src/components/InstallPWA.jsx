@@ -117,7 +117,7 @@ export default function InstallPWA({ appName, logoUrl }) {
 
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontWeight: 800, fontSize: 14, color: '#fff', marginBottom: 2 }}>
-          {displayName ? `ثبّت تطبيق "${displayName}"` : 'ثبّت التطبيق على هاتفك'}
+          {`ثبّت تطبيق "${displayName || 'المتجر'}"`}
         </div>
         <div style={{ fontSize: 11, color: 'var(--clr-text-3)', lineHeight: 1.3 }}>
           {isIOS
