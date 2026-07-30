@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Download, X, Smartphone } from 'lucide-react'
 
-export default function InstallPWA() {
+export default function InstallPWA({ appName, logoUrl }) {
   const [deferredPrompt, setDeferredPrompt] = useState(null)
   const [showPrompt, setShowPrompt] = useState(false)
   const [isIOS, setIsIOS] = useState(false)
@@ -92,13 +92,18 @@ export default function InstallPWA() {
           fontSize: 22,
           flexShrink: 0,
           boxShadow: '0 4px 12px var(--clr-primary-glow)',
+          overflow: 'hidden'
         }}>
-          📲
+          {logoUrl ? (
+            <img src={logoUrl} alt={appName || 'logo'} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          ) : (
+            '📲'
+          )}
         </div>
 
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontWeight: 800, fontSize: 14, color: '#fff', marginBottom: 2 }}>
-            ثبّت تطبيق "سريع"
+            {appName ? `ثبّت تطبيق "${appName}"` : 'ثبّت التطبيق على هاتفك'}
           </div>
           <div style={{ fontSize: 11, color: 'var(--clr-text-3)', lineHeight: 1.3 }}>
             {isIOS

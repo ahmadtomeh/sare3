@@ -737,8 +737,8 @@ export default function CustomerStorefront({ previewSlug }) {
           order={trackedOrder}
           onClose={() => setTrackedOrder(null)}
         />
-      )}
-
+      {/* ── Install PWA Banner ── */}
+      <InstallPWA appName={store.name} logoUrl={store.logo_url} />
     </div>
   )
 }
