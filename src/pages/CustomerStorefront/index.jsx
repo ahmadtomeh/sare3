@@ -765,7 +765,7 @@ function CompactProductCard({ product, currency, badge, onAdd }) {
       {/* Image */}
       <div style={{ width: '100%', aspectRatio: '1/1', background: 'var(--glass-bg-2)', position: 'relative', overflow: 'hidden' }}>
         {product.image_url ? (
-          <img src={product.image_url} alt={product.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} loading="lazy" />
+          <img src={product.image_url} alt={product.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} loading="lazy" decoding="async" />
         ) : (
           <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--clr-text-muted)' }}>
             <Package size={28} style={{ opacity: 0.3 }} />

@@ -4,6 +4,7 @@ import { useProductsStore } from '../../stores/useProductsStore'
 import { useAuthStore } from '../../stores/useAuthStore'
 import { supabase } from '../../lib/supabase'
 import { Download, Upload, Plus, Trash2, X, Image } from 'lucide-react'
+import { compressImage } from '../../utils/imageCompressor'
 import toast from 'react-hot-toast'
 
 const CURRENCIES = [
@@ -99,37 +100,29 @@ export default function StoreSettings() {
     if (!file) return
     setUploading(true)
     try {
-      // Convert image to permanent Base64 Data URL so it saves to database 100% reliably
-      const reader = new FileReader()
-      reader.onload = async (e) => {
-        const base64Url = e.target.result
-        set(field, base64Url)
+      // Compress image client-side to max 800px & ~40KB quality for instant storefront loading
+      const compressedUrl = await compressImage(file, 800, 800, 0.75)
+      set(field, compressedUrl)
 
-        // Try uploading to Supabase storage bucket if available
-        try {
-          const ext = file.name.split('.').pop()
-          const path = `${field}/${store?.id || 'unknown'}/${Date.now()}.${ext}`
-          const { error } = await supabase.storage.from('store-assets').upload(path, file, { upsert: true })
-          if (!error) {
-            const { data: urlData } = supabase.storage.from('store-assets').getPublicUrl(path)
-            if (urlData?.publicUrl) {
-              set(field, urlData.publicUrl)
-            }
+      // Try uploading to Supabase storage bucket in background if available
+      try {
+        const ext = file.name.split('.').pop()
+        const path = `${field}/${store?.id || 'unknown'}/${Date.now()}.${ext}`
+        const { error } = await supabase.storage.from('store-assets').upload(path, file, { upsert: true })
+        if (!error) {
+          const { data: urlData } = supabase.storage.from('store-assets').getPublicUrl(path)
+          if (urlData?.publicUrl) {
+            set(field, urlData.publicUrl)
           }
-        } catch (storageErr) {
-          console.warn('Storage bucket upload fallback to Base64:', storageErr)
         }
+      } catch (storageErr) {
+        console.warn('Storage bucket upload fallback:', storageErr)
+      }
 
-        toast.success('✅ تم رفع الصورة بنجاح! اضغط حفظ التغييرات بالأسفل للتأكيد 💾')
-        setUploading(false)
-      }
-      reader.onerror = () => {
-        toast.error('فشل قراءة ملف الصورة')
-        setUploading(false)
-      }
-      reader.readAsDataURL(file)
+      toast.success('✅ تم رفع وتصغير الصورة بنجاح! اضغط حفظ التغييرات بالأسفل للتأكيد 💾')
     } catch {
       toast.error('فشل رفع الصورة')
+    } finally {
       setUploading(false)
     }
   }

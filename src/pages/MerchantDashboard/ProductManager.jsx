@@ -3,6 +3,7 @@ import { Plus, Edit2, Trash2, Package, FolderPlus, X, Upload } from 'lucide-reac
 import { useProductsStore } from '../../stores/useProductsStore'
 import { useStoreConfig } from '../../stores/useStoreConfig'
 import { Modal } from '../../components/ui/Modal'
+import { compressImage } from '../../utils/imageCompressor'
 import toast from 'react-hot-toast'
 import { supabase } from '../../lib/supabase'
 
@@ -266,11 +267,11 @@ function ProductFormModal({ product, categories, storeId, currency, onClose, onS
     if (!file) return
     setUploading(true)
 
-    const reader = new FileReader()
-    reader.onload = async (event) => {
-      const base64Url = event.target.result
-      setImagePreview(base64Url)
-      set('image_url', base64Url)
+    try {
+      // Compress product image down to max 600px & ~35KB for lightning fast storefront rendering
+      const compressedUrl = await compressImage(file, 600, 600, 0.7)
+      setImagePreview(compressedUrl)
+      set('image_url', compressedUrl)
 
       try {
         const ext = file.name.split('.').pop()
@@ -284,11 +285,12 @@ function ProductFormModal({ product, categories, storeId, currency, onClose, onS
         }
       } catch (err) {
         console.warn('Product image storage upload fallback:', err)
-      } finally {
-        setUploading(false)
       }
+    } catch {
+      toast.error('فشل معالجة صورة المنتج')
+    } finally {
+      setUploading(false)
     }
-    reader.readAsDataURL(file)
   }
 
   const addOption = () => set('options', [...form.options, { label: '', values: [] }])
