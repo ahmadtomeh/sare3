@@ -205,7 +205,9 @@ export const useProductsStore = create((set, get) => ({
           return { products: nextProducts }
         })
       })
-      .subscribe()
+      .subscribe((status) => {
+        console.log(`⚡ Realtime product subscription status: ${status}`)
+      })
     return () => supabase.removeChannel(channel)
   },
 

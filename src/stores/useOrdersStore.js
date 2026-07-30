@@ -215,7 +215,9 @@ export const useOrdersStore = create((set, get) => ({
           return { orders: [payload.new, ...s.orders] }
         })
       })
-      .subscribe()
+      .subscribe((status) => {
+        console.log(`⚡ Realtime orders subscription status: ${status}`)
+      })
     return () => supabase.removeChannel(channel)
   },
 
