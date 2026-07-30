@@ -237,7 +237,7 @@ ALTER TABLE products ADD COLUMN IF NOT EXISTS stock_count INTEGER DEFAULT 0;
 -- ── Push Subscriptions (Web Push Notifications) ───────────────
 CREATE TABLE IF NOT EXISTS push_subscriptions (
   id         UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  store_id   UUID REFERENCES stores(id) ON DELETE CASCADE,
+  store_id   TEXT NOT NULL,
   endpoint   TEXT UNIQUE NOT NULL,
   p256dh     TEXT NOT NULL,
   auth       TEXT NOT NULL,

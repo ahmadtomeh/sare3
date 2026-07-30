@@ -152,7 +152,7 @@ export default function DashboardHome({ onNavigate }) {
       toast.error('لم يتم تحديد المتجر')
       return
     }
-    toast.loading('جاري تسجيل الجهاز واختبار الإشعار...', { id: 'test-push' })
+    toast.loading(`جاري تسجيل الجهاز (store_id: ${store.id})...`, { id: 'test-push' })
     try {
       const sub = await subscribeToPush(store.id)
       if (!sub) {
