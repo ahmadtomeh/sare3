@@ -18,7 +18,7 @@ export default function CustomerStorefront({ previewSlug }) {
   const navigate = useNavigate()
 
   const { store, fetchStore, loading: storeLoading } = useStoreConfig()
-  const { categories, products, fetchAll, loading: productsLoading } = useProductsStore()
+  const { categories, products, fetchAll, loading: productsLoading, subscribeToProducts } = useProductsStore()
   const { items, addItem, count, total, setStoreId, customerInfo, setCustomerInfo } = useCartStore()
 
   const [activeCategory, setActiveCategory] = useState('all')
@@ -255,8 +255,13 @@ export default function CustomerStorefront({ previewSlug }) {
           setStoreId(s.id)
         }
       })
-    }
   }, [slug])
+
+  useEffect(() => {
+    if (store?.id && subscribeToProducts) {
+      return subscribeToProducts(store.id)
+    }
+  }, [store?.id, subscribeToProducts])
 
   // ── SEO + Open Graph + Dynamic White-Label Store PWA Manifest ──
   useEffect(() => {

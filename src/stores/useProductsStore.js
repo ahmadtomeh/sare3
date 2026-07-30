@@ -162,6 +162,49 @@ export const useProductsStore = create((set, get) => ({
     await get().updateProduct(id, { is_available: !product.is_available })
   },
 
+  subscribeToProducts: (storeId) => {
+    const isDemo = checkDemo(storeId)
+    if (isDemo || !storeId) return () => {}
+
+    const cacheKey = `sare3_products_${storeId}`
+    const channel = supabase
+      .channel(`products-${storeId}`)
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'products',
+        filter: `store_id=eq.${storeId}`,
+      }, (payload) => {
+        set((s) => {
+          let nextProducts = [...s.products]
+          if (payload.eventType === 'INSERT') {
+            if (!nextProducts.some(p => p.id === payload.new.id)) {
+              nextProducts.push(payload.new)
+            }
+          } else if (payload.eventType === 'UPDATE') {
+            nextProducts = nextProducts.map(p => p.id === payload.new.id ? payload.new : p)
+          } else if (payload.eventType === 'DELETE') {
+            nextProducts = nextProducts.filter(p => p.id !== payload.old.id)
+          }
+
+          try {
+            const cached = sessionStorage.getItem(cacheKey) || localStorage.getItem(cacheKey)
+            if (cached) {
+              const parsed = JSON.parse(cached)
+              parsed.products = nextProducts
+              const jsonStr = JSON.stringify(parsed)
+              sessionStorage.setItem(cacheKey, jsonStr)
+              localStorage.setItem(cacheKey, jsonStr)
+            }
+          } catch {}
+
+          return { products: nextProducts }
+        })
+      })
+      .subscribe()
+    return () => supabase.removeChannel(channel)
+  },
+
   getByCategory: (catId) => {
     const prods = get().products
     if (!catId) return prods
