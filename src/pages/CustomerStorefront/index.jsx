@@ -451,11 +451,11 @@ export default function CustomerStorefront({ previewSlug }) {
 
   if (!store) {
     if (!storeLoading) return <StoreNotFound />
-    return <CompactSkeleton />
+    return <CompactSkeleton logoUrl={store?.logo_url} storeName={store?.name} />
   }
 
   if (isRefreshing && (storeLoading || productsLoading)) {
-    return <CompactSkeleton />
+    return <CompactSkeleton logoUrl={store?.logo_url} storeName={store?.name} />
   }
 
   // ── فحص انتهاء الاشتراك ──────────────────────────────────────
@@ -1754,12 +1754,55 @@ function StoreExpired({ storeName }) {
   )
 }
 
-function CompactSkeleton() {
+function CompactSkeleton({ logoUrl, storeName }) {
   return (
-    <div style={{ padding: 12 }}>
-      <div className="skeleton" style={{ height: 50, marginBottom: 12 }} />
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-        {[1, 2, 3, 4].map(i => <div key={i} className="skeleton" style={{ height: 160 }} />)}
+    <div style={{
+      minHeight: '100dvh',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      background: 'var(--clr-bg, #0d0d12)',
+      color: '#fff',
+      direction: 'rtl',
+      gap: 20,
+    }}>
+      <div style={{
+        position: 'relative',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}>
+        {logoUrl ? (
+          <img src={logoUrl} alt={storeName || 'logo'} style={{ width: 72, height: 72, borderRadius: 20, objectFit: 'cover', boxShadow: '0 8px 32px rgba(124,58,237,0.35)' }} />
+        ) : (
+          <div style={{
+            width: 72, height: 72, borderRadius: 20,
+            background: 'linear-gradient(135deg, var(--clr-primary, #7c3aed), var(--clr-accent, #10b981))',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: 36, boxShadow: '0 8px 32px rgba(124,58,237,0.35)',
+          }}>
+            ⚡
+          </div>
+        )}
+        <div style={{
+          position: 'absolute',
+          inset: -8,
+          borderRadius: 28,
+          border: '3px solid transparent',
+          borderTopColor: 'var(--clr-accent, #10b981)',
+          borderRightColor: 'var(--clr-primary, #7c3aed)',
+          animation: 'spin 1s linear infinite',
+        }} />
+      </div>
+
+      <div style={{ textAlign: 'center' }}>
+        <h3 style={{ fontSize: 16, fontWeight: 800, color: 'var(--clr-text, #fff)', marginBottom: 4 }}>
+          {storeName ? `جاري تحميل ${storeName}...` : 'جاري تحميل المتجر...'}
+        </h3>
+        <p style={{ fontSize: 12, color: 'var(--clr-text-3, #999)' }}>
+          جاري تجهيز وتحديث المنتجات ⚡
+        </p>
       </div>
     </div>
   )
