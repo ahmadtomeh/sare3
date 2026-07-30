@@ -173,8 +173,11 @@ export const useProductsStore = create((set, get) => ({
         event: '*',
         schema: 'public',
         table: 'products',
-        filter: `store_id=eq.${storeId}`,
       }, (payload) => {
+        const isTargetStore = (payload.new && payload.new.store_id === storeId) ||
+                              (payload.old && get().products.some(p => p.id === payload.old.id))
+        if (!isTargetStore) return
+
         set((s) => {
           let nextProducts = [...s.products]
           if (payload.eventType === 'INSERT') {
