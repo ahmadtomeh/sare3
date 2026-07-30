@@ -7,18 +7,36 @@ export default function InstallPWA({ appName, logoUrl }) {
   const [isIOS, setIsIOS] = useState(false)
   const [isStandalone, setIsStandalone] = useState(false)
 
+  const [displayName, setDisplayName] = useState(appName || '')
+  const [displayLogo, setDisplayLogo] = useState(logoUrl || '')
+
   useEffect(() => {
-    // Check if already running as installed app (PWA standalone mode)
+    const updateName = () => {
+      if (appName) {
+        setDisplayName(appName)
+      } else {
+        const title = typeof document !== 'undefined' && document.title ? document.title.split('—')[0].trim() : ''
+        if (title && title !== 'سريع') {
+          setDisplayName(title)
+        }
+      }
+      if (logoUrl) setDisplayLogo(logoUrl)
+    }
+
+    updateName()
+    const timer = setInterval(updateName, 500)
+    return () => clearInterval(timer)
+  }, [appName, logoUrl])
+
+  useEffect(() => {
     const standalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true
     setIsStandalone(standalone)
     if (standalone) return
 
-    // Detect iOS
     const userAgent = window.navigator.userAgent.toLowerCase()
     const ios = /iphone|ipad|ipod/.test(userAgent)
     setIsIOS(ios)
 
-    // Capture Android/Desktop PWA install prompt
     const handleBeforeInstallPrompt = (e) => {
       e.preventDefault()
       setDeferredPrompt(e)
@@ -30,7 +48,6 @@ export default function InstallPWA({ appName, logoUrl }) {
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
 
-    // Show iOS guide if mobile iOS and not dismissed
     if (ios && !localStorage.getItem('sare3-pwa-dismissed')) {
       setShowPrompt(true)
     }
@@ -56,9 +73,6 @@ export default function InstallPWA({ appName, logoUrl }) {
   }
 
   if (isStandalone || !showPrompt) return null
-
-  const storeTitle = typeof document !== 'undefined' && document.title ? document.title.split('—')[0].trim() : ''
-  const finalAppName = appName || (storeTitle && !storeTitle.startsWith('سريع') ? storeTitle : null)
 
   return (
     <div style={{
@@ -94,8 +108,8 @@ export default function InstallPWA({ appName, logoUrl }) {
         boxShadow: '0 4px 12px var(--clr-primary-glow)',
         overflow: 'hidden'
       }}>
-        {logoUrl ? (
-          <img src={logoUrl} alt={finalAppName || 'logo'} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+        {displayLogo ? (
+          <img src={displayLogo} alt={displayName || 'logo'} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
         ) : (
           '📲'
         )}
@@ -103,7 +117,7 @@ export default function InstallPWA({ appName, logoUrl }) {
 
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontWeight: 800, fontSize: 14, color: '#fff', marginBottom: 2 }}>
-          {finalAppName ? `ثبّت تطبيق "${finalAppName}"` : 'ثبّت التطبيق على هاتفك'}
+          {displayName ? `ثبّت تطبيق "${displayName}"` : 'ثبّت التطبيق على هاتفك'}
         </div>
         <div style={{ fontSize: 11, color: 'var(--clr-text-3)', lineHeight: 1.3 }}>
           {isIOS
