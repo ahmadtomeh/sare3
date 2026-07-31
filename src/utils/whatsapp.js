@@ -8,10 +8,12 @@ export function buildWhatsAppMessage({ store, items, customer, total, discount, 
   const itemsText = items
     .map((item) => {
       const opts = Object.entries(item.selectedOptions || {})
-        .map(([k, v]) => `${k}: ${v}`)
+        .map(([k, v]) => `${k}: ${v.name || v}${v.price > 0 ? ` (+${v.price} ${currency})` : ''}`)
         .join(' | ')
       const optStr = opts ? ` (${opts})` : ''
-      return `• ${item.product.name}${optStr} × ${item.quantity} — ${(item.product.price * item.quantity).toFixed(0)} ${currency}`
+      const optionExtra = Object.values(item.selectedOptions || {}).reduce((s, opt) => s + Number(opt.price || 0), 0)
+      const itemPrice = Number(item.product.price) + optionExtra
+      return `• ${item.product.name}${optStr} × ${item.quantity} — ${(itemPrice * item.quantity).toFixed(0)} ${currency}`
     })
     .join('\n')
 

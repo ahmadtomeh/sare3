@@ -892,14 +892,25 @@ function ProductOptionsSheet({ product, currency, onClose, onAdd }) {
     if (!Array.isArray(opts) || opts.length === 0) return []
     // Normalize: flat string array ['S','M'] → [{label:'الخيار', values:['S','M']}]
     if (typeof opts[0] === 'string') {
-      return [{ label: 'الخيار', values: opts }]
+      return [{ label: 'الخيار', values: opts.map(v => ({ name: v, price: 0 })) }]
     }
     // Already [{label, values}] format
-    return opts.map(o => ({ label: o.label || 'الخيار', values: Array.isArray(o.values) ? o.values : [] }))
+    return opts.map(o => ({
+      label: o.label || 'الخيار',
+      values: Array.isArray(o.values)
+        ? o.values.map(v => typeof v === 'string' ? { name: v, price: 0 } : { name: v.name || '', price: Number(v.price || 0) })
+        : []
+    }))
   }, [product?.options])
 
   const [selected, setSelected] = useState({})
   const allSelected = optionsList.length === 0 || optionsList.every((opt) => selected[opt.label])
+
+  const currentTotalPrice = useMemo(() => {
+    const base = parseFloat(product.price) || 0
+    const extra = Object.values(selected).reduce((sum, opt) => sum + Number(opt.price || 0), 0)
+    return base + extra
+  }, [product.price, selected])
 
   return (
     <BottomSheet title={product.name} onClose={onClose}>
@@ -908,24 +919,25 @@ function ProductOptionsSheet({ product, currency, onClose, onAdd }) {
           <img src={product.image_url} alt={product.name} style={{ width: '100%', maxHeight: 180, objectFit: 'cover', borderRadius: 12 }} />
         )}
         <div style={{ fontSize: 20, fontWeight: 900, color: 'var(--clr-accent)' }}>
-          {parseFloat(product.price).toFixed(2)} {currency}
+          {currentTotalPrice.toFixed(2)} {currency}
         </div>
 
         {optionsList.map((opt) => (
           <div key={opt.label}>
             <div style={{ fontWeight: 700, marginBottom: 6, fontSize: 12 }}>
-              {opt.label} {selected[opt.label] && <span style={{ color: 'var(--clr-primary)' }}>— {selected[opt.label]}</span>}
+              {opt.label} {selected[opt.label] && <span style={{ color: 'var(--clr-primary)' }}>— {selected[opt.label].name}</span>}
             </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
               {opt.values?.map((val) => (
                 <button
-                  key={val}
+                  key={val.name}
                   type="button"
-                  className={`category-chip ${selected[opt.label] === val ? 'active' : ''}`}
+                  className={`category-chip ${selected[opt.label]?.name === val.name ? 'active' : ''}`}
                   style={{ padding: '6px 14px', minHeight: 34, fontSize: 12, fontWeight: 700 }}
                   onClick={() => setSelected((s) => ({ ...s, [opt.label]: val }))}
                 >
-                  {val}
+                  {val.name}
+                  {val.price > 0 && ` (+${val.price} ${currency})`}
                 </button>
               ))}
             </div>
@@ -1087,8 +1099,15 @@ function CartDrawer({
                   }
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontWeight: 700, fontSize: 12, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.product.name}</div>
-                    <div style={{ fontWeight: 900, color: 'var(--clr-accent)', fontSize: 12 }}>
-                      {(item.product.price * item.quantity).toFixed(0)} {currency}
+                    {item.selectedOptions && Object.keys(item.selectedOptions).length > 0 && (
+                      <div style={{ fontSize: 10, color: 'var(--clr-text-3)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {Object.entries(item.selectedOptions)
+                          .map(([label, val]) => `${label}: ${val.name || val}${val.price > 0 ? ` (+${val.price} ${currency})` : ''}`)
+                          .join(' | ')}
+                      </div>
+                    )}
+                    <div style={{ fontWeight: 900, color: 'var(--clr-accent)', fontSize: 12, marginTop: 2 }}>
+                      {((Number(item.product.price) + Object.values(item.selectedOptions || {}).reduce((s, opt) => s + Number(opt.price || 0), 0)) * item.quantity).toFixed(0)} {currency}
                     </div>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'var(--glass-bg-2)', padding: '2px 4px', borderRadius: 6 }}>
@@ -1266,11 +1285,17 @@ function OrderFormSheet({
     const shippingObj = selectedShippingZone ? { name: selectedShippingZone.name, cost: actualShippingCost } : null
 
     // ── تجهيز تفاصيل المنتجات لقاعدة البيانات ──
-    const dbItems = items.map(i => ({
-      product: { id: i.product.id, name: i.product.name, price: parseFloat(i.product.price) },
-      quantity: i.quantity,
-      selectedOptions: i.option
-    }))
+    const dbItems = items.map(i => {
+      const optionStr = Object.entries(i.selectedOptions || {})
+        .map(([k, v]) => `${k}: ${v.name || v}${v.price > 0 ? ` (+${v.price} ${currency})` : ''}`)
+        .join(' | ')
+      const optionExtra = Object.values(i.selectedOptions || {}).reduce((s, opt) => s + Number(opt.price || 0), 0)
+      return {
+        product: { id: i.product.id, name: i.product.name, price: parseFloat(i.product.price) + optionExtra },
+        quantity: i.quantity,
+        selectedOptions: optionStr
+      }
+    })
 
     // إضافة الخصم كبند خاص في سلة الطلب بقاعدة البيانات
     if (appliedCoupon) {
@@ -1334,7 +1359,18 @@ function OrderFormSheet({
       storeName: store.name,
       date: new Date().toISOString(),
       customer: form,
-      items: items.map(i => ({ name: i.product.name, qty: i.quantity, price: i.product.price, option: i.option })),
+      items: items.map(i => {
+        const optionStr = Object.entries(i.selectedOptions || {})
+          .map(([k, v]) => `${k}: ${v.name || v}${v.price > 0 ? ` (+${v.price} ${currency})` : ''}`)
+          .join(' | ')
+        const optionExtra = Object.values(i.selectedOptions || {}).reduce((s, opt) => s + Number(opt.price || 0), 0)
+        return {
+          name: i.product.name,
+          qty: i.quantity,
+          price: Number(i.product.price) + optionExtra,
+          option: optionStr
+        }
+      }),
       total: finalTotal,
       currency,
     }

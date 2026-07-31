@@ -1,5 +1,4 @@
 import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
 import { supabase, isConfigured } from '../lib/supabase'
 import { DEMO_ORDERS } from '../utils/demoData'
 import { useAuthStore } from './useAuthStore'
@@ -14,18 +13,14 @@ const checkDemo = () => {
          (typeof window !== 'undefined' && window.location.pathname.includes('/dashboard') && !useAuthStore.getState().user)
 }
 
-export const useOrdersStore = create(
-  persist(
-    (set, get) => ({
+export const useOrdersStore = create((set, get) => ({
   orders: [],
   loading: false,
 
   fetchOrders: async (storeId) => {
     const isDemo = checkDemo()
     if (isDemo) { set({ orders: DEMO_ORDERS, loading: false }); return }
-    if (get().orders.length === 0) {
-      set({ loading: true })
-    }
+    set({ loading: true })
     const { data, error } = await supabase
       .from('orders')
       .select('*')
@@ -83,7 +78,7 @@ export const useOrdersStore = create(
       if (storeData?.telegram_chat_id) {
         const itemsList = (data.items || [])
           .filter(i => !i.isSpecial)
-          .map((i, idx, arr) => `${idx === arr.length - 1 ? '└' : '├'} ${i.quantity}x ${i.product?.name}`)
+          .map((i, idx, arr) => `${idx === arr.length - 1 ? '└' : '├'} ${i.quantity}x ${i.product?.name}${i.selectedOptions ? ` (${i.selectedOptions})` : ''}`)
           .join('\n') || '└ لا توجد تفاصيل'
 
         const cleanPhone = (data.customer_phone || '').replace(/[^0-9]/g, '')
@@ -261,10 +256,4 @@ export const useOrdersStore = create(
       newOrders: orders.filter((o) => o.status === 'new').length,
     }
   },
-    }),
-    {
-      name: 'fawri-orders',
-      partialize: (s) => ({ orders: s.orders }),
-    }
-  )
-)
+}))

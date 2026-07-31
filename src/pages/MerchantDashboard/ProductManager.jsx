@@ -241,10 +241,15 @@ function ProductFormModal({ product, categories, storeId, currency, onClose, onS
     if (opts.length === 0) return []
     if (typeof opts[0] === 'string') {
       // old format: flat string array — convert to single group
-      return [{ label: 'الخيارات', values: opts }]
+      return [{ label: 'الخيارات', values: opts.map(v => ({ name: v, price: 0 })) }]
     }
     // already {label, values} format
-    return opts.map(o => ({ label: o.label || '', values: Array.isArray(o.values) ? o.values : [] }))
+    return opts.map(o => ({
+      label: o.label || '',
+      values: Array.isArray(o.values)
+        ? o.values.map(v => typeof v === 'string' ? { name: v, price: 0 } : { name: v.name || '', price: Number(v.price || 0) })
+        : []
+    }))
   }
 
   const [form, setForm] = useState({
@@ -295,7 +300,7 @@ function ProductFormModal({ product, categories, storeId, currency, onClose, onS
     }
   }
 
-  const addOption = () => set('options', [...form.options, { label: '', values: [] }])
+  const addOption = () => set('options', [...form.options, { label: '', values: [{ name: '', price: 0 }] }])
   const removeOption = (i) => set('options', form.options.filter((_, idx) => idx !== i))
   const updateOption = (i, k, v) => set('options', form.options.map((o, idx) => idx === i ? { ...o, [k]: v } : o))
 
@@ -428,14 +433,77 @@ function ProductFormModal({ product, categories, storeId, currency, onClose, onS
             </button>
           </div>
           {form.options.map((opt, i) => (
-            <div key={i} className="glass-2" style={{ padding: 'var(--sp-sm)', marginBottom: 'var(--sp-sm)', display: 'flex', gap: 'var(--sp-sm)', alignItems: 'flex-start' }}>
-              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 6 }}>
-                <input className="input" style={{ fontSize: 'var(--text-sm)' }} value={opt.label} onChange={(e) => updateOption(i, 'label', e.target.value)} placeholder="اسم الخيار (مثال: المقاس)" />
-                <input className="input" style={{ fontSize: 'var(--text-sm)' }} value={opt.values.join(', ')} onChange={(e) => updateOption(i, 'values', e.target.value.split(',').map(v => v.trim()).filter(Boolean))} placeholder="القيم مفصولة بفاصلة (S, M, L)" />
+            <div key={i} className="glass-2" style={{ padding: 'var(--sp-sm)', marginBottom: 'var(--sp-sm)', display: 'flex', flexDirection: 'column', gap: 'var(--sp-sm)' }}>
+              <div style={{ display: 'flex', gap: 'var(--sp-sm)', alignItems: 'center' }}>
+                <input
+                  className="input"
+                  style={{ fontSize: 'var(--text-sm)', fontWeight: 700, flex: 1 }}
+                  value={opt.label}
+                  onChange={(e) => updateOption(i, 'label', e.target.value)}
+                  placeholder="اسم الخيار (مثال: المقاس، الإضافات)"
+                />
+                <button
+                  type="button"
+                  className="btn btn-ghost btn-icon btn-sm"
+                  onClick={() => removeOption(i)}
+                  style={{ color: 'var(--clr-danger)' }}
+                >
+                  <X size={14} />
+                </button>
               </div>
-              <button type="button" className="btn btn-ghost btn-icon btn-sm" onClick={() => removeOption(i)} style={{ color: 'var(--clr-danger)' }}>
-                <X size={14} />
-              </button>
+
+              {/* List of values for this option group */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6, paddingRight: 12, borderRight: '2px solid var(--clr-border)' }}>
+                {opt.values.map((val, valIdx) => (
+                  <div key={valIdx} style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                    <input
+                      className="input"
+                      style={{ fontSize: 'var(--text-xs)', flex: 2 }}
+                      value={val.name}
+                      onChange={(e) => {
+                        const newVals = opt.values.map((v, idx) => idx === valIdx ? { ...v, name: e.target.value } : v)
+                        updateOption(i, 'values', newVals)
+                      }}
+                      placeholder="القيمة (مثال: كبير)"
+                    />
+                    <input
+                      className="input"
+                      type="number"
+                      style={{ fontSize: 'var(--text-xs)', flex: 1, direction: 'ltr' }}
+                      value={val.price === 0 ? '' : val.price}
+                      onChange={(e) => {
+                        const valNum = parseFloat(e.target.value)
+                        const newVals = opt.values.map((v, idx) => idx === valIdx ? { ...v, price: isNaN(valNum) ? 0 : valNum } : v)
+                        updateOption(i, 'values', newVals)
+                      }}
+                      placeholder="السعر الإضافي"
+                    />
+                    <span style={{ fontSize: 10, color: 'var(--clr-text-muted)' }}>{currency}</span>
+                    <button
+                      type="button"
+                      className="btn btn-ghost btn-icon btn-sm"
+                      onClick={() => {
+                        const newVals = opt.values.filter((_, idx) => idx !== valIdx)
+                        updateOption(i, 'values', newVals)
+                      }}
+                      style={{ color: 'var(--clr-text-muted)', padding: 4 }}
+                    >
+                      <X size={12} />
+                    </button>
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  className="btn btn-ghost btn-sm"
+                  style={{ alignSelf: 'flex-start', fontSize: 11, padding: '2px 8px', minHeight: 26 }}
+                  onClick={() => {
+                    const newVals = [...opt.values, { name: '', price: 0 }]
+                    updateOption(i, 'values', newVals)
+                  }}
+                >
+                  <Plus size={12} /> إضافة قيمة
+                </button>
+              </div>
             </div>
           ))}
         </div>

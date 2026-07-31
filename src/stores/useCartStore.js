@@ -38,7 +38,10 @@ export const useCartStore = create(
 
       clearCart: () => set({ items: [] }),
 
-      total: () => get().items.reduce((sum, i) => sum + i.product.price * i.quantity, 0),
+      total: () => get().items.reduce((sum, i) => {
+        const optionExtra = Object.values(i.selectedOptions || {}).reduce((s, opt) => s + Number(opt.price || 0), 0)
+        return sum + (Number(i.product.price) + optionExtra) * i.quantity
+      }, 0),
       count: () => get().items.reduce((sum, i) => sum + i.quantity, 0),
 
       setCustomerInfo: (info) => set({ customerInfo: info }),
