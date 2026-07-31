@@ -241,11 +241,12 @@ function ProductFormModal({ product, categories, storeId, currency, onClose, onS
     if (opts.length === 0) return []
     if (typeof opts[0] === 'string') {
       // old format: flat string array — convert to single group
-      return [{ label: 'الخيارات', values: opts.map(v => ({ name: v, price: 0 })) }]
+      return [{ label: 'الخيارات', required: true, values: opts.map(v => ({ name: v, price: 0 })) }]
     }
     // already {label, values} format
     return opts.map(o => ({
       label: o.label || '',
+      required: o.required !== undefined ? !!o.required : true,
       values: Array.isArray(o.values)
         ? o.values.map(v => typeof v === 'string' ? { name: v, price: 0 } : { name: v.name || '', price: Number(v.price || 0) })
         : []
@@ -300,7 +301,7 @@ function ProductFormModal({ product, categories, storeId, currency, onClose, onS
     }
   }
 
-  const addOption = () => set('options', [...form.options, { label: '', values: [{ name: '', price: 0 }] }])
+  const addOption = () => set('options', [...form.options, { label: '', required: true, values: [{ name: '', price: 0 }] }])
   const removeOption = (i) => set('options', form.options.filter((_, idx) => idx !== i))
   const updateOption = (i, k, v) => set('options', form.options.map((o, idx) => idx === i ? { ...o, [k]: v } : o))
 
@@ -442,6 +443,15 @@ function ProductFormModal({ product, categories, storeId, currency, onClose, onS
                   onChange={(e) => updateOption(i, 'label', e.target.value)}
                   placeholder="اسم الخيار (مثال: المقاس، الإضافات)"
                 />
+                <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                  <input
+                    type="checkbox"
+                    checked={!!opt.required}
+                    onChange={(e) => updateOption(i, 'required', e.target.checked)}
+                    style={{ cursor: 'pointer' }}
+                  />
+                  إجباري الاختيار 📌
+                </label>
                 <button
                   type="button"
                   className="btn btn-ghost btn-icon btn-sm"

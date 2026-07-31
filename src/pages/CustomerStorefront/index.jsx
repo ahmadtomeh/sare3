@@ -892,11 +892,12 @@ function ProductOptionsSheet({ product, currency, onClose, onAdd }) {
     if (!Array.isArray(opts) || opts.length === 0) return []
     // Normalize: flat string array ['S','M'] → [{label:'الخيار', values:['S','M']}]
     if (typeof opts[0] === 'string') {
-      return [{ label: 'الخيار', values: opts.map(v => ({ name: v, price: 0 })) }]
+      return [{ label: 'الخيار', required: true, values: opts.map(v => ({ name: v, price: 0 })) }]
     }
     // Already [{label, values}] format
     return opts.map(o => ({
       label: o.label || 'الخيار',
+      required: o.required !== undefined ? !!o.required : true,
       values: Array.isArray(o.values)
         ? o.values.map(v => typeof v === 'string' ? { name: v, price: 0 } : { name: v.name || '', price: Number(v.price || 0) })
         : []
@@ -904,7 +905,7 @@ function ProductOptionsSheet({ product, currency, onClose, onAdd }) {
   }, [product?.options])
 
   const [selected, setSelected] = useState({})
-  const allSelected = optionsList.length === 0 || optionsList.every((opt) => selected[opt.label])
+  const allSelected = optionsList.length === 0 || optionsList.every((opt) => !opt.required || selected[opt.label])
 
   const currentTotalPrice = useMemo(() => {
     const base = parseFloat(product.price) || 0
@@ -924,8 +925,14 @@ function ProductOptionsSheet({ product, currency, onClose, onAdd }) {
 
         {optionsList.map((opt) => (
           <div key={opt.label}>
-            <div style={{ fontWeight: 700, marginBottom: 6, fontSize: 12 }}>
-              {opt.label} {selected[opt.label] && <span style={{ color: 'var(--clr-primary)' }}>— {selected[opt.label].name}</span>}
+            <div style={{ fontWeight: 700, marginBottom: 6, fontSize: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                {opt.label} 
+                <span style={{ fontSize: 10, color: opt.required ? 'var(--clr-accent)' : 'var(--clr-text-muted)', marginRight: 6 }}>
+                  {opt.required ? '(إجباري)' : '(اختياري)'}
+                </span>
+              </div>
+              {selected[opt.label] && <span style={{ color: 'var(--clr-primary)' }}>— {selected[opt.label].name}</span>}
             </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
               {opt.values?.map((val) => (
@@ -934,7 +941,14 @@ function ProductOptionsSheet({ product, currency, onClose, onAdd }) {
                   type="button"
                   className={`category-chip ${selected[opt.label]?.name === val.name ? 'active' : ''}`}
                   style={{ padding: '6px 14px', minHeight: 34, fontSize: 12, fontWeight: 700 }}
-                  onClick={() => setSelected((s) => ({ ...s, [opt.label]: val }))}
+                  onClick={() => setSelected((s) => {
+                    if (s[opt.label]?.name === val.name) {
+                      const newSelected = { ...s }
+                      delete newSelected[opt.label]
+                      return newSelected
+                    }
+                    return { ...s, [opt.label]: val }
+                  })}
                 >
                   {val.name}
                   {val.price > 0 && ` (+${val.price} ${currency})`}
