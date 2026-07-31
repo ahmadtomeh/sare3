@@ -317,7 +317,7 @@ export default function CustomerStorefront({ previewSlug }) {
         scope: `/store/${storeSlug}`,
         display: 'standalone',
         background_color: '#0d0d12',
-        theme_color: '#7c3aed',
+        theme_color: store.primary_color || '#7c3aed',
         orientation: 'portrait-primary',
         lang: 'ar',
         dir: 'rtl',
