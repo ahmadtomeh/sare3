@@ -44,7 +44,7 @@ export const useCartStore = create(
       setCustomerInfo: (info) => set({ customerInfo: info }),
     }),
     {
-      name: 'sare3-cart',
+      name: 'fawri-cart',
       partialize: (s) => ({ items: s.items, storeId: s.storeId, customerInfo: s.customerInfo }),
     }
   )

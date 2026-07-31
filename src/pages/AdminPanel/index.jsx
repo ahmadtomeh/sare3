@@ -5,12 +5,12 @@ import { supabase } from '../../lib/supabase'
 import { useAuthStore } from '../../stores/useAuthStore'
 import toast from 'react-hot-toast'
 
-const ADMIN_EMAIL = 'admin@sare3.com'
+const ADMIN_EMAIL = 'admin@fawri.shop'
 
 function generateCode() {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
   const seg = () => Array.from({ length: 4 }, () => chars[Math.floor(Math.random() * chars.length)]).join('')
-  return `SARE-${seg()}-${seg()}`
+  return `FAWRI-${seg()}-${seg()}`
 }
 
 export default function AdminPanel() {

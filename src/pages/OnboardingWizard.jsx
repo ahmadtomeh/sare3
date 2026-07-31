@@ -98,7 +98,7 @@ export default function OnboardingWizard() {
         {/* Logo */}
         <div style={{ textAlign: 'center' }}>
           <div className="navbar-logo" style={{ justifyContent: 'center', fontSize: 'var(--text-2xl)' }}>
-            <Zap size={30} />سريع
+            <Zap size={30} />فوري
           </div>
           <p style={{ color: 'var(--clr-text-3)', marginTop: 4 }}>أنشئ متجرك في دقيقتين ⚡</p>
         </div>

@@ -15,6 +15,6 @@ export const useThemeStore = create(
         document.documentElement.setAttribute('data-theme', t)
       },
     }),
-    { name: 'sare3-theme' }
+    { name: 'fawri-theme' }
   )
 )

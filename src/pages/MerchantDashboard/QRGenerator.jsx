@@ -9,7 +9,7 @@ export default function QRGenerator() {
 
   const storeUrl = store?.slug
     ? `${window.location.origin}/${store.slug}`
-    : 'https://sare3.app/my-store'
+    : 'https://fawri.shop/my-store'
 
   const copyLink = () => {
     navigator.clipboard.writeText(storeUrl)
@@ -33,7 +33,7 @@ export default function QRGenerator() {
       ctx.fillStyle = '#1a1a2e'
       ctx.font = 'bold 16px Arial'
       ctx.textAlign = 'center'
-      ctx.fillText(store?.name || 'متجري على سريع', 200, 420)
+      ctx.fillText(store?.name || 'متجري على فوري', 200, 420)
 
       const link = document.createElement('a')
       link.download = `qr-${store?.slug || 'store'}.png`

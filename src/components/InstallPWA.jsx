@@ -16,7 +16,7 @@ export default function InstallPWA({ appName, logoUrl }) {
         setDisplayName(appName)
       } else {
         const title = typeof document !== 'undefined' && document.title ? document.title.split('—')[0].trim() : ''
-        if (title && title !== 'سريع') {
+        if (title && title !== 'فوري') {
           setDisplayName(title)
         }
       }

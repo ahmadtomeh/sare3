@@ -129,7 +129,7 @@ export default function DashboardHome({ onNavigate }) {
     const storeUrl = `${window.location.origin}/${store?.slug || 'demo'}`
     if (navigator.share) {
       navigator.share({
-        title: store?.name || 'متجري على سريع',
+        title: store?.name || 'متجري على فوري',
         text: `تفضل بزيارة متجرنا واطلب عبر الواتساب مباشرة:`,
         url: storeUrl,
       }).catch(() => {})
@@ -173,7 +173,7 @@ export default function DashboardHome({ onNavigate }) {
         body: JSON.stringify({
           store_id: store.id,
           notification: {
-            title: `🔔 إشعار تجريبي من ${store.name || 'سريع'}`,
+            title: `🔔 إشعار تجريبي من ${store.name || 'فوري'}`,
             body: `نظام الإشعارات الفورية يعمل بنجاح! ⚡`,
             tag: `test-${Date.now()}`,
             url: '/dashboard',

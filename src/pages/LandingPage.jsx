@@ -56,7 +56,7 @@ export default function LandingPage() {
           }}>
             <Zap size={18} style={{ color: '#fff' }} />
           </div>
-          <span className="gradient-text" style={{ fontSize: 'var(--text-xl)', fontWeight: 900 }}>سريع</span>
+          <span className="gradient-text" style={{ fontSize: 'var(--text-xl)', fontWeight: 900 }}>فوري</span>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-xs)' }}>
@@ -91,7 +91,7 @@ export default function LandingPage() {
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 12px', background: 'var(--glass-bg-2)', border: '1px solid var(--glass-border-glow)', borderRadius: 'var(--radius-full)', width: 'fit-content' }}>
               <span style={{ fontSize: 12 }}>🇵🇸 🇪🇬 🇸🇦 🇯🇴</span>
               <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--clr-accent)' }}>
-                متجرك الإلكتروني السريع للطلب عبر الواتساب
+                متجرك الإلكتروني الفوري للطلب عبر الواتساب
               </span>
             </div>
 
@@ -154,7 +154,7 @@ export default function LandingPage() {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 'var(--sp-md)' }}>
             {[
               { icon: <MessageSquare size={22} />, title: 'طلب واتساب منسق', desc: 'استقبل الطلبات مجهزة بالكميات، الخيارات، وعنوان التوصيل بنقرة واحدة.', color: 'var(--clr-accent)' },
-              { icon: <QrCode size={22} />, title: 'رمز QR ورابط خاص', desc: 'احصل على رابط مخصص sare3.app/your-name ورمز QR جاهز للطباعة.', color: 'var(--clr-primary)' },
+              { icon: <QrCode size={22} />, title: 'رمز QR ورابط خاص', desc: 'احصل على رابط مخصص fawri.shop/your-name ورمز QR جاهز للطباعة.', color: 'var(--clr-primary)' },
               { icon: <ShieldCheck size={22} />, title: '0% عمولات مجاناً', desc: 'كل الإيرادات تذهب لحسابك المباشر دون أي اقتطاعات أو عمولات مخفية.', color: '#38bdf8' },
             ].map((f, i) => (
               <div key={i} className="glass glass-interactive" style={{ padding: 'var(--sp-md)', display: 'flex', gap: 12, alignItems: 'flex-start' }}>
@@ -174,12 +174,12 @@ export default function LandingPage() {
       {/* ── Testimonials Section ── */}
       <section style={{ padding: 'var(--sp-xl) var(--sp-md)', maxWidth: 1140, margin: '0 auto' }}>
         <div style={{ textAlign: 'center', marginBottom: 'var(--sp-lg)' }}>
-          <h2 style={{ fontSize: 'var(--text-xl)', fontWeight: 900 }}>تجار يثقون بسريع ❤️</h2>
-          <p style={{ color: 'var(--clr-text-3)', fontSize: 'var(--text-xs)', marginTop: 4 }}>آلاف التجار يستخدمون سريع لإدارة طلباتهم يومياً</p>
+          <h2 style={{ fontSize: 'var(--text-xl)', fontWeight: 900 }}>تجار يثقون بفوري ❤️</h2>
+          <p style={{ color: 'var(--clr-text-3)', fontSize: 'var(--text-xs)', marginTop: 4 }}>آلاف التجار يستخدمون فوري لإدارة طلباتهم يومياً</p>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 'var(--sp-md)' }}>
           {[
-            { name: 'محمد أبو سليم', store: 'كافيه النخيل', location: 'رام الله', emoji: '☕', quote: 'كنت بستقبل طلباتي على ورقة. مع سريع بقي كل شي مرتب والطلب وصلني كاملاً على الواتساب!', rating: 5 },
+            { name: 'محمد أبو سليم', store: 'كافيه النخيل', location: 'رام الله', emoji: '☕', quote: 'كنت بستقبل طلباتي على ورقة. مع فوري بقي كل شي مرتب والطلب وصلني كاملاً على الواتساب!', rating: 5 },
             { name: 'سارة الخطيب', store: 'متجر الأناقة', location: 'نابلس', emoji: '👗', quote: 'ما توقعت كمية الطلبات اللي رحت بتجييها بعد ما شاركت رابط المتجر على الواتساب. مشكور!', rating: 5 },
             { name: 'يوسف عبد الهادي', store: 'مخبز البيت', location: 'القدس', emoji: '🥐', quote: 'الفكرة بسيطة لكن تنفيذها ذكي جداً. الزبون يختار مطلوباته والطلب يصلني جاهز بدون أي جهد مني.', rating: 5 },
             { name: 'خالد العمري', store: 'سوبر ماركت الجوار', location: 'أريحا', emoji: '🛒', quote: 'الدعم سريع جداً والسعر مناسب. أفضل من أي منصة تجربتها بسعر سعرهم عالي وبيأخذوا عمولة.', rating: 5 },
@@ -385,7 +385,7 @@ export default function LandingPage() {
               <div style={{ width: 28, height: 28, borderRadius: 8, background: 'linear-gradient(135deg, var(--clr-primary), var(--clr-accent))', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <Zap size={14} style={{ color: '#fff' }} />
               </div>
-              <span className="gradient-text" style={{ fontWeight: 900, fontSize: 16 }}>سريع</span>
+              <span className="gradient-text" style={{ fontWeight: 900, fontSize: 16 }}>فوري</span>
             </div>
             <div style={{ display: 'flex', gap: 'var(--sp-lg)', flexWrap: 'wrap' }}>
               {[{ val: '0%', label: 'عمولات' }, { val: '7 أيام', label: 'تجربة مجانية' }, { val: '24/7', label: 'دعم فني' }].map((s, i) => (
@@ -397,7 +397,7 @@ export default function LandingPage() {
             </div>
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8, borderTop: '1px solid var(--clr-border)', paddingTop: 12 }}>
-            <span style={{ fontSize: 11, color: 'var(--clr-text-3)' }}>© 2026 سريع (Sare3) • جميع الحقوق محفوظة</span>
+            <span style={{ fontSize: 11, color: 'var(--clr-text-3)' }}>© 2026 فوري (Fawri) • جميع الحقوق محفوظة</span>
             <div style={{ display: 'flex', gap: 'var(--sp-md)', fontSize: 11, color: 'var(--clr-text-3)' }}>
               <span style={{ cursor: 'pointer' }}>سياسة الخصوصية</span>
               <span style={{ cursor: 'pointer' }}>شروط الاستخدام</span>
@@ -481,7 +481,7 @@ function InteractivePhonePreview() {
                 🛍️
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontWeight: 800, fontSize: 10, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>متجر الأناقة السريع</div>
+                <div style={{ fontWeight: 800, fontSize: 10, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>متجر الأناقة الفوري</div>
                 <div style={{ fontSize: 8, opacity: 0.85 }}>متصل الآن 🟢</div>
               </div>
             </div>
@@ -494,7 +494,7 @@ function InteractivePhonePreview() {
 
               {/* Outgoing Message (Customer Order) */}
               <div style={{ alignSelf: 'flex-start', maxWidth: '92%', background: '#005c4b', color: '#e9edef', padding: '8px 10px', borderRadius: '8px 8px 8px 0px', fontSize: 9, lineHeight: 1.45, whiteSpace: 'pre-line', boxShadow: '0 1px 2px rgba(0,0,0,0.3)' }}>
-                {`🛍️ *طلب جديد من متجر الأناقة السريع*\n-------------------------------\n${itemsText}\n-------------------------------\n💰 *الإجمالي:* ${cartTotal} ₪\n📍 *الاسم:* زبون تجريبي\n📍 *العنوان:* رام الله - الشارع الرئيسي\n⚡ *مرسل عبر سريع*`}
+                {`🛍️ *طلب جديد من متجر الأناقة الفوري*\n-------------------------------\n${itemsText}\n-------------------------------\n💰 *الإجمالي:* ${cartTotal} ₪\n📍 *الاسم:* زبون تجريبي\n📍 *العنوان:* رام الله - الشارع الرئيسي\n⚡ *مرسل عبر فوري*`}
                 <div style={{ textAlign: 'left', fontSize: 7, color: '#8696a0', marginTop: 3 }}>22:21 ✓✓</div>
               </div>
 
@@ -528,7 +528,7 @@ function InteractivePhonePreview() {
                   🛍️
                 </div>
                 <div>
-                  <div style={{ fontWeight: 800, fontSize: 11 }}>متجر الأناقة السريع</div>
+                  <div style={{ fontWeight: 800, fontSize: 11 }}>متجر الأناقة الفوري</div>
                   <div style={{ fontSize: 9, opacity: 0.9 }}>نشط الآن 🟢 (نسخة تجريبية حية)</div>
                 </div>
               </div>

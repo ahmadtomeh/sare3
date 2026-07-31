@@ -1763,7 +1763,7 @@ function StoreNotFound() {
         </div>
 
         <div style={{ marginTop: 20, fontSize: 11, color: 'var(--clr-text-muted)', paddingTop: 16, borderTop: '1px solid var(--clr-border)' }}>
-          سريع (Sare3) — المنصة الأولى للطلب عبر الواتساب ⚡
+          فوري (Fawri) — المنصة الأولى للطلب عبر الواتساب ⚡
         </div>
       </div>
     </div>

@@ -177,7 +177,7 @@ export default function StoreSettings() {
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `sare3-backup-${store.slug || 'store'}-${new Date().toLocaleDateString('en-CA')}.json`
+    a.download = `fawri-backup-${store.slug || 'store'}-${new Date().toLocaleDateString('en-CA')}.json`
     a.click()
     URL.revokeObjectURL(url)
     toast.success('✅ تم تصدير النسخة الاحتياطية بنجاح!')
@@ -268,7 +268,7 @@ export default function StoreSettings() {
                 style={{ direction: 'ltr', flex: 1 }}
                 id="store-slug-input"
               />
-              <span style={{ color: 'var(--clr-text-3)', fontSize: 'var(--text-sm)', flexShrink: 0, whiteSpace: 'nowrap' }}>sare3.app/</span>
+              <span style={{ color: 'var(--clr-text-3)', fontSize: 'var(--text-sm)', flexShrink: 0, whiteSpace: 'nowrap' }}>fawri.shop/</span>
             </div>
             <p style={{ fontSize: 'var(--text-xs)', color: 'var(--clr-text-muted)' }}>أحرف إنجليزية وأرقام وشرطات فقط</p>
           </div>

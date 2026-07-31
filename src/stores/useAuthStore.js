@@ -9,7 +9,7 @@ export const useAuthStore = create(
       role: null, // 'super_admin' | 'merchant' | 'staff'
       loading: (() => {
         try {
-          const cached = localStorage.getItem('sare3-auth')
+          const cached = localStorage.getItem('fawri-auth')
           if (cached) {
             const parsed = JSON.parse(cached)
             if (parsed?.state?.user || parsed?.state?.isDemoMode) {
@@ -78,7 +78,7 @@ export const useAuthStore = create(
       isAuthenticated: () => !!get().user || get().isDemoMode,
     }),
     {
-      name: 'sare3-auth',
+      name: 'fawri-auth',
       partialize: (s) => ({ user: s.user, role: s.role, isDemoMode: s.isDemoMode }),
     }
   )

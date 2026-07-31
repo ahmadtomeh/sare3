@@ -87,7 +87,7 @@ export default function AuthPage() {
             <div style={{ fontSize: '2.5rem', marginBottom: 'var(--sp-sm)' }}>
               <Zap size={40} style={{ color: 'var(--clr-primary)', display: 'inline' }} />
             </div>
-            <h1 className="gradient-text" style={{ fontSize: 'var(--text-2xl)', fontWeight: 900 }}>سريع</h1>
+            <h1 className="gradient-text" style={{ fontSize: 'var(--text-2xl)', fontWeight: 900 }}>فوري</h1>
             <p style={{ color: 'var(--clr-text-3)', fontSize: 'var(--text-sm)', marginTop: 4 }}>
               {mode === 'signup' ? 'أنشئ حسابك وابدأ مجاناً' : 'مرحباً بعودتك'}
             </p>

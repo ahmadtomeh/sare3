@@ -36,7 +36,7 @@ export const useProductsStore = create((set, get) => ({
     }
 
     // Instant Cache Read (0ms latency!)
-    const cacheKey = `sare3_products_${storeId}`
+    const cacheKey = `fawri_products_${storeId}`
     try {
       const cached = sessionStorage.getItem(cacheKey) || localStorage.getItem(cacheKey)
       if (cached) {
@@ -166,7 +166,7 @@ export const useProductsStore = create((set, get) => ({
     const isDemo = checkDemo(storeId)
     if (isDemo || !storeId) return () => {}
 
-    const cacheKey = `sare3_products_${storeId}`
+    const cacheKey = `fawri_products_${storeId}`
     const channel = supabase
       .channel(`products-${storeId}`)
       .on('postgres_changes', {

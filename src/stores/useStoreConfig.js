@@ -142,7 +142,7 @@ export const useStoreConfig = create(
       },
     }),
     {
-      name: 'sare3-store-config',
+      name: 'fawri-store-config',
       partialize: (s) => ({ store: s.store }),
     }
   )

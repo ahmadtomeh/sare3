@@ -39,7 +39,7 @@ export function buildWhatsAppMessage({ store, items, customer, total, discount, 
     `━━━━━━━━━━━━━━━━━━━`,
     `⏰ ${dateStr}`,
     ``,
-    `✅ تم الإرسال عبر منصة سريع 🚀`,
+    `✅ تم الإرسال عبر منصة فوري 🚀`,
   ]
     .filter(Boolean)
     .join('\n')

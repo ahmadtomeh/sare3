@@ -93,7 +93,7 @@ export const useOrdersStore = create(
           `⚡ *طلب جديد واصل الآن!*`,
           `━━━━━━━━━━━━━━━━━━━`,
           `📦 *رقم الطلب:* \`#${data.order_number}\``,
-          `🏪 *المتجر:* ${storeData.name || 'سريع'}`,
+          `🏪 *المتجر:* ${storeData.name || 'فوري'}`,
           `⏰ *التوقيت:* \`${orderTime}\``,
           ``,
           `👤 *بيانات الزبون:*`,
@@ -263,7 +263,7 @@ export const useOrdersStore = create(
   },
     }),
     {
-      name: 'sare3-orders',
+      name: 'fawri-orders',
       partialize: (s) => ({ orders: s.orders }),
     }
   )
