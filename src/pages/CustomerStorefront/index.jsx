@@ -754,10 +754,9 @@ export default function CustomerStorefront({ previewSlug }) {
           product={selectedProduct}
           currency={currency}
           onClose={() => setSelectedProduct(null)}
-          onAdd={(opts) => {
-            addItem(selectedProduct, opts)
+          onAdd={(opts, qty) => {
+            addItem(selectedProduct, opts, qty)
             playAudioPop()
-            setSelectedProduct(null)
             toast.success('أضيف للسلة 🛒', { duration: 1000 })
           }}
         />
@@ -1140,6 +1139,7 @@ function ProductOptionsSheet({ product, currency, onClose, onAdd }) {
   }, [product?.options])
 
   const [selected, setSelected] = useState({})
+  const [quantity, setQuantity] = useState(1)
   const [added, setAdded] = useState(false)
   const allSelected = optionsList.length === 0 || optionsList.every((opt) => !opt.required || selected[opt.label])
 
@@ -1225,16 +1225,37 @@ function ProductOptionsSheet({ product, currency, onClose, onAdd }) {
   }
 
   const handleConfirmAdd = () => {
-    onAdd(selected)
+    onAdd(selected, quantity)
     setAdded(true)
-    // Delay closing to let the user see the success check/pulse animation
+    // Delay closing to let the user see the success check/pulse/fly animation
     setTimeout(() => {
       onClose()
-    }, 600)
+    }, 700)
   }
 
   return (
     <BottomSheet title={product.name} onClose={onClose}>
+      {/* Inject custom CSS keyframes for flying image animation */}
+      <style>{`
+        .image-fly-to-cart {
+          animation: imageFlyAnim 0.65s cubic-bezier(0.25, 1, 0.50, 1) forwards;
+        }
+        @keyframes imageFlyAnim {
+          0% {
+            transform: scale(1) translate(0, 0);
+            opacity: 1;
+          }
+          40% {
+            transform: scale(0.6) translate(-100px, -80px);
+            opacity: 0.8;
+          }
+          100% {
+            transform: scale(0.01) translate(-280px, -450px);
+            opacity: 0;
+          }
+        }
+      `}</style>
+
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
         {/* Multi-Image Swiper */}
         {images.length > 0 && (
@@ -1242,7 +1263,11 @@ function ProductOptionsSheet({ product, currency, onClose, onAdd }) {
             <img
               src={images[activeImg]}
               alt={product.name}
-              style={{ width: '100%', maxHeight: 200, objectFit: 'cover', display: 'block', borderRadius: 12 }}
+              className={added ? 'image-fly-to-cart' : ''}
+              style={{ 
+                width: '100%', maxHeight: 200, objectFit: 'cover', display: 'block', borderRadius: 12,
+                transition: 'all 0.3s ease',
+              }}
               onTouchStart={handleImgTouchStart}
               onTouchEnd={handleImgTouchEnd}
             />
@@ -1318,22 +1343,56 @@ function ProductOptionsSheet({ product, currency, onClose, onAdd }) {
           </div>
         ))}
 
-        <button
-          type="button"
-          className={`btn btn-full btn-lg ${added ? 'btn-success' : 'btn-primary'} animate-glow`}
-          onClick={handleConfirmAdd}
-          disabled={!allSelected || added}
-          style={{ 
-            marginTop: 8,
-            background: added ? '#10B981' : undefined,
-            borderColor: added ? '#10B981' : undefined,
-            color: '#fff',
-            animation: added ? 'buttonConfirmBounce 0.4s ease-in-out' : undefined,
-            transition: 'all 0.3s ease',
-          }}
-        >
-          {added ? '🎉 تمت الإضافة للسلة!' : allSelected ? '✅ إضافة للسلة' : 'اختر الخيارات أولاً'}
-        </button>
+        {/* Dynamic Quantity Selector & Add Button Row */}
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginTop: 12 }}>
+          {/* Quantity selector inside options sheet */}
+          <div style={{ 
+            display: 'flex', alignItems: 'center', gap: 12, 
+            background: 'var(--glass-bg-2)', padding: '6px 12px', 
+            borderRadius: 12, border: '1px solid var(--clr-border)',
+            minHeight: 46
+          }}>
+            <button 
+              type="button" 
+              className="btn btn-ghost btn-sm" 
+              style={{ padding: '2px 8px', minHeight: 28, fontSize: 16, fontWeight: 900 }} 
+              onClick={() => setQuantity(q => Math.max(1, q - 1))}
+              disabled={added}
+            >
+              −
+            </button>
+            <span style={{ fontWeight: 800, fontSize: 15, minWidth: 20, textAlign: 'center', color: 'var(--clr-text)' }}>
+              {quantity}
+            </span>
+            <button 
+              type="button" 
+              className="btn btn-ghost btn-sm" 
+              style={{ padding: '2px 8px', minHeight: 28, fontSize: 16, fontWeight: 900 }} 
+              onClick={() => setQuantity(q => q + 1)}
+              disabled={added}
+            >
+              +
+            </button>
+          </div>
+
+          <button
+            type="button"
+            className={`btn btn-full btn-lg ${added ? 'btn-success' : 'btn-primary'} animate-glow`}
+            onClick={handleConfirmAdd}
+            disabled={!allSelected || added}
+            style={{ 
+              flex: 1,
+              background: added ? '#10B981' : undefined,
+              borderColor: added ? '#10B981' : undefined,
+              color: '#fff',
+              animation: added ? 'buttonConfirmBounce 0.4s ease-in-out' : undefined,
+              transition: 'all 0.3s ease',
+              minHeight: 46,
+            }}
+          >
+            {added ? '🎉 تمت الإضافة للسلة!' : allSelected ? `إضافة للسلة (${formatPrice(currentTotalPrice * quantity)} ${currency})` : 'اختر الخيارات أولاً'}
+          </button>
+        </div>
       </div>
     </BottomSheet>
   )

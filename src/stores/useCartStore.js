@@ -18,14 +18,14 @@ export const useCartStore = create(
         }
       },
 
-      addItem: (product, selectedOptions = {}) => {
+      addItem: (product, selectedOptions = {}, quantity = 1) => {
         const key = `${product.id}-${JSON.stringify(selectedOptions)}`
         set((s) => {
           const existing = s.items.find((i) => i.key === key)
           if (existing) {
-            return { items: s.items.map((i) => i.key === key ? { ...i, quantity: i.quantity + 1 } : i) }
+            return { items: s.items.map((i) => i.key === key ? { ...i, quantity: i.quantity + quantity } : i) }
           }
-          return { items: [...s.items, { key, product, quantity: 1, selectedOptions }] }
+          return { items: [...s.items, { key, product, quantity, selectedOptions }] }
         })
       },
 
