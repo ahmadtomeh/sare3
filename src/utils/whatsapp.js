@@ -1,6 +1,9 @@
-/**
- * بناء رسالة الواتساب المنسقة من سلة الطلبات
- */
+const formatPrice = (val) => {
+  const num = Number(val)
+  if (isNaN(num)) return '0'
+  return num % 1 === 0 ? num.toString() : num.toFixed(2).replace(/\.?0+$/, '')
+}
+
 export function buildWhatsAppMessage({ store, items, customer, total, discount, shipping, orderNumber }) {
   const currency = store?.currency || '₪'
   const storeName = store?.name || 'المتجر'
@@ -13,7 +16,7 @@ export function buildWhatsAppMessage({ store, items, customer, total, discount, 
       const optStr = opts ? ` (${opts})` : ''
       const optionExtra = Object.values(item.selectedOptions || {}).reduce((s, opt) => s + Number(opt.price || 0), 0)
       const itemPrice = Number(item.product.price) + optionExtra
-      return `• ${item.product.name}${optStr} × ${item.quantity} — ${(itemPrice * item.quantity).toFixed(0)} ${currency}`
+      return `• ${item.product.name}${optStr} × ${item.quantity} — ${formatPrice(itemPrice * item.quantity)} ${currency}`
     })
     .join('\n')
 
@@ -33,9 +36,9 @@ export function buildWhatsAppMessage({ store, items, customer, total, discount, 
     `🧾 تفاصيل الطلب:`,
     itemsText,
     `━━━━━━━━━━━━━━━━━━━`,
-    discount ? `🏷️ الخصم (${discount.code}): -${discount.amount.toFixed(0)} ${currency}` : '',
-    shipping ? `📦 التوصيل (${shipping.name}): +${shipping.cost.toFixed(0)} ${currency}` : '',
-    `💰 الإجمالي النهائي: ${total.toFixed(0)} ${currency}`,
+    discount ? `🏷️ الخصم (${discount.code}): -${formatPrice(discount.amount)} ${currency}` : '',
+    shipping ? `📦 التوصيل (${shipping.name}): +${formatPrice(shipping.cost)} ${currency}` : '',
+    `💰 الإجمالي النهائي: ${formatPrice(total)} ${currency}`,
     customer.notes ? `📝 ملاحظات: ${customer.notes}` : '',
     orderNumber ? `🔖 رقم الطلب: #${orderNumber}` : '',
     `━━━━━━━━━━━━━━━━━━━`,

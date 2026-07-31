@@ -12,6 +12,12 @@ import { supabase } from '../../lib/supabase'
 import InstallPWA from '../../components/InstallPWA'
 import toast from 'react-hot-toast'
 
+export const formatPrice = (val) => {
+  const num = Number(val)
+  if (isNaN(num)) return '0'
+  return num % 1 === 0 ? num.toString() : num.toFixed(2).replace(/\.?0+$/, '')
+}
+
 export default function CustomerStorefront({ previewSlug }) {
   const { slug: routeSlug } = useParams()
 
@@ -726,7 +732,7 @@ export default function CustomerStorefront({ previewSlug }) {
               <span>السلة ({cartCount})</span>
             </div>
             <div style={{ fontWeight: 900, fontSize: 16 }}>
-              {cartTotal.toFixed(0)} {currency} ←
+              {formatPrice(cartTotal)} {currency} ←
             </div>
           </button>
         </div>
@@ -856,7 +862,7 @@ function CompactProductCard({ product, currency, badge, onAdd }) {
         {/* Price & Compact Add Button Row */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 'auto', paddingTop: 4 }}>
           <div style={{ fontWeight: 900, fontSize: 13, color: 'var(--clr-accent)' }}>
-            {parseFloat(product.price).toFixed(0)} <span style={{ fontSize: 9 }}>{currency}</span>
+            {formatPrice(product.price)} <span style={{ fontSize: 9 }}>{currency}</span>
           </div>
 
           {product.is_available && (
@@ -1084,7 +1090,7 @@ function CartDrawer({
                   {isFreeShippingEligible ? (
                     <span style={{ color: 'var(--clr-accent)', fontWeight: 800 }}>🎉 مبروك! لقد حصلت على توصيل مجاني!</span>
                   ) : (
-                    <span>يتبقى لك <strong style={{ color: 'var(--clr-primary)' }}>{remaining.toFixed(0)} {currency}</strong> للحصول على شحن مجاني 🚚</span>
+                    <span>يتبقى لك <strong style={{ color: 'var(--clr-primary)' }}>{formatPrice(remaining)} {currency}</strong> للحصول على شحن مجاني 🚚</span>
                   )}
                   <span>{percent.toFixed(0)}%</span>
                 </div>
@@ -1121,7 +1127,7 @@ function CartDrawer({
                       </div>
                     )}
                     <div style={{ fontWeight: 900, color: 'var(--clr-accent)', fontSize: 12, marginTop: 2 }}>
-                      {((Number(item.product.price) + Object.values(item.selectedOptions || {}).reduce((s, opt) => s + Number(opt.price || 0), 0)) * item.quantity).toFixed(0)} {currency}
+                      {formatPrice((Number(item.product.price) + Object.values(item.selectedOptions || {}).reduce((s, opt) => s + Number(opt.price || 0), 0)) * item.quantity)} {currency}
                     </div>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'var(--glass-bg-2)', padding: '2px 4px', borderRadius: 6 }}>
@@ -1171,7 +1177,7 @@ function CartDrawer({
                       </div>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'auto' }}>
                         <span style={{ fontSize: 11, fontWeight: 900, color: 'var(--clr-accent)' }}>
-                          {parseFloat(prod.price).toFixed(0)} {currency}
+                          {formatPrice(prod.price)} {currency}
                         </span>
                         <button
                           type="button"
@@ -1232,18 +1238,18 @@ function CartDrawer({
             <div style={{ display: 'flex', flexDirection: 'column', gap: 4, borderTop: '1px solid var(--clr-border)', paddingTop: 8 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 12, color: 'var(--clr-text-3)' }}>
                 <span>مجموع المنتجات:</span>
-                <span>{cartTotal.toFixed(0)} {currency}</span>
+                <span>{formatPrice(cartTotal)} {currency}</span>
               </div>
               {appliedCoupon && (
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 12, color: 'var(--clr-accent)' }}>
                   <span>خصم كوبون ({appliedCoupon.code}):</span>
-                  <span>-{discountAmount.toFixed(0)} {currency}</span>
+                  <span>-{formatPrice(discountAmount)} {currency}</span>
                 </div>
               )}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px dashed var(--clr-border)', paddingTop: 6, marginTop: 4 }}>
                 <span style={{ fontWeight: 800, fontSize: 13 }}>المجموع الإجمالي:</span>
                 <span style={{ fontWeight: 900, fontSize: 16, color: 'var(--clr-accent)' }}>
-                  {finalTotal.toFixed(0)} {currency}
+                  {formatPrice(finalTotal)} {currency}
                 </span>
               </div>
             </div>
@@ -1475,7 +1481,7 @@ function OrderFormSheet({
           style={{ background: '#25D366', borderColor: '#25D366', color: '#fff', marginTop: 4 }}
         >
           <MessageCircle size={18} />
-          إرسال الطلب الآن ({finalTotal.toFixed(0)} {currency}) 💬
+          إرسال الطلب الآن ({formatPrice(finalTotal)} {currency}) 💬
         </button>
       </div>
     </BottomSheet>
@@ -1531,7 +1537,7 @@ function MyOrdersSheet({ store, onClose, onTrack }) {
                   </div>
                 </div>
                 <span style={{ fontWeight: 900, fontSize: 14, color: 'var(--clr-accent)' }}>
-                  {order.total?.toFixed(0)} {order.currency}
+                  {formatPrice(order.total)} {order.currency}
                 </span>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 3, marginBottom: 8 }}>

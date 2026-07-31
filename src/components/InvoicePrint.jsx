@@ -1,6 +1,12 @@
 import React, { useState } from 'react'
 import { Printer, X } from 'lucide-react'
 
+const formatPrice = (val) => {
+  const num = Number(val)
+  if (isNaN(num)) return '0'
+  return num % 1 === 0 ? num.toString() : num.toFixed(2).replace(/\.?0+$/, '')
+}
+
 export default function InvoicePrint({ order, store, onClose }) {
   if (!order || !store) return null
 
@@ -150,8 +156,8 @@ export default function InvoicePrint({ order, store, onClose }) {
                     <div key={idx} style={{ display: 'flex', flexDirection: 'column', fontSize: 11 }}>
                       <div style={{ fontWeight: 700 }}>{name} {option && `(${option})`}</div>
                       <div style={{ display: 'flex', justifyContent: 'space-between', opacity: 0.9 }}>
-                        <span>{qty} × {price.toFixed(0)} {currency}</span>
-                        <span style={{ fontWeight: 800 }}>{(price * qty).toFixed(0)} {currency}</span>
+                        <span>{qty} × {formatPrice(price)} {currency}</span>
+                        <span style={{ fontWeight: 800 }}>{formatPrice(price * qty)} {currency}</span>
                       </div>
                     </div>
                   )
@@ -164,23 +170,23 @@ export default function InvoicePrint({ order, store, onClose }) {
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4, fontSize: 11 }}>
                 <div style={{ display: 'flex', width: '100%', justifyContent: 'space-between' }}>
                   <span>المجموع الفرعي:</span>
-                  <span>{subtotal.toFixed(0)} {currency}</span>
+                  <span>{formatPrice(subtotal)} {currency}</span>
                 </div>
                 {discountVal > 0 && (
                   <div style={{ display: 'flex', width: '100%', justifyContent: 'space-between' }}>
                     <span>{discountName}:</span>
-                    <span>-{discountVal.toFixed(0)} {currency}</span>
+                    <span>-{formatPrice(discountVal)} {currency}</span>
                   </div>
                 )}
                 {shippingVal > 0 && (
                   <div style={{ display: 'flex', width: '100%', justifyContent: 'space-between' }}>
                     <span>{shippingName}:</span>
-                    <span>+{shippingVal.toFixed(0)} {currency}</span>
+                    <span>+{formatPrice(shippingVal)} {currency}</span>
                   </div>
                 )}
                 <div style={{ display: 'flex', width: '100%', justifyContent: 'space-between', borderTop: '1px dotted #000', paddingTop: 6, fontWeight: 900, fontSize: 13 }}>
                   <span>المجموع النهائي:</span>
-                  <span>{parseFloat(order.total).toFixed(0)} {currency}</span>
+                  <span>{formatPrice(order.total)} {currency}</span>
                 </div>
               </div>
 
@@ -248,8 +254,8 @@ export default function InvoicePrint({ order, store, onClose }) {
                           {option && <span style={{ color: '#6b7280', fontSize: 10 }}> ({option})</span>}
                         </td>
                         <td style={{ textAlign: 'center', padding: 8, color: '#4b5563' }}>{qty}</td>
-                        <td style={{ textAlign: 'left', padding: 8, color: '#4b5563' }}>{price.toFixed(0)} {currency}</td>
-                        <td style={{ textAlign: 'left', padding: 8, fontWeight: 700, color: '#111827' }}>{(price * qty).toFixed(0)} {currency}</td>
+                        <td style={{ textAlign: 'left', padding: 8, color: '#4b5563' }}>{formatPrice(price)} {currency}</td>
+                        <td style={{ textAlign: 'left', padding: 8, fontWeight: 700, color: '#111827' }}>{formatPrice(price * qty)} {currency}</td>
                       </tr>
                     )
                   })}
@@ -260,23 +266,23 @@ export default function InvoicePrint({ order, store, onClose }) {
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6, alignItems: 'flex-start', fontSize: 12, color: '#4b5563', paddingRight: '50%', textAlign: 'left', marginTop: 16 }}>
                 <div style={{ display: 'flex', width: '100%', justifyContent: 'space-between', borderTop: '2px solid #e5e7eb', paddingTop: 8 }}>
                   <span>المجموع الفرعي:</span>
-                  <span>{subtotal.toFixed(0)} {currency}</span>
+                  <span>{formatPrice(subtotal)} {currency}</span>
                 </div>
                 {discountVal > 0 && (
                   <div style={{ display: 'flex', width: '100%', justifyContent: 'space-between', color: '#8b5cf6' }}>
                     <span>{discountName}:</span>
-                    <span>-{discountVal.toFixed(0)} {currency}</span>
+                    <span>-{formatPrice(discountVal)} {currency}</span>
                   </div>
                 )}
                 {shippingVal > 0 && (
                   <div style={{ display: 'flex', width: '100%', justifyContent: 'space-between' }}>
                     <span>{shippingName}:</span>
-                    <span>+{shippingVal.toFixed(0)} {currency}</span>
+                    <span>+{formatPrice(shippingVal)} {currency}</span>
                   </div>
                 )}
                 <div style={{ display: 'flex', width: '100%', justifyContent: 'space-between', borderTop: '1px dashed #e5e7eb', paddingTop: 6, marginTop: 4 }}>
                   <span style={{ fontWeight: 700, color: '#111827' }}>المجموع النهائي:</span>
-                  <span style={{ fontWeight: 900, fontSize: 16, color: 'var(--clr-primary, #7c3aed)' }}>{parseFloat(order.total).toFixed(0)} {currency}</span>
+                  <span style={{ fontWeight: 900, fontSize: 16, color: 'var(--clr-primary, #7c3aed)' }}>{formatPrice(order.total)} {currency}</span>
                 </div>
               </div>
 

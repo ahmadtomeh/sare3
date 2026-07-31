@@ -7,6 +7,12 @@ import { buildStatusUpdateMessage, buildWhatsAppUrl } from '../../utils/whatsapp
 import InvoicePrint from '../../components/InvoicePrint'
 import toast from 'react-hot-toast'
 
+const formatPrice = (val) => {
+  const num = Number(val)
+  if (isNaN(num)) return '0'
+  return num % 1 === 0 ? num.toString() : num.toFixed(2).replace(/\.?0+$/, '')
+}
+
 const STATUSES = [
   { value: 'all',              label: 'الكل',              emoji: '📋' },
   { value: 'new',              label: 'جديد',              emoji: '🟡' },
@@ -187,7 +193,7 @@ function OrderCard({ order, currency, isExpanded, onToggle, onStatusUpdate, onNo
             </div>
           </div>
           <div style={{ fontWeight: 800, color: 'var(--clr-accent)', flexShrink: 0 }}>
-            {parseFloat(order.total).toFixed(0)} {currency}
+            {formatPrice(order.total)} {currency}
           </div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-sm)' }}>
@@ -233,7 +239,7 @@ function OrderCard({ order, currency, isExpanded, onToggle, onStatusUpdate, onNo
                     </div>
                     <div style={{ fontSize: 'var(--text-xs)', color: 'var(--clr-text-3)' }}>×{item.quantity}</div>
                     <div style={{ fontWeight: 700, color: 'var(--clr-primary)', fontSize: 'var(--text-sm)', flexShrink: 0 }}>
-                      {((item.product?.price || 0) * item.quantity).toFixed(0)} {currency}
+                      {formatPrice((item.product?.price || 0) * item.quantity)} {currency}
                     </div>
                   </div>
                 )
