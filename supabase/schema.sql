@@ -1,5 +1,5 @@
 -- ================================================================
--- SARE3 / سريع — Supabase Database Schema
+-- FAWRI / فوري — Supabase Database Schema
 -- Run this SQL in your Supabase SQL Editor
 -- ================================================================
 

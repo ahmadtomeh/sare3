@@ -13,13 +13,13 @@
   "categories": ["shopping", "business", "productivity"],
   "icons": [
     {
-      "src": "https://api.dicebear.com/9.x/shapes/svg?seed=sare3&size=192&backgroundColor=7c3aed",
+      "src": "https://api.dicebear.com/9.x/shapes/svg?seed=fawri&size=192&backgroundColor=7c3aed",
       "sizes": "192x192",
       "type": "image/svg+xml",
       "purpose": "any"
     },
     {
-      "src": "https://api.dicebear.com/9.x/shapes/svg?seed=sare3&size=512&backgroundColor=7c3aed",
+      "src": "https://api.dicebear.com/9.x/shapes/svg?seed=fawri&size=512&backgroundColor=7c3aed",
       "sizes": "512x512",
       "type": "image/svg+xml",
       "purpose": "maskable"

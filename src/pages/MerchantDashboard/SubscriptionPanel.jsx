@@ -174,7 +174,7 @@ export default function SubscriptionPanel() {
             </h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sp-md)' }}>
               {[
-                { step: '1', icon: '📱', title: 'أرسل المبلغ عبر Reflect', desc: 'أرسل المبلغ إلى حساب سريع على Reflect (سيتم تحديث الرقم قريباً)' },
+                { step: '1', icon: '📱', title: 'أرسل المبلغ عبر Reflect', desc: 'أرسل المبلغ إلى حساب فوري على Reflect (سيتم تحديث الرقم قريباً)' },
                 { step: '2', icon: '📸', title: 'أرسل صورة الإيصال', desc: 'أرسل لقطة شاشة للحوالة على الواتساب أو البريد الإلكتروني' },
                 { step: '3', icon: '🔑', title: 'استلم كود التفعيل', desc: 'سيتم إرسال كود التفعيل خلال دقائق بعد التحقق من الدفع' },
                 { step: '4', icon: '✅', title: 'فعّل اشتراكك', desc: 'أدخل الكود في قسم "تفعيل كود" وانطلق!' },
@@ -196,7 +196,7 @@ export default function SubscriptionPanel() {
             </div>
 
             <a
-              href="https://wa.me/970569922257?text=مرحبا، أريد الاشتراك في سريع"
+              href="https://wa.me/970569922257?text=مرحبا، أريد الاشتراك في فوري"
               target="_blank"
               rel="noreferrer"
               className="btn btn-full"

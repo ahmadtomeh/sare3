@@ -1339,7 +1339,7 @@ function OrderFormSheet({
       currency,
     }
     try {
-      const key = `sare3-orders-${store.id}`
+      const key = `fawri-orders-${store.id}`
       const prev = JSON.parse(localStorage.getItem(key) || '[]')
       localStorage.setItem(key, JSON.stringify([orderRecord, ...prev].slice(0, 30)))
     } catch {}
@@ -1438,7 +1438,7 @@ function MyOrdersSheet({ store, onClose, onTrack }) {
 
   useEffect(() => {
     try {
-      const key = `sare3-orders-${store.id}`
+      const key = `fawri-orders-${store.id}`
       const saved = JSON.parse(localStorage.getItem(key) || '[]')
       setOrders(saved)
     } catch {
@@ -1455,7 +1455,7 @@ function MyOrdersSheet({ store, onClose, onTrack }) {
   }
 
   const handleClearOrders = () => {
-    const key = `sare3-orders-${store.id}`
+    const key = `fawri-orders-${store.id}`
     localStorage.removeItem(key)
     setOrders([])
     toast.success('تم مسح السجل')

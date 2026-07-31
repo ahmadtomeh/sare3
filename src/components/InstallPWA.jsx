@@ -40,7 +40,7 @@ export default function InstallPWA({ appName, logoUrl }) {
     const handleBeforeInstallPrompt = (e) => {
       e.preventDefault()
       setDeferredPrompt(e)
-      const dismissed = localStorage.getItem('sare3-pwa-dismissed')
+      const dismissed = localStorage.getItem('fawri-pwa-dismissed')
       if (!dismissed) {
         setShowPrompt(true)
       }
@@ -48,7 +48,7 @@ export default function InstallPWA({ appName, logoUrl }) {
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
 
-    if (ios && !localStorage.getItem('sare3-pwa-dismissed')) {
+    if (ios && !localStorage.getItem('fawri-pwa-dismissed')) {
       setShowPrompt(true)
     }
 
@@ -69,7 +69,7 @@ export default function InstallPWA({ appName, logoUrl }) {
 
   const handleDismiss = () => {
     setShowPrompt(false)
-    localStorage.setItem('sare3-pwa-dismissed', 'true')
+    localStorage.setItem('fawri-pwa-dismissed', 'true')
   }
 
   if (isStandalone || !showPrompt) return null

@@ -292,7 +292,7 @@ export default function MerchantDashboard() {
 
           <div className="navbar-logo" style={{ flexShrink: 0 }}>
             <Zap size={18} style={{ color: 'var(--clr-accent)' }}/>
-            سريع
+            فوري
           </div>
 
           {store && (

@@ -55,7 +55,7 @@ Deno.serve(async (req: Request) => {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               chat_id: chatId,
-              text: `👋 أهلاً بك في بوت إشعارات منصة سريع ⚡\n\nربط الإشعارات يتم بنقرة واحدة مباشرة من لوحة تحكم متجرك!`,
+              text: `👋 أهلاً بك في بوت إشعارات منصة فوري ⚡\n\nربط الإشعارات يتم بنقرة واحدة مباشرة من لوحة تحكم متجرك!`,
               parse_mode: 'Markdown',
             }),
           })

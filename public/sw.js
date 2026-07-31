@@ -1,4 +1,4 @@
-// ── Sare3 Service Worker ──
+// ── Fawri Service Worker ──
 // Web Push Notifications + Instant Network Pass-Through (No Asset Caching Issues)
 
 self.addEventListener('install', (event) => {
@@ -25,12 +25,12 @@ self.addEventListener('push', (event) => {
     }
   }
 
-  const title = data.title || 'طلب جديد على سريع 🛒'
+  const title = data.title || 'طلب جديد على فوري 🛒'
   const options = {
     body: data.body || 'لديك طلب جديد في متجرك!',
     icon: '/icon-192.png',
     badge: '/icon-192.png',
-    tag: data.tag || 'sare3-order',
+    tag: data.tag || 'fawri-order',
     renotify: true,
     vibrate: [200, 100, 200, 100, 200, 100, 400],
     data: {
