@@ -354,6 +354,11 @@ export default function CustomerStorefront({ previewSlug }) {
 
   useEffect(() => {
     if (!store) return
+    console.log("🎨 SAR3E Theme Loader - Colors from Database:", {
+      primary: store.primary_color,
+      accent: store.accent_color,
+      selected_theme: store.selected_theme
+    })
     const theme = store.selected_theme || 'neon'
     const root = document.documentElement
 
