@@ -7,6 +7,12 @@ import { subscribeToPush } from '../../lib/pushNotifications'
 import { checkAndBindTelegram } from '../../lib/telegram'
 import toast from 'react-hot-toast'
 
+const formatPrice = (val) => {
+  const num = Number(val)
+  if (isNaN(num)) return '0'
+  return num % 1 === 0 ? num.toString() : num.toFixed(2).replace(/\.?0+$/, '')
+}
+
 const STATUS_CONFIG = {
   new:              { label: 'جديد',          color: '#f59e0b', bg: 'rgba(245,158,11,0.12)' },
   preparing:        { label: 'قيد التجهيز',   color: '#3b82f6', bg: 'rgba(59,130,246,0.12)' },
@@ -44,7 +50,7 @@ export default function DashboardHome({ onNavigate }) {
     : stats.todayOrders > 0 ? 'طلبات جديدة ✨' : 'انتظر أول طلب'
 
   const avgOrderValue = orders.length > 0
-    ? (stats.totalRevenue / orders.length).toFixed(0)
+    ? formatPrice(stats.totalRevenue / orders.length)
     : 0
 
   // أفضل المنتجات مبيعاً
@@ -279,7 +285,7 @@ export default function DashboardHome({ onNavigate }) {
           bg="rgba(16,185,129,0.15)"
           clr="var(--clr-accent)"
           label="الإيرادات"
-          value={`${stats.totalRevenue.toFixed(0)} ${store?.currency || '₪'}`}
+          value={`${formatPrice(stats.totalRevenue)} ${store?.currency || '₪'}`}
           trend={revenueTrend}
           sparklinePath="M0,28 Q30,20 60,24 T120,10 T180,4 T200,2"
         />
@@ -326,7 +332,7 @@ export default function DashboardHome({ onNavigate }) {
               {/* Grid Lines */}
               {[0, 0.5, 1].map((ratio) => {
                 const y = padT + ratio * plotH
-                const val = (maxRev * (1 - ratio)).toFixed(0)
+                const val = formatPrice(maxRev * (1 - ratio))
                 return (
                   <g key={ratio} style={{ opacity: 0.15 }}>
                     <line x1={padL} y1={y} x2={svgW - padR} y2={y} stroke="var(--clr-text)" strokeWidth="1" strokeDasharray="4 4" />
@@ -359,7 +365,7 @@ export default function DashboardHome({ onNavigate }) {
                   />
                   {p.revenue > 0 && (
                     <text x={p.x} y={p.y - 8} textAnchor="middle" fontSize="9" fontWeight="800" fill="var(--clr-accent)">
-                      {p.revenue.toFixed(0)}
+                      {formatPrice(p.revenue)}
                     </text>
                   )}
                   {/* X Axis Labels */}
@@ -493,7 +499,7 @@ export default function DashboardHome({ onNavigate }) {
                           {order.customer_name}
                         </td>
                         <td style={{ padding: '14px var(--sp-md)', fontWeight: 900, color: 'var(--clr-accent)' }}>
-                          {parseFloat(order.total).toFixed(0)} {store?.currency || '₪'}
+                          {formatPrice(order.total)} {store?.currency || '₪'}
                         </td>
                         <td style={{ padding: '14px var(--sp-md)' }}>
                           <span style={{
@@ -533,7 +539,7 @@ export default function DashboardHome({ onNavigate }) {
                     <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 180 }}>{name}</span>
                   </span>
                   <span style={{ color: 'var(--clr-text-3)', fontWeight: 700, flexShrink: 0 }}>
-                    {data.qty} وحدة • {data.revenue.toFixed(0)} {store?.currency || '₪'}
+                    {data.qty} وحدة • {formatPrice(data.revenue)} {store?.currency || '₪'}
                   </span>
                 </div>
                 <div style={{ height: 6, background: 'var(--glass-bg-2)', borderRadius: 'var(--radius-full)', overflow: 'hidden' }}>

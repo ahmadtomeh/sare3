@@ -259,46 +259,71 @@ function ProductFormModal({ product, categories, storeId, currency, onClose, onS
     price: product?.price || '',
     category_id: product?.category_id || '',
     image_url: product?.image_url || '',
+    images: Array.isArray(product?.images) && product.images.length > 0
+      ? product.images
+      : (product?.image_url ? [product.image_url] : []),
     is_available: product?.is_available ?? true,
     options: normalizeOptions(product?.options),
     track_stock: product?.track_stock ?? false,
     stock_count: product?.stock_count ?? 0,
   })
-  const [imagePreview, setImagePreview] = useState(product?.image_url || '')
   const [uploading, setUploading] = useState(false)
   const fileRef = useRef()
 
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }))
 
   const handleFileChange = async (e) => {
-    const file = e.target.files[0]
-    if (!file) return
+    const files = Array.from(e.target.files)
+    if (!files.length) return
     setUploading(true)
 
     try {
-      // Compress product image down to max 600px & ~35KB for lightning fast storefront rendering
-      const compressedUrl = await compressImage(file, 600, 600, 0.7)
-      setImagePreview(compressedUrl)
-      set('image_url', compressedUrl)
+      const newUrls = []
+      for (const file of files) {
+        // Compress each image
+        const compressedUrl = await compressImage(file, 600, 600, 0.7)
+        let finalUrl = compressedUrl
 
-      try {
-        const ext = file.name.split('.').pop()
-        const path = `products/${storeId}/${Date.now()}.${ext}`
-        const { error } = await supabase.storage.from('store-assets').upload(path, file)
-        if (!error) {
-          const { data: urlData } = supabase.storage.from('store-assets').getPublicUrl(path)
-          if (urlData?.publicUrl) {
-            set('image_url', urlData.publicUrl)
+        try {
+          const ext = file.name.split('.').pop()
+          const path = `products/${storeId}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
+          const { error } = await supabase.storage.from('store-assets').upload(path, file)
+          if (!error) {
+            const { data: urlData } = supabase.storage.from('store-assets').getPublicUrl(path)
+            if (urlData?.publicUrl) finalUrl = urlData.publicUrl
           }
+        } catch (err) {
+          console.warn('Image storage upload fallback:', err)
         }
-      } catch (err) {
-        console.warn('Product image storage upload fallback:', err)
+        newUrls.push(finalUrl)
       }
+
+      setForm(f => {
+        const combined = [...f.images, ...newUrls]
+        return { ...f, images: combined, image_url: combined[0] || '' }
+      })
+      toast.success(`✅ تم رفع ${newUrls.length} صورة`)
     } catch {
-      toast.error('فشل معالجة صورة المنتج')
+      toast.error('فشل معالجة الصور')
     } finally {
       setUploading(false)
     }
+  }
+
+  const handleRemoveImage = (idx) => {
+    setForm(f => {
+      const imgs = f.images.filter((_, i) => i !== idx)
+      return { ...f, images: imgs, image_url: imgs[0] || '' }
+    })
+  }
+
+  const handleSetPrimary = (idx) => {
+    setForm(f => {
+      const imgs = [...f.images]
+      const [chosen] = imgs.splice(idx, 1)
+      imgs.unshift(chosen)
+      return { ...f, images: imgs, image_url: imgs[0] }
+    })
   }
 
   const addOption = () => set('options', [...form.options, { label: '', required: true, values: [{ name: '', price: 0 }] }])
@@ -308,47 +333,94 @@ function ProductFormModal({ product, categories, storeId, currency, onClose, onS
   const handleSubmit = (e) => {
     e.preventDefault()
     if (!form.name || !form.price) { toast.error('يرجى تعبئة الاسم والسعر'); return }
-    onSave({ ...form, price: parseFloat(form.price) })
+    // Ensure image_url is always set to first image if images exist
+    const finalImageUrl = form.images[0] || form.image_url || ''
+    onSave({ ...form, price: parseFloat(form.price), image_url: finalImageUrl })
   }
 
   return (
     <Modal title={product ? 'تعديل المنتج' : 'إضافة منتج جديد'} onClose={onClose} size="lg">
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sp-md)' }}>
-        {/* Image Upload */}
+        {/* Image Upload - Multi Gallery */}
         <div>
-          <label className="input-label" style={{ marginBottom: 8, display: 'block' }}>صورة المنتج</label>
-          <div
-            className="upload-area"
-            onClick={() => fileRef.current?.click()}
-            style={{ cursor: 'pointer', position: 'relative', overflow: 'hidden' }}
-          >
-            {imagePreview ? (
-              <img src={imagePreview} style={{ maxHeight: 160, objectFit: 'contain', margin: 'auto', borderRadius: 8 }} />
-            ) : (
+          <label className="input-label" style={{ marginBottom: 8, display: 'block' }}>صور المنتج ({form.images.length}/5)</label>
+
+          {/* Gallery Preview */}
+          {form.images.length > 0 && (
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 10 }}>
+              {form.images.map((src, idx) => (
+                <div key={idx} style={{
+                  position: 'relative', width: 80, height: 80, borderRadius: 10,
+                  border: idx === 0 ? '2px solid var(--clr-primary)' : '2px solid var(--clr-border)',
+                  overflow: 'hidden', flexShrink: 0,
+                }}>
+                  <img src={src} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  {idx === 0 && (
+                    <span style={{
+                      position: 'absolute', top: 2, right: 2,
+                      background: 'var(--clr-primary)', color: '#fff',
+                      fontSize: 8, fontWeight: 800, padding: '1px 4px', borderRadius: 4,
+                    }}>رئيسية</span>
+                  )}
+                  <div style={{
+                    position: 'absolute', inset: 0, background: 'rgba(0,0,0,0)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4,
+                    transition: 'background 0.2s',
+                  }}
+                    onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,0,0,0.5)'}
+                    onMouseLeave={e => e.currentTarget.style.background = 'rgba(0,0,0,0)'}
+                  >
+                    {idx !== 0 && (
+                      <button
+                        type="button"
+                        title="تعيين كرئيسية"
+                        onClick={() => handleSetPrimary(idx)}
+                        style={{ background: 'var(--clr-primary)', border: 'none', borderRadius: 4, color: '#fff', fontSize: 10, padding: '2px 4px', cursor: 'pointer' }}
+                      >⭐</button>
+                    )}
+                    <button
+                      type="button"
+                      title="حذف"
+                      onClick={() => handleRemoveImage(idx)}
+                      style={{ background: '#ef4444', border: 'none', borderRadius: 4, color: '#fff', fontSize: 10, padding: '2px 4px', cursor: 'pointer' }}
+                    >✕</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Upload Area */}
+          {form.images.length < 5 && (
+            <div
+              className="upload-area"
+              onClick={() => fileRef.current?.click()}
+              style={{ cursor: 'pointer', position: 'relative', overflow: 'hidden', minHeight: form.images.length > 0 ? 60 : 120 }}
+            >
               <div style={{ color: 'var(--clr-text-3)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
-                <Upload size={28} />
-                <span style={{ fontSize: 'var(--text-sm)' }}>انقر لرفع صورة المنتج</span>
-                <span style={{ fontSize: 'var(--text-xs)', color: 'var(--clr-text-muted)' }}>JPG, PNG, WEBP — حتى 5MB</span>
+                <Upload size={form.images.length > 0 ? 20 : 28} />
+                <span style={{ fontSize: 'var(--text-sm)' }}>
+                  {form.images.length > 0 ? `+ إضافة صور (${5 - form.images.length} متبقية)` : 'انقر لرفع صور المنتج'}
+                </span>
+                {form.images.length === 0 && (
+                  <span style={{ fontSize: 'var(--text-xs)', color: 'var(--clr-text-muted)' }}>JPG, PNG, WEBP — حتى 5 صور</span>
+                )}
               </div>
-            )}
-            {uploading && (
-              <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 'inherit' }}>
-                <span className="animate-spin" style={{ width: 28, height: 28, border: '3px solid rgba(255,255,255,0.3)', borderTop: '3px solid #fff', borderRadius: '50%', display: 'inline-block' }} />
-              </div>
-            )}
-          </div>
+              {uploading && (
+                <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 'inherit' }}>
+                  <span className="animate-spin" style={{ width: 28, height: 28, border: '3px solid rgba(255,255,255,0.3)', borderTop: '3px solid #fff', borderRadius: '50%', display: 'inline-block' }} />
+                </div>
+              )}
+            </div>
+          )}
           <input
             ref={fileRef}
             type="file"
             accept="image/*"
+            multiple
             style={{ display: 'none' }}
             onChange={handleFileChange}
           />
-          {imagePreview && (
-            <button type="button" className="btn btn-ghost btn-sm" style={{ marginTop: 6 }} onClick={() => { setImagePreview(''); set('image_url', '') }}>
-              <X size={14} /> إزالة الصورة
-            </button>
-          )}
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--sp-md)' }}>

@@ -3,6 +3,12 @@ import { useOrdersStore } from '../../stores/useOrdersStore'
 import { useStoreConfig } from '../../stores/useStoreConfig'
 import { Users, Phone, Calendar, MessageCircle, Search, ArrowUpDown, Star } from 'lucide-react'
 
+const formatPrice = (val) => {
+  const num = Number(val)
+  if (isNaN(num)) return '0'
+  return num % 1 === 0 ? num.toString() : num.toFixed(2).replace(/\.?0+$/, '')
+}
+
 // تصنيف الزبون حسب عدد طلباته وإنفاقه
 const getCustomerTier = (ordersCount, totalSpent) => {
   if (ordersCount >= 3 || totalSpent >= 200) return { label: 'VIP 🏆', color: '#f59e0b', bg: 'rgba(245,158,11,0.15)' }
@@ -119,7 +125,7 @@ export default function CustomersCRM() {
         <div className="glass" style={{ padding: 'var(--sp-md) var(--sp-lg)', borderRadius: 'var(--radius-md)' }}>
           <span style={{ fontSize: 'var(--text-xs)', color: 'var(--clr-text-3)' }}>متوسط الإنفاق للزبون</span>
           <div style={{ fontSize: 'var(--text-xl)', fontWeight: 900, marginTop: 4, color: 'var(--clr-accent)' }}>
-            {customers.length > 0 ? (customers.reduce((sum, c) => sum + c.totalSpent, 0) / customers.length).toFixed(0) : 0} {currency}
+            {customers.length > 0 ? formatPrice(customers.reduce((sum, c) => sum + c.totalSpent, 0) / customers.length) : 0} {currency}
           </div>
         </div>
         <div className="glass" style={{ padding: 'var(--sp-md) var(--sp-lg)', borderRadius: 'var(--radius-md)' }}>
@@ -218,7 +224,7 @@ export default function CustomersCRM() {
                     </span>
                   </td>
                   <td style={{ padding: 12, fontSize: 13, fontWeight: 900, color: 'var(--clr-accent)' }}>
-                    {cust.totalSpent.toFixed(0)} {currency}
+                    {formatPrice(cust.totalSpent)} {currency}
                   </td>
                   <td style={{ padding: 12, fontSize: 11, color: 'var(--clr-text-3)' }}>
                     <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>

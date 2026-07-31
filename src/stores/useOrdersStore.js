@@ -243,6 +243,30 @@ export const useOrdersStore = create((set, get) => ({
     }))
   },
 
+  cancelOrder: async (orderNumber, storeId) => {
+    // orderNumber here is the numeric order number stored in localStorage (e.g. #1234)
+    const cleanNumber = parseInt(String(orderNumber).replace('#', ''), 10)
+    if (isNaN(cleanNumber)) return { success: false, reason: 'invalid_id' }
+
+    const { data, error } = await supabase
+      .from('orders')
+      .select('id, status')
+      .eq('store_id', storeId)
+      .eq('order_number', cleanNumber)
+      .maybeSingle()
+
+    if (error || !data) return { success: false, reason: 'not_found' }
+    if (data.status !== 'new') return { success: false, reason: 'already_processing' }
+
+    const { error: updateError } = await supabase
+      .from('orders')
+      .update({ status: 'cancelled', notes: 'ألغاه الزبون', status_updated_at: new Date().toISOString() })
+      .eq('id', data.id)
+
+    if (updateError) return { success: false, reason: 'update_failed' }
+    return { success: true }
+  },
+
   getStats: () => {
     const orders = get().orders
     const total = orders.reduce((s, o) => s + (parseFloat(o.total) || 0), 0)

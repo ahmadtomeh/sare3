@@ -2,7 +2,7 @@ import { useState, useEffect, lazy, Suspense } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import {
   LayoutDashboard, ShoppingBag, ClipboardList, Settings,
-  QrCode, CreditCard, LogOut, Zap, Menu, X, Bell, Tag, Users
+  QrCode, CreditCard, LogOut, Zap, Menu, X, Bell, Tag, Users, Star
 } from 'lucide-react'
 import { useAuthStore } from '../../stores/useAuthStore'
 import { useStoreConfig } from '../../stores/useStoreConfig'
@@ -22,12 +22,15 @@ import QRGenerator       from './QRGenerator'
 import SubscriptionPanel from './SubscriptionPanel'
 import CouponManager     from './CouponManager'
 import CustomersCRM      from './CustomersCRM'
+import ReviewsDashboard  from './ReviewsDashboard'
+import { useReviewsStore } from '../../stores/useReviewsStore'
 
 const NAV_ITEMS = [
   { id: 'home',         icon: <LayoutDashboard size={20}/>, label: 'الرئيسية',       badge: null },
   { id: 'products',     icon: <ShoppingBag size={20}/>,     label: 'المنتجات',       badge: null },
   { id: 'orders',       icon: <ClipboardList size={20}/>,   label: 'الطلبات',        badge: 'orders' },
   { id: 'customers',    icon: <Users size={20}/>,           label: 'العملاء والزبائن', badge: null },
+  { id: 'reviews',      icon: <Star size={20}/>,            label: 'التقييمات ⭐',     badge: 'reviews' },
   { id: 'coupons',      icon: <Tag size={20}/>,             label: 'الكوبونات والخصومات', badge: null },
   { id: 'settings',     icon: <Settings size={20}/>,        label: 'إعدادات المتجر', badge: null },
   { id: 'qr',           icon: <QrCode size={20}/>,          label: 'الرابط والـ QR', badge: null },
@@ -41,7 +44,7 @@ export default function MerchantDashboard() {
   const getInitialTab = () => {
     const parts = location.pathname.split('/').filter(Boolean)
     const tab = parts[parts.length - 1]
-    return ['products', 'orders', 'customers', 'coupons', 'settings', 'qr', 'subscription'].includes(tab) ? tab : 'home'
+    return ['products', 'orders', 'customers', 'reviews', 'coupons', 'settings', 'qr', 'subscription'].includes(tab) ? tab : 'home'
   }
 
   const [active, setActive] = useState(getInitialTab)
@@ -536,6 +539,7 @@ export default function MerchantDashboard() {
         {active === 'products'     && <ProductManager/>}
         {active === 'orders'       && <OrdersTable/>}
         {active === 'customers'    && <CustomersCRM/>}
+        {active === 'reviews'      && <ReviewsDashboard/>}
         {active === 'coupons'      && <CouponManager/>}
         {active === 'settings'     && <StoreSettings/>}
         {active === 'qr'           && <QRGenerator/>}

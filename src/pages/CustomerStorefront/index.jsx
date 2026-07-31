@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { Search, ShoppingCart, Package, MapPin, Phone, User, MessageCircle, Plus, Check, ArrowRight } from 'lucide-react'
 import { useStoreConfig } from '../../stores/useStoreConfig'
@@ -10,6 +10,7 @@ import { BottomSheet } from '../../components/ui/Modal'
 import ThemeToggle from '../../components/ThemeToggle'
 import { supabase } from '../../lib/supabase'
 import InstallPWA from '../../components/InstallPWA'
+import { useReviewsStore } from '../../stores/useReviewsStore'
 import toast from 'react-hot-toast'
 
 export const formatPrice = (val) => {
@@ -54,7 +55,8 @@ export default function CustomerStorefront({ previewSlug }) {
   const [orderOpen, setOrderOpen] = useState(false)
   const [selectedProduct, setSelectedProduct] = useState(null)
   const [myOrdersOpen, setMyOrdersOpen] = useState(false)
-  const [trackedOrder, setTrackedOrder] = useState(null) // New state for tracking order details
+  const [trackedOrder, setTrackedOrder] = useState(null)
+  const [reviewOpen, setReviewOpen] = useState(false) // {product} after order success
 
   // ── Coupon & Shipping States ──
   const [couponCode, setCouponCode] = useState('')
@@ -790,6 +792,11 @@ export default function CustomerStorefront({ previewSlug }) {
           onClose={() => setOrderOpen(false)}
           triggerConfetti={triggerConfetti}
           isFreeShippingEligible={isFreeShippingEligible}
+          onOrderSuccess={(lastProduct) => {
+            setOrderOpen(false)
+            // Show review sheet after a short delay
+            setTimeout(() => setReviewOpen(lastProduct || true), 800)
+          }}
         />
       )}
 
@@ -813,14 +820,36 @@ export default function CustomerStorefront({ previewSlug }) {
           onClose={() => setTrackedOrder(null)}
         />
       )}
+      {/* ── Review Sheet ── */}
+      {reviewOpen && (
+        <ReviewSheet
+          store={store}
+          product={reviewOpen}
+          onClose={() => setReviewOpen(false)}
+        />
+      )}
+
       {/* ── Install PWA Banner ── */}
       <InstallPWA appName={store?.name} logoUrl={store?.logo_url} />
     </div>
   )
 }
 
+/* ── Star Rating Display Helper ── */
+function StarRating({ rating, count, size = 11 }) {
+  if (!rating) return null
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+      {[1,2,3,4,5].map(s => (
+        <span key={s} style={{ fontSize: size, color: s <= Math.round(rating) ? '#f59e0b' : 'var(--clr-border)' }}>★</span>
+      ))}
+      <span style={{ fontSize: size - 1, color: 'var(--clr-text-3)', marginRight: 2 }}>({count})</span>
+    </div>
+  )
+}
+
 /* ── Ultra-Compact Product Card Component ── */
-function CompactProductCard({ product, currency, badge, onAdd }) {
+function CompactProductCard({ product, currency, badge, onAdd, rating }) {
   return (
     <div className="glass" style={{
       borderRadius: 14, overflow: 'hidden', display: 'flex', flexDirection: 'column',
@@ -859,6 +888,9 @@ function CompactProductCard({ product, currency, badge, onAdd }) {
           {product.name}
         </div>
 
+        {/* Star Rating */}
+        {rating && <StarRating rating={rating.avg} count={rating.count} />}
+
         {/* Price & Compact Add Button Row */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 'auto', paddingTop: 4 }}>
           <div style={{ fontWeight: 900, fontSize: 13, color: 'var(--clr-accent)' }}>
@@ -886,6 +918,121 @@ function CompactProductCard({ product, currency, badge, onAdd }) {
     </div>
   )
 }
+
+/* ── Review Submission Sheet ── */
+function ReviewSheet({ store, product, onClose }) {
+  const { submitReview } = useReviewsStore()
+  const [rating, setRating] = useState(0)
+  const [hovered, setHovered] = useState(0)
+  const [name, setName] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('fawri-customer-info') || '{}').name || '' } catch { return '' }
+  })
+  const [comment, setComment] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+  const [done, setDone] = useState(false)
+
+  const handleSubmit = async () => {
+    if (!rating) { toast.error('يرجى اختيار عدد النجوم'); return }
+    if (!name.trim()) { toast.error('يرجى كتابة اسمك'); return }
+    setSubmitting(true)
+    try {
+      await submitReview({
+        storeId: store.id,
+        productId: product?.id || null,
+        customerName: name.trim(),
+        rating,
+        comment: comment.trim(),
+      })
+      setDone(true)
+      toast.success('شكراً على تقييمك! 🌟')
+    } catch {
+      toast.error('تعذّر إرسال التقييم')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  return (
+    <BottomSheet title="قيّم تجربتك ⭐" onClose={onClose}>
+      {done ? (
+        <div style={{ textAlign: 'center', padding: 32 }}>
+          <div style={{ fontSize: '3rem', marginBottom: 12 }}>🌟</div>
+          <div style={{ fontWeight: 800, fontSize: 16, marginBottom: 6 }}>شكراً على تقييمك!</div>
+          <div style={{ fontSize: 13, color: 'var(--clr-text-3)' }}>رأيك يهمنا ويساعدنا على التحسين لك ولجميع زبائننا.</div>
+          <button className="btn btn-primary" style={{ marginTop: 20 }} onClick={onClose}>إغلاق</button>
+        </div>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          {product && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: 10, background: 'var(--glass-bg-2)', borderRadius: 10 }}>
+              {product.image_url && <img src={product.image_url} style={{ width: 44, height: 44, objectFit: 'cover', borderRadius: 8 }} />}
+              <div style={{ fontWeight: 700, fontSize: 13 }}>{product.name}</div>
+            </div>
+          )}
+
+          {/* Star Picker */}
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ fontSize: 12, color: 'var(--clr-text-3)', marginBottom: 8 }}>انقر على النجوم للتقييم</div>
+            <div style={{ display: 'flex', justifyContent: 'center', gap: 8 }}>
+              {[1,2,3,4,5].map(s => (
+                <button
+                  key={s}
+                  type="button"
+                  onMouseEnter={() => setHovered(s)}
+                  onMouseLeave={() => setHovered(0)}
+                  onClick={() => setRating(s)}
+                  style={{
+                    fontSize: 36, background: 'none', border: 'none', cursor: 'pointer', padding: 0,
+                    color: s <= (hovered || rating) ? '#f59e0b' : 'var(--clr-border)',
+                    transform: s <= (hovered || rating) ? 'scale(1.2)' : 'scale(1)',
+                    transition: 'all 0.15s',
+                  }}
+                >★</button>
+              ))}
+            </div>
+            {rating > 0 && (
+              <div style={{ fontSize: 12, color: '#f59e0b', fontWeight: 700, marginTop: 4 }}>
+                {['', 'ضعيف', 'مقبول', 'جيد', 'جيد جداً', 'رائع! أحسنت الاختيار ❤️'][rating]}
+              </div>
+            )}
+          </div>
+
+          <div className="input-group">
+            <label className="input-label">اسمك *</label>
+            <input
+              className="input"
+              value={name}
+              onChange={e => setName(e.target.value)}
+              placeholder="محمد أحمد"
+              style={{ minHeight: 38, fontSize: 13 }}
+            />
+          </div>
+
+          <div className="input-group">
+            <label className="input-label">تعليقك (اختياري)</label>
+            <textarea
+              className="input"
+              value={comment}
+              onChange={e => setComment(e.target.value)}
+              placeholder="شاركنا رأيك بالتفصيل..."
+              rows={3}
+              style={{ fontSize: 13 }}
+            />
+          </div>
+
+          <button
+            className="btn btn-primary btn-full"
+            onClick={handleSubmit}
+            disabled={submitting || !rating}
+          >
+            {submitting ? 'جاري الإرسال...' : 'إرسال التقييم ⭐'}
+          </button>
+        </div>
+      )}
+    </BottomSheet>
+  )
+}
+
 
 /* ── Product Options Sheet ── */
 function ProductOptionsSheet({ product, currency, onClose, onAdd }) {
@@ -919,14 +1066,83 @@ function ProductOptionsSheet({ product, currency, onClose, onAdd }) {
     return base + extra
   }, [product.price, selected])
 
+  // ── Multi-image gallery state ──
+  const images = useMemo(() => {
+    const imgs = Array.isArray(product.images) && product.images.length > 0
+      ? product.images
+      : (product.image_url ? [product.image_url] : [])
+    return imgs
+  }, [product.images, product.image_url])
+
+  const [activeImg, setActiveImg] = useState(0)
+  const imgStartX = useRef(null)
+
+  const handleImgTouchStart = (e) => { imgStartX.current = e.touches[0].clientX }
+  const handleImgTouchEnd = (e) => {
+    if (imgStartX.current === null) return
+    const diff = imgStartX.current - e.changedTouches[0].clientX
+    if (Math.abs(diff) > 40) {
+      if (diff > 0) setActiveImg(i => Math.min(i + 1, images.length - 1))
+      else setActiveImg(i => Math.max(i - 1, 0))
+    }
+    imgStartX.current = null
+  }
+
   return (
     <BottomSheet title={product.name} onClose={onClose}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-        {product.image_url && (
-          <img src={product.image_url} alt={product.name} style={{ width: '100%', maxHeight: 180, objectFit: 'cover', borderRadius: 12 }} />
+        {/* Multi-Image Swiper */}
+        {images.length > 0 && (
+          <div style={{ position: 'relative', borderRadius: 12, overflow: 'hidden', userSelect: 'none' }}>
+            <img
+              src={images[activeImg]}
+              alt={product.name}
+              style={{ width: '100%', maxHeight: 200, objectFit: 'cover', display: 'block', borderRadius: 12 }}
+              onTouchStart={handleImgTouchStart}
+              onTouchEnd={handleImgTouchEnd}
+            />
+            {/* Dots */}
+            {images.length > 1 && (
+              <div style={{
+                position: 'absolute', bottom: 8, left: '50%', transform: 'translateX(-50%)',
+                display: 'flex', gap: 5,
+              }}>
+                {images.map((_, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => setActiveImg(idx)}
+                    style={{
+                      width: idx === activeImg ? 18 : 6, height: 6, borderRadius: 3,
+                      background: idx === activeImg ? '#fff' : 'rgba(255,255,255,0.5)',
+                      border: 'none', padding: 0, cursor: 'pointer',
+                      transition: 'all 0.25s',
+                    }}
+                  />
+                ))}
+              </div>
+            )}
+            {/* Navigation arrows for non-touch */}
+            {images.length > 1 && (
+              <>
+                <button onClick={() => setActiveImg(i => Math.max(i - 1, 0))} style={{
+                  position: 'absolute', top: '50%', right: 8, transform: 'translateY(-50%)',
+                  background: 'rgba(0,0,0,0.4)', border: 'none', borderRadius: '50%',
+                  width: 28, height: 28, color: '#fff', fontSize: 14, cursor: 'pointer',
+                  display: activeImg > 0 ? 'flex' : 'none', alignItems: 'center', justifyContent: 'center',
+                }}>›</button>
+                <button onClick={() => setActiveImg(i => Math.min(i + 1, images.length - 1))} style={{
+                  position: 'absolute', top: '50%', left: 8, transform: 'translateY(-50%)',
+                  background: 'rgba(0,0,0,0.4)', border: 'none', borderRadius: '50%',
+                  width: 28, height: 28, color: '#fff', fontSize: 14, cursor: 'pointer',
+                  display: activeImg < images.length - 1 ? 'flex' : 'none', alignItems: 'center', justifyContent: 'center',
+                }}>‹</button>
+              </>
+            )}
+          </div>
         )}
+
         <div style={{ fontSize: 20, fontWeight: 900, color: 'var(--clr-accent)' }}>
-          {currentTotalPrice.toFixed(2)} {currency}
+          {formatPrice(currentTotalPrice)} {currency}
         </div>
 
         {optionsList.map((opt) => (
@@ -1269,7 +1485,7 @@ function CartDrawer({
 function OrderFormSheet({
   store, items, currency, cartTotal,
   appliedCoupon, discountAmount, selectedShippingZone, setSelectedShippingZone,
-  finalTotal, customerInfo, onSaveCustomer, onClose, triggerConfetti, isFreeShippingEligible
+  finalTotal, customerInfo, onSaveCustomer, onClose, triggerConfetti, isFreeShippingEligible, onOrderSuccess
 }) {
   const { clearCart, setCustomerInfo } = useCartStore()
   const [form, setForm] = useState({
@@ -1409,6 +1625,11 @@ function OrderFormSheet({
     setSending(false)
     onClose()
     toast.success('🎉 تم إرسال طلبك وحفظه في سجل طلباتك!')
+    // Prompt review after order
+    if (onOrderSuccess) {
+      const firstItem = items[0]?.product || null
+      onOrderSuccess(firstItem)
+    }
   }
 
   // Filter out the free shipping configuration limit option from zone selector dropdown
@@ -1490,7 +1711,9 @@ function OrderFormSheet({
 
 function MyOrdersSheet({ store, onClose, onTrack }) {
   const { addItem } = useCartStore()
+  const { cancelOrder } = useOrdersStore()
   const [orders, setOrders] = useState([])
+  const [cancelling, setCancelling] = useState(null) // orderId being cancelled
 
   useEffect(() => {
     try {
@@ -1510,11 +1733,47 @@ function MyOrdersSheet({ store, onClose, onTrack }) {
     onClose()
   }
 
+  const handleCancelOrder = async (order) => {
+    if (!confirm(`هل أنت متأكد من إلغاء الطلب ${order.id}؟`)) return
+    setCancelling(order.id)
+    try {
+      const result = await cancelOrder(order.id, store.id)
+      if (result.success) {
+        // Update localStorage to reflect cancellation
+        const key = `fawri-orders-${store.id}`
+        const saved = JSON.parse(localStorage.getItem(key) || '[]')
+        const updated = saved.map(o => o.id === order.id ? { ...o, status: 'cancelled' } : o)
+        localStorage.setItem(key, JSON.stringify(updated))
+        setOrders(updated)
+        toast.success('✅ تم إلغاء الطلب بنجاح')
+      } else if (result.reason === 'already_processing') {
+        toast.error('❌ لا يمكن الإلغاء — الطلب بدأ التجهيز بالفعل')
+      } else {
+        toast.error('❌ تعذّر إلغاء الطلب، تواصل مع المتجر مباشرة')
+      }
+    } catch {
+      toast.error('❌ حدث خطأ، حاول مرة أخرى')
+    } finally {
+      setCancelling(null)
+    }
+  }
+
   const handleClearOrders = () => {
     const key = `fawri-orders-${store.id}`
     localStorage.removeItem(key)
     setOrders([])
     toast.success('تم مسح السجل')
+  }
+
+  const getOrderStatusBadge = (status) => {
+    const map = {
+      new: { label: 'جديد', color: '#f59e0b', bg: 'rgba(245,158,11,0.15)' },
+      preparing: { label: 'قيد التجهيز', color: '#3b82f6', bg: 'rgba(59,130,246,0.12)' },
+      out_for_delivery: { label: 'خرج للتوصيل', color: '#8b5cf6', bg: 'rgba(139,92,246,0.12)' },
+      done: { label: 'تم التسليم ✅', color: '#10b981', bg: 'rgba(16,185,129,0.12)' },
+      cancelled: { label: 'ملغي ❌', color: '#ef4444', bg: 'rgba(239,68,68,0.12)' },
+    }
+    return map[status] || map.new
   }
 
   return (
@@ -1527,46 +1786,92 @@ function MyOrdersSheet({ store, onClose, onTrack }) {
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10, maxHeight: '55dvh', overflowY: 'auto' }}>
-          {orders.map((order) => (
-            <div key={order.id} className="glass" style={{ borderRadius: 12, padding: 12 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
-                <div>
-                  <div style={{ fontWeight: 800, fontSize: 13 }}>{order.id}</div>
-                  <div style={{ fontSize: 11, color: 'var(--clr-text-3)' }}>
-                    {new Date(order.date).toLocaleDateString('ar-EG', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+          {orders.map((order) => {
+            const badge = getOrderStatusBadge(order.status)
+            const isCancelled = order.status === 'cancelled'
+            const isDone = order.status === 'done'
+            const canCancel = !isCancelled && !isDone && order.status !== 'out_for_delivery'
+            const isCancellingThis = cancelling === order.id
+            return (
+              <div key={order.id} className="glass" style={{ borderRadius: 12, padding: 12, opacity: isCancelled ? 0.7 : 1 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
+                  <div>
+                    <div style={{ fontWeight: 800, fontSize: 13 }}>{order.id}</div>
+                    <div style={{ fontSize: 11, color: 'var(--clr-text-3)' }}>
+                      {new Date(order.date).toLocaleDateString('ar-EG', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
+                    <span style={{ fontWeight: 900, fontSize: 14, color: 'var(--clr-accent)' }}>
+                      {formatPrice(order.total)} {order.currency}
+                    </span>
+                    {order.status && (
+                      <span style={{
+                        fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 20,
+                        background: badge.bg, color: badge.color,
+                      }}>
+                        {badge.label}
+                      </span>
+                    )}
                   </div>
                 </div>
-                <span style={{ fontWeight: 900, fontSize: 14, color: 'var(--clr-accent)' }}>
-                  {formatPrice(order.total)} {order.currency}
-                </span>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 3, marginBottom: 8 }}>
+                  {order.items.map((item, i) => (
+                    <div key={i} style={{ fontSize: 11, color: 'var(--clr-text-2)', display: 'flex', gap: 4 }}>
+                      <span style={{ color: 'var(--clr-text-3)' }}>{item.qty}×</span>
+                      <span>{item.name}</span>
+                      {item.option && <span style={{ color: 'var(--clr-text-3)' }}>({item.option})</span>}
+                    </div>
+                  ))}
+                </div>
+                <div style={{ display: 'flex', gap: 6 }}>
+                  {!isCancelled && (
+                    <button
+                      className="btn btn-primary btn-sm"
+                      onClick={() => onTrack(order)}
+                      style={{ fontSize: 11, flex: 1, gap: 4 }}
+                    >
+                      🚚 تتبع الطلب
+                    </button>
+                  )}
+                  {!isCancelled && !isDone && (
+                    <button
+                      className="btn btn-ghost btn-sm"
+                      onClick={() => handleReorder(order)}
+                      style={{ fontSize: 11, flex: 1 }}
+                    >
+                      🔄 إعادة طلب
+                    </button>
+                  )}
+                  {canCancel && (
+                    <button
+                      className="btn btn-sm"
+                      onClick={() => handleCancelOrder(order)}
+                      disabled={isCancellingThis}
+                      style={{
+                        fontSize: 11,
+                        background: 'rgba(239,68,68,0.1)',
+                        color: '#ef4444',
+                        border: '1px solid rgba(239,68,68,0.3)',
+                        flexShrink: 0,
+                      }}
+                    >
+                      {isCancellingThis ? '⏳' : '❌ إلغاء'}
+                    </button>
+                  )}
+                  {isCancelled && (
+                    <button
+                      className="btn btn-ghost btn-sm"
+                      onClick={() => handleReorder(order)}
+                      style={{ fontSize: 11, flex: 1 }}
+                    >
+                      🔄 طلب مجدداً
+                    </button>
+                  )}
+                </div>
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 3, marginBottom: 8 }}>
-                {order.items.map((item, i) => (
-                  <div key={i} style={{ fontSize: 11, color: 'var(--clr-text-2)', display: 'flex', gap: 4 }}>
-                    <span style={{ color: 'var(--clr-text-3)' }}>{item.qty}×</span>
-                    <span>{item.name}</span>
-                    {item.option && <span style={{ color: 'var(--clr-text-3)' }}>({item.option})</span>}
-                  </div>
-                ))}
-              </div>
-              <div style={{ display: 'flex', gap: 6 }}>
-                <button
-                  className="btn btn-primary btn-sm"
-                  onClick={() => onTrack(order)}
-                  style={{ fontSize: 11, flex: 1, gap: 4 }}
-                >
-                  🚚 تتبع الطلب
-                </button>
-                <button
-                  className="btn btn-ghost btn-sm"
-                  onClick={() => handleReorder(order)}
-                  style={{ fontSize: 11, flex: 1 }}
-                >
-                  🔄 إعادة طلب
-                </button>
-              </div>
-            </div>
-          ))}
+            )
+          })}
           <button
             className="btn btn-ghost btn-sm"
             onClick={handleClearOrders}
