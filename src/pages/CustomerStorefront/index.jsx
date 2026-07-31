@@ -771,6 +771,7 @@ export default function CustomerStorefront({ previewSlug }) {
       {/* ── Product Options Sheet ── */}
       {selectedProduct && (
         <ProductOptionsSheet
+          key={selectedProduct.id}
           product={selectedProduct}
           currency={currency}
           onClose={() => setSelectedProduct(null)}
@@ -778,6 +779,10 @@ export default function CustomerStorefront({ previewSlug }) {
             addItem(selectedProduct, opts, qty)
             playAudioPop()
             toast.success('أضيف للسلة 🛒', { duration: 1000 })
+            // The parent manages the delay so the fly-to-cart animation completes perfectly before unmounting
+            setTimeout(() => {
+              setSelectedProduct(null)
+            }, 700)
           }}
         />
       )}
@@ -1245,12 +1250,8 @@ function ProductOptionsSheet({ product, currency, onClose, onAdd }) {
   }
 
   const handleConfirmAdd = () => {
-    onAdd(selected, quantity)
     setAdded(true)
-    // Delay closing to let the user see the success check/pulse/fly animation
-    setTimeout(() => {
-      onClose()
-    }, 700)
+    onAdd(selected, quantity)
   }
 
   return (
