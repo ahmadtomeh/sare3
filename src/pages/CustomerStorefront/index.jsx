@@ -1086,6 +1086,14 @@ function ProductOptionsSheet({ product, currency, onClose, onAdd }) {
   }, [baseImages, selected])
 
   const [activeImg, setActiveImg] = useState(0)
+
+  // Reset active image to 0 if the currently displayed image is removed (deselected)
+  useEffect(() => {
+    if (activeImg >= images.length || !images[activeImg]) {
+      setActiveImg(0)
+    }
+  }, [images, activeImg])
+
   const imgStartX = useRef(null)
 
   const handleImgTouchStart = (e) => { imgStartX.current = e.touches[0].clientX }
