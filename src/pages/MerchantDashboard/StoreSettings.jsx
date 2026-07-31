@@ -208,7 +208,7 @@ export default function StoreSettings() {
   }
 
   const storeUrl = store?.slug
-    ? `${window.location.origin}/store/${store.slug}`
+    ? `${window.location.origin}/${store.slug}`
     : 'أنشئ متجرك أولاً'
 
 
@@ -268,7 +268,7 @@ export default function StoreSettings() {
                 style={{ direction: 'ltr', flex: 1 }}
                 id="store-slug-input"
               />
-              <span style={{ color: 'var(--clr-text-3)', fontSize: 'var(--text-sm)', flexShrink: 0, whiteSpace: 'nowrap' }}>sare3.app/store/</span>
+              <span style={{ color: 'var(--clr-text-3)', fontSize: 'var(--text-sm)', flexShrink: 0, whiteSpace: 'nowrap' }}>sare3.app/</span>
             </div>
             <p style={{ fontSize: 'var(--text-xs)', color: 'var(--clr-text-muted)' }}>أحرف إنجليزية وأرقام وشرطات فقط</p>
           </div>

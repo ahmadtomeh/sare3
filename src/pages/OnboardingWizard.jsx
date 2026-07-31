@@ -87,7 +87,7 @@ export default function OnboardingWizard() {
     }
   }
 
-  const storeUrl = form.slug ? `${window.location.origin}/store/${form.slug}` : ''
+  const storeUrl = form.slug ? `${window.location.origin}/${form.slug}` : ''
 
   return (
     <div style={{

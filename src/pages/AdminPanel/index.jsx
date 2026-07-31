@@ -324,7 +324,7 @@ export default function AdminPanel() {
                         {statusLabel(m.subscription_status)}
                       </span>
                       <div style={{ display: 'flex', gap: 4 }}>
-                        <a href={`/store/${m.slug}`} target="_blank" rel="noreferrer"
+                        <a href={`/${m.slug}`} target="_blank" rel="noreferrer"
                           className="btn btn-ghost btn-sm" style={{ fontSize: 10, padding: '3px 8px' }} title="فتح المتجر">
                           <ExternalLink size={12} />
                         </a>

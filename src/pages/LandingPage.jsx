@@ -154,7 +154,7 @@ export default function LandingPage() {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 'var(--sp-md)' }}>
             {[
               { icon: <MessageSquare size={22} />, title: 'طلب واتساب منسق', desc: 'استقبل الطلبات مجهزة بالكميات، الخيارات، وعنوان التوصيل بنقرة واحدة.', color: 'var(--clr-accent)' },
-              { icon: <QrCode size={22} />, title: 'رمز QR ورابط خاص', desc: 'احصل على رابط مخصص sare3.app/store/your-name ورمز QR جاهز للطباعة.', color: 'var(--clr-primary)' },
+              { icon: <QrCode size={22} />, title: 'رمز QR ورابط خاص', desc: 'احصل على رابط مخصص sare3.app/your-name ورمز QR جاهز للطباعة.', color: 'var(--clr-primary)' },
               { icon: <ShieldCheck size={22} />, title: '0% عمولات مجاناً', desc: 'كل الإيرادات تذهب لحسابك المباشر دون أي اقتطاعات أو عمولات مخفية.', color: '#38bdf8' },
             ].map((f, i) => (
               <div key={i} className="glass glass-interactive" style={{ padding: 'var(--sp-md)', display: 'flex', gap: 12, alignItems: 'flex-start' }}>
@@ -241,7 +241,7 @@ export default function LandingPage() {
           ].map((s) => (
             <a
               key={s.slug}
-              href={`/store/${s.slug}`}
+              href={`/${s.slug}`}
               id={`demo-store-${s.slug}`}
               style={{ textDecoration: 'none' }}
             >

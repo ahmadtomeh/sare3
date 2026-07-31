@@ -8,8 +8,8 @@ export default function QRGenerator() {
   const qrRef = useRef()
 
   const storeUrl = store?.slug
-    ? `${window.location.origin}/store/${store.slug}`
-    : 'https://sare3.app/store/my-store'
+    ? `${window.location.origin}/${store.slug}`
+    : 'https://sare3.app/my-store'
 
   const copyLink = () => {
     navigator.clipboard.writeText(storeUrl)

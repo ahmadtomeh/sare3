@@ -126,7 +126,7 @@ export default function DashboardHome({ onNavigate }) {
   })
 
   const handleShareStore = () => {
-    const storeUrl = `${window.location.origin}/store/${store?.slug || 'demo'}`
+    const storeUrl = `${window.location.origin}/${store?.slug || 'demo'}`
     if (navigator.share) {
       navigator.share({
         title: store?.name || 'متجري على سريع',
@@ -140,7 +140,7 @@ export default function DashboardHome({ onNavigate }) {
   }
 
   const handleCopyLink = () => {
-    const storeUrl = `${window.location.origin}/store/${store?.slug || 'demo'}`
+    const storeUrl = `${window.location.origin}/${store?.slug || 'demo'}`
     navigator.clipboard.writeText(storeUrl).then(() => {
       toast.success(`📋 تم نسخ رابط المتجر: ${storeUrl}`, { duration: 3000 })
     }).catch(() => {

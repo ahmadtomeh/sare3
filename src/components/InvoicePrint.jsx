@@ -189,7 +189,7 @@ export default function InvoicePrint({ order, store, onClose }) {
               {/* QR Code and footer */}
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, textAlign: 'center' }}>
                 <img
-                  src={`https://api.qrserver.com/v1/create-qr-code/?size=90x90&data=${encodeURIComponent(`${window.location.origin}/store/${store.slug}?track=${order.order_number || order.id.slice(-6)}`)}`}
+                  src={`https://api.qrserver.com/v1/create-qr-code/?size=90x90&data=${encodeURIComponent(`${window.location.origin}/${store.slug}?track=${order.order_number || order.id.slice(-6)}`)}`}
                   alt="Order QR Code"
                   style={{ width: 90, height: 90, display: 'block' }}
                 />

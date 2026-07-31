@@ -99,8 +99,8 @@ function AppRoutes() {
       <Route path="/onboarding"    element={<ProtectedRoute><OnboardingWizard /></ProtectedRoute>} />
       <Route path="/dashboard"     element={<ProtectedRoute><MerchantDashboard /></ProtectedRoute>} />
       <Route path="/dashboard/*"   element={<ProtectedRoute><MerchantDashboard /></ProtectedRoute>} />
-      <Route path="/store/:slug"   element={<CustomerStorefront />} />
       <Route path="/admin"         element={<ProtectedRoute><AdminPanel /></ProtectedRoute>} />
+      <Route path="/:slug"         element={<CustomerStorefront />} />
       <Route path="*"              element={<Navigate to="/" replace />} />
     </Routes>
   )
