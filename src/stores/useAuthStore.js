@@ -7,7 +7,18 @@ export const useAuthStore = create(
     (set, get) => ({
       user: null,
       role: null, // 'super_admin' | 'merchant' | 'staff'
-      loading: true,
+      loading: (() => {
+        try {
+          const cached = localStorage.getItem('sare3-auth')
+          if (cached) {
+            const parsed = JSON.parse(cached)
+            if (parsed?.state?.user || parsed?.state?.isDemoMode) {
+              return false
+            }
+          }
+        } catch {}
+        return true
+      })(),
       session: null,
       isDemoMode: false,
 
