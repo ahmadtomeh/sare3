@@ -226,7 +226,7 @@ body {
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, var(--clr-primary), rgba(0, 0, 0, 0.15));
+  background: linear-gradient(135deg, var(--clr-primary), var(--clr-accent));
   color: #ffffff;
   box-shadow: 0 4px 18px var(--clr-primary-glow);
 }
@@ -332,7 +332,7 @@ body {
 }
 
 .live-switcher-btn.active {
-  background: linear-gradient(135deg, var(--clr-primary), rgba(0, 0, 0, 0.15));
+  background: linear-gradient(135deg, var(--clr-primary), var(--clr-accent));
   color: #ffffff;
   box-shadow: 0 4px 14px var(--clr-primary-glow);
 }
@@ -423,7 +423,7 @@ body {
 }
 
 .category-chip.active {
-  background: linear-gradient(135deg, var(--clr-primary), rgba(0, 0, 0, 0.15));
+  background: linear-gradient(135deg, var(--clr-primary), var(--clr-accent));
   color: #ffffff;
   border-color: transparent;
   box-shadow: 0 4px 14px var(--clr-primary-glow);
