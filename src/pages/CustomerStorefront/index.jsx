@@ -550,7 +550,9 @@ export default function CustomerStorefront({ previewSlug }) {
         }
       `}</style>
 
-      {/* ── Compact Native Mobile Top Bar (Height ~54px) ── */}
+      {/* Background interaction lock container to absorb Ghost Clicks and prevent click-throughs on the storefront */}
+      <div style={{ pointerEvents: selectedProduct ? 'none' : 'auto' }}>
+        {/* ── Compact Native Mobile Top Bar (Height ~54px) ── */}
       <header style={{
         position: 'sticky', top: 0, zIndex: 50,
         height: 54,
@@ -767,6 +769,8 @@ export default function CustomerStorefront({ previewSlug }) {
           </button>
         </div>
       )}
+
+      </div>
 
       {/* ── Product Options Sheet ── */}
       {selectedProduct && (
