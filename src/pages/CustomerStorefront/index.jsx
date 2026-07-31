@@ -687,27 +687,34 @@ export default function CustomerStorefront({ previewSlug }) {
           </div>
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', alignContent: 'start', alignItems: 'start', gap: 8 }}>
-            {filteredProducts.map((product, idx) => (
-              <CompactProductCard
-                key={product.id}
-                product={product}
-                currency={currency}
-                badge={idx === 0 ? '🔥 الأكثر مبيعاً' : null}
-                onAdd={() => {
-                  let opts = product.options
-                  if (typeof opts === 'string') {
-                    try { opts = JSON.parse(opts) } catch { opts = [] }
-                  }
-                  if (Array.isArray(opts) && opts.length > 0) {
-                    setSelectedProduct(product)
-                  } else {
-                    addItem(product)
-                    playAudioPop()
-                    toast.success(`أضيف للسلة 🛒`, { duration: 1000 })
-                  }
-                }}
-              />
-            ))}
+            {filteredProducts.map((product, idx) => {
+              const qtyInCart = items
+                .filter(item => item.product.id === product.id)
+                .reduce((sum, item) => sum + item.quantity, 0)
+              
+              return (
+                <CompactProductCard
+                  key={product.id}
+                  product={product}
+                  currency={currency}
+                  badge={idx === 0 ? '🔥 الأكثر مبيعاً' : null}
+                  qtyInCart={qtyInCart}
+                  onAdd={() => {
+                    let opts = product.options
+                    if (typeof opts === 'string') {
+                      try { opts = JSON.parse(opts) } catch { opts = [] }
+                    }
+                    if (Array.isArray(opts) && opts.length > 0) {
+                      setSelectedProduct(product)
+                    } else {
+                      addItem(product)
+                      playAudioPop()
+                      toast.success(`أضيف للسلة 🛒`, { duration: 1000 })
+                    }
+                  }}
+                />
+              )
+            })}
           </div>
         )}
       </div>
@@ -849,12 +856,45 @@ function StarRating({ rating, count, size = 11 }) {
 }
 
 /* ── Ultra-Compact Product Card Component ── */
-function CompactProductCard({ product, currency, badge, onAdd, rating }) {
+function CompactProductCard({ product, currency, badge, onAdd, rating, qtyInCart }) {
+  const isInCart = qtyInCart > 0
+
   return (
     <div className="glass" style={{
       borderRadius: 14, overflow: 'hidden', display: 'flex', flexDirection: 'column',
-      position: 'relative', border: '1px solid var(--clr-border)',
+      position: 'relative', 
+      border: isInCart ? '1px solid var(--clr-primary)' : '1px solid var(--clr-border)',
+      boxShadow: isInCart ? '0 0 10px var(--clr-primary-glow)' : 'none',
+      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+      transform: isInCart ? 'scale(1.01)' : 'scale(1)',
     }}>
+      {/* Dynamic Cart Count Badge */}
+      {isInCart && (
+        <span style={{
+          position: 'absolute', top: 6, left: 6, zIndex: 10,
+          background: 'var(--clr-primary)', color: '#fff',
+          fontSize: 10, fontWeight: 900, width: 22, height: 22,
+          borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
+          boxShadow: '0 2px 8px var(--clr-primary-glow)',
+          animation: 'cartBadgePop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+        }}>
+          {qtyInCart}
+        </span>
+      )}
+
+      {/* CSS Animation for badge and card pop */}
+      <style>{`
+        @keyframes cartBadgePop {
+          0% { transform: scale(0) rotate(-20deg); }
+          100% { transform: scale(1) rotate(0deg); }
+        }
+        @keyframes cardPress {
+          0% { transform: scale(1); }
+          50% { transform: scale(0.96); }
+          100% { transform: scale(1); }
+        }
+      `}</style>
+
       {/* Badge */}
       {badge && product.is_available && (
         <span style={{
@@ -899,18 +939,25 @@ function CompactProductCard({ product, currency, badge, onAdd, rating }) {
 
           {product.is_available && (
             <button
-              onClick={onAdd}
+              onClick={(e) => {
+                e.currentTarget.style.animation = 'cardPress 0.2s ease-in-out';
+                setTimeout(() => { if(e.currentTarget) e.currentTarget.style.animation = '' }, 200);
+                onAdd();
+              }}
               id={`add-btn-${product.id}`}
               style={{
                 width: 28, height: 28, borderRadius: 8,
-                background: 'linear-gradient(135deg, var(--clr-primary), var(--clr-accent))',
+                background: isInCart 
+                  ? 'var(--clr-primary)' 
+                  : 'linear-gradient(135deg, var(--clr-primary), var(--clr-accent))',
                 border: 'none', color: '#fff',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 cursor: 'pointer', flexShrink: 0,
-                boxShadow: '0 2px 8px var(--clr-primary-glow)',
+                boxShadow: isInCart ? '0 2px 8px var(--clr-primary-glow)' : '0 2px 8px var(--clr-primary-glow)',
+                transition: 'all 0.2s ease',
               }}
             >
-              <Plus size={16} />
+              {isInCart ? <Check size={16} /> : <Plus size={16} />}
             </button>
           )}
         </div>
@@ -1374,33 +1421,39 @@ function CartDrawer({
             )}
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8, maxHeight: '35dvh', overflowY: 'auto' }}>
-              {items.map((item) => (
-                <div key={item.key} style={{ display: 'flex', gap: 8, alignItems: 'center', padding: 8, background: 'var(--glass-bg-2)', borderRadius: 10 }}>
-                  {item.product.image_url
-                    ? <img src={item.product.image_url} style={{ width: 44, height: 44, objectFit: 'cover', borderRadius: 8, flexShrink: 0 }} />
-                    : <div style={{ width: 44, height: 44, background: 'var(--clr-bg-surface)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>📦</div>
-                  }
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontWeight: 700, fontSize: 12, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.product.name}</div>
-                    {item.selectedOptions && Object.keys(item.selectedOptions).length > 0 && (
-                      <div style={{ fontSize: 10, color: 'var(--clr-text-3)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {Object.entries(item.selectedOptions)
-                          .map(([label, val]) => `${label}: ${val.name || val}${val.price > 0 ? ` (+${val.price} ${currency})` : ''}`)
-                          .join(' | ')}
+              {items.map((item) => {
+                // Find if any selected option has a custom image_url
+                const optionWithImage = Object.values(item.selectedOptions || {}).find(opt => opt.image_url)
+                const displayImage = optionWithImage ? optionWithImage.image_url : item.product.image_url
+
+                return (
+                  <div key={item.key} style={{ display: 'flex', gap: 8, alignItems: 'center', padding: 8, background: 'var(--glass-bg-2)', borderRadius: 10 }}>
+                    {displayImage
+                      ? <img src={displayImage} style={{ width: 44, height: 44, objectFit: 'cover', borderRadius: 8, flexShrink: 0 }} />
+                      : <div style={{ width: 44, height: 44, background: 'var(--clr-bg-surface)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>📦</div>
+                    }
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontWeight: 700, fontSize: 12, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.product.name}</div>
+                      {item.selectedOptions && Object.keys(item.selectedOptions).length > 0 && (
+                        <div style={{ fontSize: 10, color: 'var(--clr-text-3)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {Object.entries(item.selectedOptions)
+                            .map(([label, val]) => `${label}: ${val.name || val}${val.price > 0 ? ` (+${val.price} ${currency})` : ''}`)
+                            .join(' | ')}
+                        </div>
+                      )}
+                      <div style={{ fontWeight: 900, color: 'var(--clr-accent)', fontSize: 12, marginTop: 2 }}>
+                        {formatPrice((Number(item.product.price) + Object.values(item.selectedOptions || {}).reduce((s, opt) => s + Number(opt.price || 0), 0)) * item.quantity)} {currency}
                       </div>
-                    )}
-                    <div style={{ fontWeight: 900, color: 'var(--clr-accent)', fontSize: 12, marginTop: 2 }}>
-                      {formatPrice((Number(item.product.price) + Object.values(item.selectedOptions || {}).reduce((s, opt) => s + Number(opt.price || 0), 0)) * item.quantity)} {currency}
                     </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'var(--glass-bg-2)', padding: '2px 4px', borderRadius: 6 }}>
+                      <button className="btn btn-ghost btn-sm" style={{ padding: '2px 6px', minHeight: 24 }} onClick={() => updateQty(item.key, item.quantity - 1)}>−</button>
+                      <span style={{ fontWeight: 800, fontSize: 12 }}>{item.quantity}</span>
+                      <button className="btn btn-ghost btn-sm" style={{ padding: '2px 6px', minHeight: 24 }} onClick={() => updateQty(item.key, item.quantity + 1)}>+</button>
+                    </div>
+                    <button onClick={() => removeItem(item.key)} style={{ color: 'var(--clr-danger)', background: 'none', border: 'none', cursor: 'pointer', padding: 4 }}>✕</button>
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'var(--glass-bg-2)', padding: '2px 4px', borderRadius: 6 }}>
-                    <button className="btn btn-ghost btn-sm" style={{ padding: '2px 6px', minHeight: 24 }} onClick={() => updateQty(item.key, item.quantity - 1)}>−</button>
-                    <span style={{ fontWeight: 800, fontSize: 12 }}>{item.quantity}</span>
-                    <button className="btn btn-ghost btn-sm" style={{ padding: '2px 6px', minHeight: 24 }} onClick={() => updateQty(item.key, item.quantity + 1)}>+</button>
-                  </div>
-                  <button onClick={() => removeItem(item.key)} style={{ color: 'var(--clr-danger)', background: 'none', border: 'none', cursor: 'pointer', padding: 4 }}>✕</button>
-                </div>
-              ))}
+                )
+              })}
             </div>
 
             {/* Recommendations / Upsell Carousel */}
