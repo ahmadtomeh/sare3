@@ -83,6 +83,20 @@ function ProtectedRoute({ children }) {
   return children
 }
 
+function RootElement() {
+  const hostname = window.location.hostname
+  const parts = hostname.split('.')
+
+  // Check if we are on a custom store subdomain
+  const isSubdomain = parts.length >= 3 && !hostname.includes('vercel.app') && !['www', 'dashboard', 'admin', 'api'].includes(parts[0])
+  const isLocalhostSubdomain = hostname.includes('localhost') && parts.length >= 2 && parts[0] !== 'localhost'
+
+  if (isSubdomain || isLocalhostSubdomain) {
+    return <CustomerStorefront />
+  }
+  return <LandingPage />
+}
+
 function AppRoutes() {
   const { init } = useAuthStore()
   const { initTheme } = useThemeStore()
@@ -94,7 +108,7 @@ function AppRoutes() {
 
   return (
     <Routes>
-      <Route path="/"              element={<LandingPage />} />
+      <Route path="/"              element={<RootElement />} />
       <Route path="/auth"          element={<AuthPage />} />
       <Route path="/onboarding"    element={<ProtectedRoute><OnboardingWizard /></ProtectedRoute>} />
       <Route path="/dashboard"     element={<ProtectedRoute><MerchantDashboard /></ProtectedRoute>} />

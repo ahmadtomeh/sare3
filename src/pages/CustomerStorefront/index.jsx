@@ -14,7 +14,27 @@ import toast from 'react-hot-toast'
 
 export default function CustomerStorefront({ previewSlug }) {
   const { slug: routeSlug } = useParams()
-  const slug = previewSlug || routeSlug
+
+  const slug = useMemo(() => {
+    if (previewSlug) return previewSlug
+
+    const hostname = window.location.hostname
+    const parts = hostname.split('.')
+
+    // Check if we are on a custom store subdomain on fawri.shop
+    const isSubdomain = parts.length >= 3 && !hostname.includes('vercel.app') && !['www', 'dashboard', 'admin', 'api'].includes(parts[0])
+    if (isSubdomain) {
+      return parts[0]
+    }
+
+    // Also support testing subdomains on localhost if desired (e.g. mudawra.localhost:5173)
+    const isLocalhostSubdomain = hostname.includes('localhost') && parts.length >= 2 && parts[0] !== 'localhost'
+    if (isLocalhostSubdomain) {
+      return parts[0]
+    }
+
+    return routeSlug
+  }, [previewSlug, routeSlug])
   const navigate = useNavigate()
 
   const { store, fetchStore, loading: storeLoading } = useStoreConfig()
