@@ -448,6 +448,7 @@ export default function CustomerStorefront({ previewSlug }) {
   }, [store?.primary_color, store?.accent_color, store?.selected_theme])
 
   const cartCount = count()
+  const cartPulseClass = cartCount % 2 === 0 ? 'cartPulseEvenClass' : 'cartPulseOddClass'
   const cartTotal = total()
   const currency = store?.currency || '₪'
 
@@ -595,7 +596,7 @@ export default function CustomerStorefront({ previewSlug }) {
           
           {/* Shopping Cart Button in Header */}
           <button
-            className="btn btn-ghost btn-sm"
+            className={`btn btn-ghost btn-sm ${cartPulseClass}`}
             style={{ padding: '6px 8px', minHeight: 34, position: 'relative', display: 'flex', alignItems: 'center', gap: 4 }}
             onClick={() => setCartOpen(true)}
             id="cust-top-cart-btn"
@@ -726,7 +727,7 @@ export default function CustomerStorefront({ previewSlug }) {
           left: 12, right: 12, zIndex: 90,
         }}>
           <button
-            className="btn btn-primary btn-full animate-glow"
+            className={`btn btn-primary btn-full animate-glow ${cartPulseClass}`}
             onClick={() => setCartOpen(true)}
             id="cust-bottom-cart-bar"
             style={{
@@ -858,6 +859,7 @@ function StarRating({ rating, count, size = 11 }) {
 /* ── Ultra-Compact Product Card Component ── */
 function CompactProductCard({ product, currency, badge, onAdd, rating, qtyInCart }) {
   const isInCart = qtyInCart > 0
+  const badgeAnimClass = qtyInCart % 2 === 0 ? 'badgePulseEvenClass' : 'badgePulseOddClass'
 
   return (
     <div className="glass" style={{
@@ -870,13 +872,12 @@ function CompactProductCard({ product, currency, badge, onAdd, rating, qtyInCart
     }}>
       {/* Dynamic Cart Count Badge */}
       {isInCart && (
-        <span key={qtyInCart} style={{
+        <span className={badgeAnimClass} style={{
           position: 'absolute', top: 6, left: 6, zIndex: 10,
           background: 'var(--clr-primary)', color: '#fff',
           fontSize: 10, fontWeight: 900, width: 22, height: 22,
           borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
           boxShadow: '0 2px 8px var(--clr-primary-glow)',
-          animation: 'cartBadgePop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
         }}>
           {qtyInCart}
         </span>
@@ -884,13 +885,47 @@ function CompactProductCard({ product, currency, badge, onAdd, rating, qtyInCart
 
       {/* CSS Animation for badge and card pop */}
       <style>{`
-        @keyframes cartBadgePop {
-          0% { transform: scale(0) rotate(-20deg); }
-          100% { transform: scale(1) rotate(0deg); }
+        .badgePulseEvenClass {
+          animation: badgePulseEven 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .badgePulseOddClass {
+          animation: badgePulseOdd 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .cartPulseEvenClass {
+          animation: cartPulseEven 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .cartPulseOddClass {
+          animation: cartPulseOdd 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        @keyframes badgePulseEven {
+          0% { transform: scale(1); }
+          50% { transform: scale(1.35); }
+          100% { transform: scale(1); }
+        }
+        @keyframes badgePulseOdd {
+          0% { transform: scale(1); }
+          50% { transform: scale(1.35); }
+          100% { transform: scale(1); }
+        }
+        @keyframes cartPulseEven {
+          0% { transform: scale(1); }
+          50% { transform: scale(1.1); }
+          100% { transform: scale(1); }
+        }
+        @keyframes cartPulseOdd {
+          0% { transform: scale(1); }
+          50% { transform: scale(1.1); }
+          100% { transform: scale(1); }
         }
         @keyframes cardPress {
           0% { transform: scale(1); }
           50% { transform: scale(0.96); }
+          100% { transform: scale(1); }
+        }
+        @keyframes buttonConfirmBounce {
+          0% { transform: scale(1); }
+          30% { transform: scale(0.9); }
+          65% { transform: scale(1.06); }
           100% { transform: scale(1); }
         }
       `}</style>
@@ -1105,6 +1140,7 @@ function ProductOptionsSheet({ product, currency, onClose, onAdd }) {
   }, [product?.options])
 
   const [selected, setSelected] = useState({})
+  const [added, setAdded] = useState(false)
   const allSelected = optionsList.length === 0 || optionsList.every((opt) => !opt.required || selected[opt.label])
 
   const currentTotalPrice = useMemo(() => {
@@ -1186,6 +1222,15 @@ function ProductOptionsSheet({ product, currency, onClose, onAdd }) {
         setTimeout(() => setActiveImg(idx), 50)
       }
     }
+  }
+
+  const handleConfirmAdd = () => {
+    onAdd(selected)
+    setAdded(true)
+    // Delay closing to let the user see the success check/pulse animation
+    setTimeout(() => {
+      onClose()
+    }, 600)
   }
 
   return (
@@ -1275,12 +1320,19 @@ function ProductOptionsSheet({ product, currency, onClose, onAdd }) {
 
         <button
           type="button"
-          className="btn btn-primary btn-full btn-lg animate-glow"
-          onClick={() => onAdd(selected)}
-          disabled={!allSelected}
-          style={{ marginTop: 8 }}
+          className={`btn btn-full btn-lg ${added ? 'btn-success' : 'btn-primary'} animate-glow`}
+          onClick={handleConfirmAdd}
+          disabled={!allSelected || added}
+          style={{ 
+            marginTop: 8,
+            background: added ? '#10B981' : undefined,
+            borderColor: added ? '#10B981' : undefined,
+            color: '#fff',
+            animation: added ? 'buttonConfirmBounce 0.4s ease-in-out' : undefined,
+            transition: 'all 0.3s ease',
+          }}
         >
-          {allSelected ? '✅ إضافة للسلة' : 'اختر الخيارات أولاً'}
+          {added ? '🎉 تمت الإضافة للسلة!' : allSelected ? '✅ إضافة للسلة' : 'اختر الخيارات أولاً'}
         </button>
       </div>
     </BottomSheet>
