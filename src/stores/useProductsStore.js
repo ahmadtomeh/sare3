@@ -186,7 +186,18 @@ export const useProductsStore = create((set, get) => ({
               nextProducts.push(payload.new)
             }
           } else if (payload.eventType === 'UPDATE') {
-            nextProducts = nextProducts.map(p => p.id === payload.new.id ? payload.new : p)
+            nextProducts = nextProducts.map(p => {
+              if (p.id === payload.new.id) {
+                const merged = { ...p }
+                Object.keys(payload.new).forEach(key => {
+                  if (payload.new[key] !== null) {
+                    merged[key] = payload.new[key]
+                  }
+                })
+                return merged
+              }
+              return p
+            })
           } else if (payload.eventType === 'DELETE') {
             nextProducts = nextProducts.filter(p => p.id !== payload.old.id)
           }
