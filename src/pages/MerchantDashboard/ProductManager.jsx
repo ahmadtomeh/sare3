@@ -241,14 +241,14 @@ function ProductFormModal({ product, categories, storeId, currency, onClose, onS
     if (opts.length === 0) return []
     if (typeof opts[0] === 'string') {
       // old format: flat string array — convert to single group
-      return [{ label: 'الخيارات', required: true, values: opts.map(v => ({ name: v, price: 0 })) }]
+      return [{ label: 'الخيارات', required: true, values: opts.map(v => ({ name: v, price: 0, image_url: '' })) }]
     }
     // already {label, values} format
     return opts.map(o => ({
       label: o.label || '',
       required: o.required !== undefined ? !!o.required : true,
       values: Array.isArray(o.values)
-        ? o.values.map(v => typeof v === 'string' ? { name: v, price: 0 } : { name: v.name || '', price: Number(v.price || 0) })
+        ? o.values.map(v => typeof v === 'string' ? { name: v, price: 0, image_url: '' } : { name: v.name || '', price: Number(v.price || 0), image_url: v.image_url || '' })
         : []
     }))
   }
@@ -268,7 +268,9 @@ function ProductFormModal({ product, categories, storeId, currency, onClose, onS
     stock_count: product?.stock_count ?? 0,
   })
   const [uploading, setUploading] = useState(false)
+  const [uploadingVal, setUploadingVal] = useState(null) // { optIdx, valIdx }
   const fileRef = useRef()
+  const valFileRef = useRef()
 
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }))
 
@@ -326,7 +328,61 @@ function ProductFormModal({ product, categories, storeId, currency, onClose, onS
     })
   }
 
-  const addOption = () => set('options', [...form.options, { label: '', required: true, values: [{ name: '', price: 0 }] }])
+  const triggerValImageUpload = (optIdx, valIdx) => {
+    setUploadingVal({ optIdx, valIdx })
+    valFileRef.current?.click()
+  }
+
+  const handleValFileChange = async (e) => {
+    const file = e.target.files?.[0]
+    if (!file || !uploadingVal) return
+    const { optIdx, valIdx } = uploadingVal
+    setUploadingVal(prev => ({ ...prev, loading: true }))
+
+    try {
+      // Compress option value image
+      const compressedUrl = await compressImage(file, 400, 400, 0.7)
+      let finalUrl = compressedUrl
+
+      try {
+        const ext = file.name.split('.').pop()
+        const path = `options/${storeId}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
+        const { error } = await supabase.storage.from('store-assets').upload(path, file)
+        if (!error) {
+          const { data: urlData } = supabase.storage.from('store-assets').getPublicUrl(path)
+          if (urlData?.publicUrl) finalUrl = urlData.publicUrl
+        }
+      } catch (err) {
+        console.warn('Option image upload fallback:', err)
+      }
+
+      // Update option value
+      setForm(f => {
+        const newOpts = [...f.options]
+        const opt = { ...newOpts[optIdx] }
+        opt.values = opt.values.map((v, idx) => idx === valIdx ? { ...v, image_url: finalUrl } : v)
+        newOpts[optIdx] = opt
+        return { ...f, options: newOpts }
+      })
+      toast.success('✅ تم رفع صورة الخيار')
+    } catch {
+      toast.error('فشل معالجة صورة الخيار')
+    } finally {
+      setUploadingVal(null)
+    }
+  }
+
+  const handleRemoveValImage = (optIdx, valIdx) => {
+    setForm(f => {
+      const newOpts = [...f.options]
+      const opt = { ...newOpts[optIdx] }
+      opt.values = opt.values.map((v, idx) => idx === valIdx ? { ...v, image_url: '' } : v)
+      newOpts[optIdx] = opt
+      return { ...f, options: newOpts }
+    })
+  }
+
+  const addOption = () => set('options', [...form.options, { label: '', required: true, values: [{ name: '', price: 0, image_url: '' }] }])
   const removeOption = (i) => set('options', form.options.filter((_, idx) => idx !== i))
   const updateOption = (i, k, v) => set('options', form.options.map((o, idx) => idx === i ? { ...o, [k]: v } : o))
 
@@ -536,50 +592,91 @@ function ProductFormModal({ product, categories, storeId, currency, onClose, onS
 
               {/* List of values for this option group */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6, paddingRight: 12, borderRight: '2px solid var(--clr-border)' }}>
-                {opt.values.map((val, valIdx) => (
-                  <div key={valIdx} style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-                    <input
-                      className="input"
-                      style={{ fontSize: 'var(--text-xs)', flex: 2 }}
-                      value={val.name}
-                      onChange={(e) => {
-                        const newVals = opt.values.map((v, idx) => idx === valIdx ? { ...v, name: e.target.value } : v)
-                        updateOption(i, 'values', newVals)
-                      }}
-                      placeholder="القيمة (مثال: كبير)"
-                    />
-                    <input
-                      className="input"
-                      type="number"
-                      style={{ fontSize: 'var(--text-xs)', flex: 1, direction: 'ltr' }}
-                      value={val.price === 0 ? '' : val.price}
-                      onChange={(e) => {
-                        const valNum = parseFloat(e.target.value)
-                        const newVals = opt.values.map((v, idx) => idx === valIdx ? { ...v, price: isNaN(valNum) ? 0 : valNum } : v)
-                        updateOption(i, 'values', newVals)
-                      }}
-                      placeholder="السعر الإضافي"
-                    />
-                    <span style={{ fontSize: 10, color: 'var(--clr-text-muted)' }}>{currency}</span>
-                    <button
-                      type="button"
-                      className="btn btn-ghost btn-icon btn-sm"
-                      onClick={() => {
-                        const newVals = opt.values.filter((_, idx) => idx !== valIdx)
-                        updateOption(i, 'values', newVals)
-                      }}
-                      style={{ color: 'var(--clr-text-muted)', padding: 4 }}
-                    >
-                      <X size={12} />
-                    </button>
-                  </div>
-                ))}
+                {opt.values.map((val, valIdx) => {
+                  const isUploadingThis = uploadingVal?.optIdx === i && uploadingVal?.valIdx === valIdx
+                  return (
+                    <div key={valIdx} style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                      {/* Option Value Thumbnail Upload */}
+                      <div
+                        onClick={() => triggerValImageUpload(i, valIdx)}
+                        style={{
+                          position: 'relative', width: 34, height: 34, borderRadius: 8,
+                          border: val.image_url ? '1px solid var(--clr-primary)' : '1px dashed var(--clr-border)',
+                          background: 'var(--glass-bg-2)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          cursor: 'pointer', flexShrink: 0, overflow: 'hidden',
+                        }}
+                        title={val.image_url ? 'تغيير صورة الخيار' : 'رفع صورة لهذا الخيار (اختياري)'}
+                      >
+                        {val.image_url ? (
+                          <img src={val.image_url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        ) : (
+                          <Upload size={14} style={{ color: 'var(--clr-text-3)' }} />
+                        )}
+                        {isUploadingThis && (
+                          <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <span className="animate-spin" style={{ width: 12, height: 12, border: '2px solid rgba(255,255,255,0.3)', borderTop: '2px solid #fff', borderRadius: '50%', display: 'inline-block' }} />
+                          </div>
+                        )}
+                      </div>
+
+                      <input
+                        className="input"
+                        style={{ fontSize: 'var(--text-xs)', flex: 2 }}
+                        value={val.name}
+                        onChange={(e) => {
+                          const newVals = opt.values.map((v, idx) => idx === valIdx ? { ...v, name: e.target.value } : v)
+                          updateOption(i, 'values', newVals)
+                        }}
+                        placeholder="القيمة (مثال: أحمر)"
+                      />
+                      <input
+                        className="input"
+                        type="number"
+                        style={{ fontSize: 'var(--text-xs)', flex: 1, direction: 'ltr' }}
+                        value={val.price === 0 ? '' : val.price}
+                        onChange={(e) => {
+                          const valNum = parseFloat(e.target.value)
+                          const newVals = opt.values.map((v, idx) => idx === valIdx ? { ...v, price: isNaN(valNum) ? 0 : valNum } : v)
+                          updateOption(i, 'values', newVals)
+                        }}
+                        placeholder="السعر الإضافي"
+                      />
+                      <span style={{ fontSize: 10, color: 'var(--clr-text-muted)' }}>{currency}</span>
+
+                      {/* Remove Option Image Button */}
+                      {val.image_url && (
+                        <button
+                          type="button"
+                          className="btn btn-ghost btn-icon btn-sm"
+                          onClick={() => handleRemoveValImage(i, valIdx)}
+                          style={{ color: 'var(--clr-danger)', padding: 4 }}
+                          title="حذف صورة الخيار فقط"
+                        >
+                          ✕
+                        </button>
+                      )}
+
+                      <button
+                        type="button"
+                        className="btn btn-ghost btn-icon btn-sm"
+                        onClick={() => {
+                          const newVals = opt.values.filter((_, idx) => idx !== valIdx)
+                          updateOption(i, 'values', newVals)
+                        }}
+                        style={{ color: 'var(--clr-text-muted)', padding: 4 }}
+                        title="حذف الخيار بالكامل"
+                      >
+                        <X size={12} />
+                      </button>
+                    </div>
+                  )
+                })}
                 <button
                   type="button"
                   className="btn btn-ghost btn-sm"
                   style={{ alignSelf: 'flex-start', fontSize: 11, padding: '2px 8px', minHeight: 26 }}
                   onClick={() => {
-                    const newVals = [...opt.values, { name: '', price: 0 }]
+                    const newVals = [...opt.values, { name: '', price: 0, image_url: '' }]
                     updateOption(i, 'values', newVals)
                   }}
                 >
@@ -589,6 +686,15 @@ function ProductFormModal({ product, categories, storeId, currency, onClose, onS
             </div>
           ))}
         </div>
+
+        {/* Hidden File Input for Option Value Images */}
+        <input
+          ref={valFileRef}
+          type="file"
+          accept="image/*"
+          style={{ display: 'none' }}
+          onChange={handleValFileChange}
+        />
 
         {/* Actions */}
         <div style={{ display: 'flex', gap: 'var(--sp-sm)', justifyContent: 'flex-end', marginTop: 'var(--sp-sm)' }}>

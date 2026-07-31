@@ -1045,14 +1045,14 @@ function ProductOptionsSheet({ product, currency, onClose, onAdd }) {
     if (!Array.isArray(opts) || opts.length === 0) return []
     // Normalize: flat string array ['S','M'] → [{label:'الخيار', values:['S','M']}]
     if (typeof opts[0] === 'string') {
-      return [{ label: 'الخيار', required: true, values: opts.map(v => ({ name: v, price: 0 })) }]
+      return [{ label: 'الخيار', required: true, values: opts.map(v => ({ name: v, price: 0, image_url: '' })) }]
     }
     // Already [{label, values}] format
     return opts.map(o => ({
       label: o.label || 'الخيار',
       required: o.required !== undefined ? !!o.required : true,
       values: Array.isArray(o.values)
-        ? o.values.map(v => typeof v === 'string' ? { name: v, price: 0 } : { name: v.name || '', price: Number(v.price || 0) })
+        ? o.values.map(v => typeof v === 'string' ? { name: v, price: 0, image_url: '' } : { name: v.name || '', price: Number(v.price || 0), image_url: v.image_url || '' })
         : []
     }))
   }, [product?.options])
@@ -1066,13 +1066,24 @@ function ProductOptionsSheet({ product, currency, onClose, onAdd }) {
     return base + extra
   }, [product.price, selected])
 
-  // ── Multi-image gallery state ──
-  const images = useMemo(() => {
+  // ── Dynamic Multi-image gallery state incorporating selected option images ──
+  const baseImages = useMemo(() => {
     const imgs = Array.isArray(product.images) && product.images.length > 0
       ? product.images
       : (product.image_url ? [product.image_url] : [])
     return imgs
   }, [product.images, product.image_url])
+
+  // Combine product base images and any images attached to currently selected options
+  const images = useMemo(() => {
+    const combined = [...baseImages]
+    Object.values(selected).forEach(val => {
+      if (val.image_url && !combined.includes(val.image_url)) {
+        combined.push(val.image_url)
+      }
+    })
+    return combined
+  }, [baseImages, selected])
 
   const [activeImg, setActiveImg] = useState(0)
   const imgStartX = useRef(null)
@@ -1086,6 +1097,40 @@ function ProductOptionsSheet({ product, currency, onClose, onAdd }) {
       else setActiveImg(i => Math.max(i - 1, 0))
     }
     imgStartX.current = null
+  }
+
+  // Shift gallery to option image when clicked
+  const handleSelectOption = (optLabel, val) => {
+    setSelected((s) => {
+      const isDeselected = s[optLabel]?.name === val.name
+      const newSelected = { ...s }
+      if (isDeselected) {
+        delete newSelected[optLabel]
+      } else {
+        newSelected[optLabel] = val
+      }
+      return newSelected
+    })
+
+    // If option has an image and is being selected, switch active gallery image
+    if (val.image_url && selected[optLabel]?.name !== val.name) {
+      // Find or predict index of this image in the upcoming images array
+      const combinedList = [...baseImages]
+      // Add existing selection images except this option label
+      Object.entries(selected).forEach(([k, v]) => {
+        if (k !== optLabel && v.image_url && !combinedList.includes(v.image_url)) {
+          combinedList.push(v.image_url)
+        }
+      })
+      if (!combinedList.includes(val.image_url)) {
+        combinedList.push(val.image_url)
+      }
+      const idx = combinedList.indexOf(val.image_url)
+      if (idx !== -1) {
+        // Delay slightly to allow memoized images state to update
+        setTimeout(() => setActiveImg(idx), 50)
+      }
+    }
   }
 
   return (
@@ -1163,14 +1208,7 @@ function ProductOptionsSheet({ product, currency, onClose, onAdd }) {
                   type="button"
                   className={`category-chip ${selected[opt.label]?.name === val.name ? 'active' : ''}`}
                   style={{ padding: '6px 14px', minHeight: 34, fontSize: 12, fontWeight: 700 }}
-                  onClick={() => setSelected((s) => {
-                    if (s[opt.label]?.name === val.name) {
-                      const newSelected = { ...s }
-                      delete newSelected[opt.label]
-                      return newSelected
-                    }
-                    return { ...s, [opt.label]: val }
-                  })}
+                  onClick={() => handleSelectOption(opt.label, val)}
                 >
                   {val.name}
                   {val.price > 0 && ` (+${val.price} ${currency})`}
@@ -1193,6 +1231,7 @@ function ProductOptionsSheet({ product, currency, onClose, onAdd }) {
     </BottomSheet>
   )
 }
+
 
 /* ── Cart Drawer ── */
 function CartDrawer({
