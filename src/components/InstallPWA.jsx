@@ -99,7 +99,7 @@ export default function InstallPWA({ appName, logoUrl }) {
         width: 44,
         height: 44,
         borderRadius: 12,
-        background: 'var(--clr-primary)',
+        background: 'linear-gradient(135deg, var(--clr-primary), var(--clr-accent))',
         display: 'flex',
         alignItems: 'center',
         justify: 'center',
