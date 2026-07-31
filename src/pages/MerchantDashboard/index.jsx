@@ -1,5 +1,5 @@
 import { useState, useEffect, lazy, Suspense } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import {
   LayoutDashboard, ShoppingBag, ClipboardList, Settings,
   QrCode, CreditCard, LogOut, Zap, Menu, X, Bell, Tag, Users
@@ -46,6 +46,27 @@ export default function MerchantDashboard() {
   const { fetchOrders, getStats } = useOrdersStore()
   const { fetchAll } = useProductsStore()
   const navigate = useNavigate()
+  const location = useLocation()
+
+  // 1. Sync URL path -> Active tab state on mount and URL changes
+  useEffect(() => {
+    const parts = location.pathname.split('/').filter(Boolean)
+    const tab = parts[parts.length - 1]
+    const matchedTab = ['products', 'orders', 'customers', 'coupons', 'settings', 'qr', 'subscription'].includes(tab) ? tab : 'home'
+    if (active !== matchedTab) {
+      setActive(matchedTab)
+    }
+  }, [location.pathname])
+
+  // 2. Sync Active tab state -> URL path on user interactions
+  useEffect(() => {
+    const parts = location.pathname.split('/').filter(Boolean)
+    const currentTab = parts[parts.length - 1]
+    const matchedTab = ['products', 'orders', 'customers', 'coupons', 'settings', 'qr', 'subscription'].includes(currentTab) ? currentTab : 'home'
+    if (active !== matchedTab) {
+      navigate(active === 'home' ? '/dashboard' : `/dashboard/${active}`)
+    }
+  }, [active])
 
   // Load merchant store on mount
   useEffect(() => {
