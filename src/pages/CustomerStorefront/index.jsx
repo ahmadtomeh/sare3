@@ -870,7 +870,7 @@ function CompactProductCard({ product, currency, badge, onAdd, rating, qtyInCart
     }}>
       {/* Dynamic Cart Count Badge */}
       {isInCart && (
-        <span style={{
+        <span key={qtyInCart} style={{
           position: 'absolute', top: 6, left: 6, zIndex: 10,
           background: 'var(--clr-primary)', color: '#fff',
           fontSize: 10, fontWeight: 900, width: 22, height: 22,
