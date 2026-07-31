@@ -785,7 +785,10 @@ export default function CustomerStorefront({ previewSlug }) {
             toast.success('أضيف للسلة 🛒', { duration: 1000 })
             // The parent manages the delay so the fly-to-cart animation completes perfectly before unmounting
             setTimeout(() => {
-              setSelectedProduct(null)
+              setSelectedProduct(prev => {
+                console.log("Setting selected product to null. Previous product:", prev)
+                return null
+              })
             }, 700)
           }}
         />
@@ -1385,7 +1388,7 @@ function ProductOptionsSheet({ product, currency, onClose, onAdd }) {
             type="button"
             className={`btn btn-full btn-lg ${added ? 'btn-success' : 'btn-primary'} animate-glow`}
             onClick={handleConfirmAdd}
-            disabled={!allSelected || added}
+            disabled={!allSelected}
             style={{ 
               flex: 1,
               background: added ? '#10B981' : undefined,
