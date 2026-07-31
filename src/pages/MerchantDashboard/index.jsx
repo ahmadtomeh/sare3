@@ -35,7 +35,16 @@ const NAV_ITEMS = [
 ]
 
 export default function MerchantDashboard() {
-  const [active, setActive] = useState('home')
+  const navigate = useNavigate()
+  const location = useLocation()
+
+  const getInitialTab = () => {
+    const parts = location.pathname.split('/').filter(Boolean)
+    const tab = parts[parts.length - 1]
+    return ['products', 'orders', 'customers', 'coupons', 'settings', 'qr', 'subscription'].includes(tab) ? tab : 'home'
+  }
+
+  const [active, setActive] = useState(getInitialTab)
   const [view, setView] = useState('dashboard')
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [pushEnabled, setPushEnabled] = useState(false)
@@ -45,8 +54,6 @@ export default function MerchantDashboard() {
   const { store, fetchMyStore } = useStoreConfig()
   const { fetchOrders, getStats } = useOrdersStore()
   const { fetchAll } = useProductsStore()
-  const navigate = useNavigate()
-  const location = useLocation()
 
   // 1. Sync URL path -> Active tab state on mount and URL changes
   useEffect(() => {
