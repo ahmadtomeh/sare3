@@ -225,7 +225,7 @@ export default function CustomerStorefront({ previewSlug }) {
 
   // ── Mobile Hardware Back Button / Gesture Management ──
   // Check if any modal/sheet is open
-  const isAnyModalOpen = !!(cartOpen || orderOpen || selectedProduct || myOrdersOpen || searchOpen || trackedOrder)
+  const isAnyModalOpen = !!(cartOpen || orderOpen || myOrdersOpen || searchOpen || trackedOrder)
 
   // Close all open modals helper
   const closeAllModals = () => {
