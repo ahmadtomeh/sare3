@@ -38,7 +38,7 @@ export function BottomSheet({ children, onClose, title }) {
   return (
     <>
       <div className="bottom-sheet-overlay" onClick={onClose} />
-      <div className="bottom-sheet glass">
+      <div className="bottom-sheet glass" onClick={(e) => e.stopPropagation()}>
         <div className="bottom-sheet-handle" />
         {title && (
           <div className="modal-header" style={{ padding: '0 4px 16px' }}>

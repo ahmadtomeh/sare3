@@ -1249,7 +1249,8 @@ function ProductOptionsSheet({ product, currency, onClose, onAdd }) {
     }
   }
 
-  const handleConfirmAdd = () => {
+  const handleConfirmAdd = (e) => {
+    if (e) e.stopPropagation()
     setAdded(true)
     onAdd(selected, quantity)
   }
