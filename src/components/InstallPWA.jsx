@@ -122,7 +122,7 @@ export default function InstallPWA({ appName, logoUrl }) {
         <div style={{ fontSize: 11, color: 'var(--clr-text-3)', lineHeight: 1.3 }}>
           {isIOS
             ? 'اضغط زر المشاركة ⎋ ثم اختر (إضافة إلى الشاشة الرئيسية ➕)'
-            : 'احصل على تجربة تطبيق سريعة وبدون إنترنت'}
+            : 'احصل على تجربة تطبيق فورية وسهلة وبدون إنترنت'}
         </div>
       </div>
 

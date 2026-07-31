@@ -72,7 +72,7 @@ CREATE TABLE IF NOT EXISTS orders (
 -- ── Activation Codes (License Keys) ─────────────────────────
 CREATE TABLE IF NOT EXISTS activation_codes (
   id          UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  code        TEXT UNIQUE NOT NULL,              -- e.g. SARE-XXXX-XXXX
+  code        TEXT UNIQUE NOT NULL,              -- e.g. FAWRI-XXXX-XXXX
   plan        TEXT NOT NULL DEFAULT 'monthly',   -- monthly | yearly
   used        BOOLEAN DEFAULT false,
   used_by     UUID REFERENCES stores(id),

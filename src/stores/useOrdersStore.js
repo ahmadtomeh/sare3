@@ -144,7 +144,7 @@ export const useOrdersStore = create(
         if (data.customer_address) {
           row2.push({ text: '📍 موقع التوصيل على الخريطة', url: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(data.customer_address)}` })
         }
-        row2.push({ text: '📋 فتح لوحة التحكم', url: 'https://sare-nine.vercel.app/dashboard' })
+        row2.push({ text: '📋 فتح لوحة التحكم', url: 'https://fawri.shop/dashboard' })
 
         if (row1.length > 0) inlineKeyboard.push(row1)
         if (row2.length > 0) inlineKeyboard.push(row2)

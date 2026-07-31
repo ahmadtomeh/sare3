@@ -17,7 +17,7 @@ export default function SubscriptionPanel() {
   const handleActivate = async () => {
     if (!licenseKey.trim()) { toast.error('يرجى إدخال كود التفعيل'); return }
     const key = licenseKey.trim().toUpperCase()
-    if (!key.startsWith('SARE-')) { toast.error('كود التفعيل غير صالح — يجب أن يبدأ بـ SARE-'); return }
+    if (!key.startsWith('FAWRI-')) { toast.error('كود التفعيل غير صالح — يجب أن يبدأ بـ FAWRI-'); return }
 
     setActivating(true)
     try {
@@ -229,7 +229,7 @@ export default function SubscriptionPanel() {
               className="input"
               value={licenseKey}
               onChange={(e) => setLicenseKey(e.target.value.toUpperCase())}
-              placeholder="SARE-XXXX-XXXX-XXXX"
+              placeholder="FAWRI-XXXX-XXXX-XXXX"
               style={{ direction: 'ltr', fontFamily: 'monospace', fontSize: 'var(--text-lg)', letterSpacing: 2 }}
               id="license-key-input"
             />

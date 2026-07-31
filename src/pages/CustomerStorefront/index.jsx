@@ -308,7 +308,7 @@ export default function CustomerStorefront({ previewSlug }) {
     const storeSlug = store.slug || slug || 'demo'
     const storeName = store.name || 'المتجر'
     const storeDesc = store.description || `تسوق من ${storeName} واطلب منتجاتك مباشرة عبر الواتساب بسهولة وسرعة.`
-    const storeLogo = store.logo_url || 'https://sare-nine.vercel.app/og-default.png'
+    const storeLogo = store.logo_url || 'https://fawri.shop/og-default.png'
     const url = window.location.href
 
     const title = `${storeName} — اطلب عبر الواتساب ⚡`

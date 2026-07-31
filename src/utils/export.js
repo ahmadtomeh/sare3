@@ -81,7 +81,7 @@ function statusLabel(status) {
  * توليد كود ترخيص فريد
  */
 export function generateLicenseKey(plan = 'monthly') {
-  const prefix = plan === 'yearly' ? 'SARE-Y' : 'SARE-M'
+  const prefix = plan === 'yearly' ? 'FAWRI-Y' : 'FAWRI-M'
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
   const seg = (n) => Array.from({ length: n }, () => chars[Math.floor(Math.random() * chars.length)]).join('')
   return `${prefix}-${seg(4)}-${seg(4)}-${seg(4)}`

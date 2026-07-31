@@ -20,7 +20,7 @@ Deno.serve(async (req: Request) => {
     // @ts-ignore
     const VAPID_PRIVATE_KEY = Deno.env.get('VAPID_PRIVATE_KEY') || 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAE'
     // @ts-ignore
-    const VAPID_SUBJECT = Deno.env.get('VAPID_SUBJECT') || 'https://sare-nine.vercel.app'
+    const VAPID_SUBJECT = Deno.env.get('VAPID_SUBJECT') || 'https://fawri.shop'
     // @ts-ignore
     const SUPABASE_URL = Deno.env.get('SUPABASE_URL') || 'https://aewutaqpjigaqpdnfrwu.supabase.co'
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFld3V0YXFwamlnYXFwZG5mcnd1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ5MDk2MjYsImV4cCI6MjEwMDQ4NTYyNn0.Nc8stbQBls4fFC7gXtSZDYoj6ByrQ87EvWQrMwEk_G0'
