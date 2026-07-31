@@ -23,11 +23,13 @@ export default function ProductManager() {
     if (store?.id) fetchAll(store.id)
   }, [store?.id])
 
-  const filteredProducts = products.filter((p) => {
-    const inCat = activeCat === 'all' || p.category_id === activeCat
-    const inSearch = !search || p.name.includes(search) || p.description?.includes(search)
-    return inCat && inSearch
-  })
+  const filteredProducts = products
+    .filter((p) => {
+      const inCat = activeCat === 'all' || p.category_id === activeCat
+      const inSearch = !search || p.name.includes(search) || p.description?.includes(search)
+      return inCat && inSearch
+    })
+    .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0) || new Date(a.created_at) - new Date(b.created_at))
 
   const handleDeleteProduct = async (id) => {
     if (!confirm('هل أنت متأكد من حذف هذا المنتج؟')) return

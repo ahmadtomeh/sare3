@@ -471,11 +471,13 @@ export default function CustomerStorefront({ previewSlug }) {
   }, [isFreeShippingEligible, celebratedFreeShipping])
 
   const filteredProducts = useMemo(() => {
-    return products.filter((p) => {
-      const inCat = activeCategory === 'all' || p.category_id === activeCategory
-      const inSearch = !search || p.name.includes(search) || p.description?.includes(search)
-      return inCat && inSearch
-    })
+    return products
+      .filter((p) => {
+        const inCat = activeCategory === 'all' || p.category_id === activeCategory
+        const inSearch = !search || p.name.includes(search) || p.description?.includes(search)
+        return inCat && inSearch
+      })
+      .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0) || new Date(a.created_at) - new Date(b.created_at))
   }, [products, activeCategory, search])
 
   if (!store) {
