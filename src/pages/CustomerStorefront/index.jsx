@@ -529,6 +529,26 @@ export default function CustomerStorefront({ previewSlug }) {
 
   return (
     <div style={{ minHeight: '100dvh', background: 'var(--clr-bg)', paddingBottom: cartCount > 0 ? 84 : 20 }}>
+      {/* Global persistent style block for keyframe animations to prevent browser re-render bugs */}
+      <style>{`
+        .image-fly-to-cart {
+          animation: imageFlyAnim 0.65s cubic-bezier(0.25, 1, 0.50, 1) forwards;
+        }
+        @keyframes imageFlyAnim {
+          0% {
+            transform: scale(1) translate(0, 0);
+            opacity: 1;
+          }
+          40% {
+            transform: scale(0.6) translate(-100px, -80px);
+            opacity: 0.8;
+          }
+          100% {
+            transform: scale(0.01) translate(-280px, -450px);
+            opacity: 0;
+          }
+        }
+      `}</style>
 
       {/* ── Compact Native Mobile Top Bar (Height ~54px) ── */}
       <header style={{
@@ -1235,26 +1255,6 @@ function ProductOptionsSheet({ product, currency, onClose, onAdd }) {
 
   return (
     <BottomSheet title={product.name} onClose={onClose}>
-      {/* Inject custom CSS keyframes for flying image animation */}
-      <style>{`
-        .image-fly-to-cart {
-          animation: imageFlyAnim 0.65s cubic-bezier(0.25, 1, 0.50, 1) forwards;
-        }
-        @keyframes imageFlyAnim {
-          0% {
-            transform: scale(1) translate(0, 0);
-            opacity: 1;
-          }
-          40% {
-            transform: scale(0.6) translate(-100px, -80px);
-            opacity: 0.8;
-          }
-          100% {
-            transform: scale(0.01) translate(-280px, -450px);
-            opacity: 0;
-          }
-        }
-      `}</style>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
         {/* Multi-Image Swiper */}
