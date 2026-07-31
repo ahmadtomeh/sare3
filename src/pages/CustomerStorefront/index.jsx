@@ -255,6 +255,7 @@ export default function CustomerStorefront({ previewSlug }) {
           setStoreId(s.id)
         }
       })
+    }
   }, [slug])
 
   useEffect(() => {
