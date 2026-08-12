@@ -58,15 +58,15 @@ export default async function handler(req, res) {
       start_url: `/${slug}`,
       scope: `/${slug}`,
       display: 'standalone',
-      background_color: '#0d0d12',
+      background_color: themeColor,
       theme_color: themeColor,
       orientation: 'portrait-primary',
       lang: 'ar',
       dir: 'rtl',
       gcm_sender_id: '103953800507',
       icons: [
-        { src: iconUrl, sizes: '192x192', type: 'image/png', purpose: 'any maskable' },
-        { src: iconUrl, sizes: '512x512', type: 'image/png', purpose: 'any maskable' },
+        { src: iconUrl, sizes: 'any', type: 'image/svg+xml', purpose: 'any maskable' },
+        { src: iconUrl, sizes: '512x512', type: 'image/svg+xml', purpose: 'any maskable' },
       ],
     }
 
