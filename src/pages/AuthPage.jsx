@@ -14,7 +14,10 @@ export default function AuthPage() {
   const navigate = useNavigate()
 
   useEffect(() => {
-    if (user || useAuthStore.getState().isDemoMode) navigate('/dashboard')
+    if (user || useAuthStore.getState().isDemoMode) {
+      const isAdmin = user?.email === 'admin@fawri.shop' || user?.user_metadata?.role === 'super_admin'
+      navigate(isAdmin ? '/admin' : '/dashboard')
+    }
   }, [user])
 
   const handleChange = (e) => setForm((f) => ({ ...f, [e.target.name]: e.target.value }))
@@ -27,17 +30,19 @@ export default function AuthPage() {
         await signUp({ email: form.email, password: form.password, name: form.name })
         // Auto sign-in immediately after signup (email confirmation is disabled)
         try {
-          await signIn({ email: form.email, password: form.password })
-          toast.success('مرحباً بك! أنشئ متجرك الآن ⚡')
-          navigate('/dashboard')
+          const res = await signIn({ email: form.email, password: form.password })
+          const isAdmin = res?.user?.email === 'admin@fawri.shop' || res?.user?.user_metadata?.role === 'super_admin'
+          toast.success(isAdmin ? 'أهلاً بك يا مدير المنصة! 👑' : 'مرحباً بك! أنشئ متجرك الآن ⚡')
+          navigate(isAdmin ? '/admin' : '/dashboard')
         } catch {
           toast.success('تم إنشاء حسابك — سجّل دخولك الآن')
           setMode('signin')
         }
       } else {
-        await signIn({ email: form.email, password: form.password })
-        toast.success('أهلاً بك مجدداً! 👋')
-        navigate('/dashboard')
+        const res = await signIn({ email: form.email, password: form.password })
+        const isAdmin = res?.user?.email === 'admin@fawri.shop' || res?.user?.user_metadata?.role === 'super_admin'
+        toast.success(isAdmin ? 'مرحباً بعودتك يا مدير المنصة! 👑' : 'أهلاً بك مجدداً! 👋')
+        navigate(isAdmin ? '/admin' : '/dashboard')
       }
     } catch (err) {
       const msgMap = {

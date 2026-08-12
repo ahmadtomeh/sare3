@@ -88,6 +88,7 @@ export default function OnboardingWizard() {
   }
 
   const storeUrl = form.slug ? `${window.location.origin}/${form.slug}` : ''
+  const isAdmin = user?.email === 'admin@fawri.shop' || user?.user_metadata?.role === 'super_admin'
 
   return (
     <div style={{
@@ -102,6 +103,15 @@ export default function OnboardingWizard() {
           </div>
           <p style={{ color: 'var(--clr-text-3)', marginTop: 4 }}>أنشئ متجرك في دقيقتين ⚡</p>
         </div>
+
+        {isAdmin && (
+          <div className="glass" style={{ padding: 'var(--sp-md)', textAlign: 'center', borderColor: 'var(--clr-primary)', background: 'rgba(139, 92, 246, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+            <span style={{ fontSize: 'var(--text-sm)', fontWeight: 600 }}>أنت مسجّل كمدير للمنصة 👑</span>
+            <button className="btn btn-primary btn-sm" onClick={() => navigate('/admin')}>
+              🔒 لوحة الأدمن
+            </button>
+          </div>
+        )}
 
         {/* Steps Indicator */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
