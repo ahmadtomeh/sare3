@@ -42,21 +42,11 @@ export async function subscribeCustomerToPush(orderId, storeId, orderNumber) {
     if (old) await old.unsubscribe()
   } catch {}
 
-  // توليد VAPID keypair جديد
-  const pair = await window.crypto.subtle.generateKey(
-    { name: 'ECDSA', namedCurve: 'P-256' }, true, ['sign', 'verify']
-  )
-  const pubRaw  = await window.crypto.subtle.exportKey('raw', pair.publicKey)
-  const privPkcs = await window.crypto.subtle.exportKey('pkcs8', pair.privateKey)
-  const toB64 = (buf) => btoa(String.fromCharCode(...new Uint8Array(buf)))
-    .replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_')
-  const vapidPublic  = toB64(pubRaw)
-  const vapidPrivate = toB64(new Uint8Array(privPkcs).slice(36, 68))
-
-  // الاشتراك لدى خوادم Push
+  // الاشتراك لدى خوادم Push باستخدام مفتاح VAPID الثابت للمنصة
+  const activeVapidKey = import.meta.env.VITE_VAPID_PUBLIC_KEY || VAPID_PUBLIC_KEY
   const subscription = await reg.pushManager.subscribe({
     userVisibleOnly: true,
-    applicationServerKey: urlBase64ToUint8Array(vapidPublic),
+    applicationServerKey: urlBase64ToUint8Array(activeVapidKey),
   })
 
   const subJson = subscription.toJSON()
@@ -74,8 +64,8 @@ export async function subscribeCustomerToPush(orderId, storeId, orderNumber) {
     endpoint: subJson.endpoint,
     p256dh: subJson.keys?.p256dh,
     auth: subJson.keys?.auth,
-    vapid_public_key: vapidPublic,
-    vapid_private_key: vapidPrivate,
+    vapid_public_key: activeVapidKey,
+    vapid_private_key: '', // فارغ للاعتماد على المفتاح الخاص الثابت في الخادم
   }
 
   const { error } = await supabase.from('customer_push_subscriptions').insert(payload)
