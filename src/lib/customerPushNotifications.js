@@ -61,8 +61,13 @@ export async function subscribeCustomerToPush(orderId, storeId, orderNumber) {
 
   const subJson = subscription.toJSON()
 
-  // حفظ الاشتراك في Supabase مرتبطاً بالطلب
-  const { error } = await supabase.from('customer_push_subscriptions').upsert({
+  // حذف أي اشتراك قديم لنفس الطلب أولاً (تجاهل الخطأ)
+  try {
+    await supabase.from('customer_push_subscriptions').delete().eq('order_id', orderId)
+  } catch {}
+
+  // حفظ الاشتراك الجديد في Supabase مرتبطاً بالطلب
+  const payload = {
     order_id: orderId,
     order_number: orderNumber,
     store_id: storeId,
@@ -71,9 +76,11 @@ export async function subscribeCustomerToPush(orderId, storeId, orderNumber) {
     auth: subJson.keys?.auth,
     vapid_public_key: vapidPublic,
     vapid_private_key: vapidPrivate,
-  }, { onConflict: 'order_id' })
+  }
 
-  if (error) throw new Error('فشل حفظ الاشتراك: ' + error.message)
+  const { error } = await supabase.from('customer_push_subscriptions').insert(payload)
+
+  if (error) throw new Error('فشل حفظ الاشتراك: ' + error.message + ' | ' + error.code)
   return subscription
 }
 
