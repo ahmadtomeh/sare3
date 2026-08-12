@@ -1814,7 +1814,9 @@ function OrderFormSheet({
     if (triggerConfetti) triggerConfetti()
 
     await new Promise(r => setTimeout(r, 600))
-    window.open(url, '_blank')
+    if (store?.enable_whatsapp_redirect !== false) {
+      window.open(url, '_blank')
+    }
     clearCart()
     setSending(false)
 
