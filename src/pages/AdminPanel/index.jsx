@@ -83,24 +83,25 @@ export default function AdminPanel() {
 
   const handleGenerateCode = async () => {
     const code = generateCode()
-    setGeneratedCode(code)
     try {
       const { error } = await supabase.from('activation_codes').insert({
         code,
         used: false,
         plan: codePlan,
         created_by: user?.id,
-        note: codeNote || null,
       })
       if (error) throw error
+      setGeneratedCode(code)  // Only show code in UI after successful DB save
       toast.success(`✅ تم توليد الكود: ${code}`)
       loadCodes()
       setCodeNote('')
     } catch (err) {
       console.error('Error generating code:', err)
-      toast.error('❌ فشل توليد الكود في قاعدة البيانات. تحقق من الصلاحيات.')
+      const msg = err?.message || 'خطأ غير معروف'
+      toast.error(`❌ فشل الحفظ: ${msg}`)
     }
   }
+
 
   const handleToggleMerchant = async (merchant) => {
     const newStatus = merchant.subscription_status === 'active' ? 'expired' : 'active'
