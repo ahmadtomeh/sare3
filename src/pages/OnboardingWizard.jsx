@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Zap, Check, Store, Phone, Package, ChevronLeft } from 'lucide-react'
 import { useStoreConfig } from '../stores/useStoreConfig'
@@ -26,6 +26,14 @@ export default function OnboardingWizard() {
   const { addCategory, addProduct } = useProductsStore()
   const { user } = useAuthStore()
   const navigate = useNavigate()
+
+  // Auto-redirect admin users away from onboarding to the admin panel
+  useEffect(() => {
+    const adminUser = user?.email === 'admin@fawri.shop' || user?.user_metadata?.role === 'super_admin'
+    if (adminUser) {
+      navigate('/admin', { replace: true })
+    }
+  }, [user, navigate])
 
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }))
 

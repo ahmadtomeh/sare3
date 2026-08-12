@@ -90,8 +90,10 @@ export default function MerchantDashboard() {
         const unsubscribe = useOrdersStore.getState().subscribeToOrders(s.id)
         return unsubscribe
       } else if (!useAuthStore.getState().isDemoMode) {
-        // No store found — redirect to onboarding wizard
-        navigate('/onboarding')
+        // Check if admin — don't redirect admin to onboarding
+        const currentUser = useAuthStore.getState().user
+        const isAdmin = currentUser?.email === 'admin@fawri.shop' || currentUser?.user_metadata?.role === 'super_admin'
+        navigate(isAdmin ? '/admin' : '/onboarding')
       }
     }
     const cleanup = loadData()
