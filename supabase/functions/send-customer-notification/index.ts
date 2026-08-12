@@ -51,9 +51,14 @@ Deno.serve(async (req: Request) => {
       .eq('id', storeId)
       .maybeSingle()
 
-    const storeLogo = storeObj?.logo_url 
+    let storeLogo = storeObj?.logo_url 
       ? storeObj.logo_url 
       : `https://www.fawri.shop/api/store-icon?slug=${encodeURIComponent(storeObj?.slug || '')}`
+
+    // إذا كان الشعار مخزناً بصيغة base64، نقوم باستبداله برابط ويب نظيف لتجنب تجاوز حجم الإشعار المسموح به من جوجل (4096 بايت)
+    if (storeLogo && storeLogo.startsWith('data:')) {
+      storeLogo = `https://www.fawri.shop/api/store-icon?slug=${encodeURIComponent(storeObj?.slug || '')}`
+    }
 
     const statusMessages: Record<string, { title: string; body: string }> = {
       confirmed:  { title: '✅ تم تأكيد طلبك!', body: `طلبك #${order_number} من ${store_name} تم تأكيده` },
