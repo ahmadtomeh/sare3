@@ -1819,34 +1819,12 @@ function OrderFormSheet({
     }
     clearCart()
     setSending(false)
-
-    // عرض prompt الإشعارات إذا تم حفظ الطلب بنجاح مع ID حقيقي
-    if (orderSaved && pushSupported && Notification.permission !== 'denied') {
-      setSavedOrder(orderSaved)
-    } else {
-      onClose()
-      toast.success('🎉 تم إرسال طلبك وحفظه في سجل طلباتك!')
-      if (onOrderSuccess) {
-        const firstItem = items[0]?.product || null
-        onOrderSuccess(firstItem)
-      }
-    }
-  }
-
-  // تفعيل الإشعارات من Prompt
-  const handleEnableNotif = async () => {
-    if (!savedOrder) return
-    setNotifLoading(true)
-    try {
-      await subscribeCustomerToPush(savedOrder.id, savedOrder.storeId, savedOrder.number)
-      toast.success('🔔 سيصلك إشعار عند تحديث طلبك!')
-    } catch (err) {
-      toast.error(err.message || 'لم يتم تفعيل الإشعارات')
-    }
-    setNotifLoading(false)
-    setSavedOrder(null)
     onClose()
-    if (onOrderSuccess) onOrderSuccess(items[0]?.product || null)
+    toast.success('🎉 تم إرسال طلبك وحفظه في سجل طلباتك!')
+    if (onOrderSuccess) {
+      const firstItem = items[0]?.product || null
+      onOrderSuccess(firstItem)
+    }
   }
 
   // Filter out the free shipping configuration limit option from zone selector dropdown
@@ -1854,50 +1832,11 @@ function OrderFormSheet({
   const hasSavedInfo = !!(customerInfo?.name)
 
   return (
-    <BottomSheet title={savedOrder ? '🎉 تم إرسال طلبك!' : 'بيانات التوصيل 📍'} onClose={onClose}>
+    <BottomSheet title="بيانات التوصيل 📍" onClose={onClose}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
 
-        {/* ── بنر طلب تفعيل إشعارات التتبع ── */}
-        {savedOrder && (
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, padding: '24px 8px', textAlign: 'center' }}>
-            <div style={{
-              width: 72, height: 72, borderRadius: '50%',
-              background: 'var(--clr-primary-glow)', border: '2px solid var(--clr-accent)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 32,
-            }}>🔔</div>
-            <div>
-              <div style={{ fontSize: 17, fontWeight: 800, marginBottom: 6 }}>
-                تتبع طلبك بالإشعارات!
-              </div>
-              <div style={{ fontSize: 13, color: 'var(--clr-text-muted)', lineHeight: 1.6 }}>
-                فعّل الإشعارات وسيصلك تحديث فوري عندما يتم<br />
-                تأكيد طلبك أو إرساله للتوصيل 🚗
-              </div>
-            </div>
-            <button
-              className="btn btn-primary btn-full"
-              onClick={handleEnableNotif}
-              disabled={notifLoading}
-              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, minHeight: 46 }}
-              id="cust-enable-notif-btn"
-            >
-              <Bell size={17} />
-              {notifLoading ? 'جاري التفعيل...' : 'فعّل إشعارات التتبع'}
-            </button>
-            <button
-              className="btn btn-ghost btn-full"
-              onClick={() => { setSavedOrder(null); onClose(); if (onOrderSuccess) onOrderSuccess(items[0]?.product || null) }}
-              style={{ fontSize: 13, color: 'var(--clr-text-muted)' }}
-              id="cust-skip-notif-btn"
-            >
-              تخطي الآن
-            </button>
-          </div>
-        )}
-
-        {/* ── نموذج التوصيل (يُخفى بعد نجاح الطلب) ── */}
-        {!savedOrder && hasSavedInfo && (
+        {/* ── نموذج التوصيل ── */}
+        {hasSavedInfo && (
           <div className="glass" style={{
             padding: 10, background: 'var(--clr-primary-glow)',
             border: '1px solid var(--clr-primary)', borderRadius: 10,
@@ -1909,9 +1848,6 @@ function OrderFormSheet({
           </div>
         )}
 
-        {/* حقول النموذج تظهر فقط قبل تأكيد الطلب */}
-        {!savedOrder && (
-        <>
         <div className="input-group">
           <label className="input-label"><User size={12} /> الاسم الكامل *</label>
           <input className="input" style={{ minHeight: 38, fontSize: 13 }} value={form.name} onChange={e => set('name', e.target.value)} placeholder="محمد أحمد" required id="cust-order-name" />
@@ -1965,8 +1901,6 @@ function OrderFormSheet({
           <MessageCircle size={18} />
           إرسال الطلب الآن ({formatPrice(finalTotal)} {currency}) 💬
         </button>
-        </>
-        )}
       </div>
     </BottomSheet>
   )
@@ -2152,6 +2086,10 @@ function MyOrdersSheet({ store, onClose, onTrack }) {
 function OrderStatusTracker({ store, order, onClose }) {
   const [status, setStatus] = useState('new')
   const [loading, setLoading] = useState(true)
+  const [dbOrder, setDbOrder] = useState(null)
+  const [subscribed, setSubscribed] = useState(false)
+  const [subscribing, setSubscribing] = useState(false)
+  const [permission, setPermission] = useState(Notification.permission || 'default')
 
   // Clean numerical ID if it starts with #
   const orderNumberStr = order.id.replace('#', '')
@@ -2162,7 +2100,6 @@ function OrderStatusTracker({ store, order, onClose }) {
 
     const fetchInitialStatus = async () => {
       if (isNaN(orderNumber)) {
-        // Fallback for mocked local storage IDs without Supabase mapping
         setStatus('new')
         setLoading(false)
         return
@@ -2170,13 +2107,21 @@ function OrderStatusTracker({ store, order, onClose }) {
       try {
         const { data, error } = await supabase
           .from('orders')
-          .select('status')
+          .select('id, status')
           .eq('store_id', store.id)
           .eq('order_number', orderNumber)
           .single()
         if (error) throw error
         if (data && active) {
           setStatus(data.status || 'new')
+          setDbOrder(data)
+          
+          // Check if already subscribed to this order
+          const { count } = await supabase
+            .from('customer_push_subscriptions')
+            .select('id', { count: 'exact', head: true })
+            .eq('order_id', data.id)
+          setSubscribed((count || 0) > 0)
         }
       } catch (err) {
         console.warn('Could not fetch real order status, defaulting:', err.message)
@@ -2289,6 +2234,61 @@ function OrderStatusTracker({ store, order, onClose }) {
                 </div>
               )}
             </div>
+
+            {/* ── بنر تفعيل إشعارات التتبع للزبون (غير مزعج واختياري) ── */}
+            {dbOrder && permission !== 'denied' && !subscribed && (
+              <div className="glass" style={{
+                padding: '12px 14px', borderRadius: 12, display: 'flex', flexDirection: 'column', gap: 10,
+                background: 'var(--clr-primary-glow)', border: '1px solid var(--clr-primary)',
+              }}>
+                <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+                  <span style={{ fontSize: 20 }}>🔔</span>
+                  <div style={{ flex: 1, textAlign: 'right' }}>
+                    <div style={{ fontSize: 12, fontWeight: 800, color: 'var(--clr-text)' }}>إشعارات التتبع التلقائية</div>
+                    <div style={{ fontSize: 11, color: 'var(--clr-text-3)', marginTop: 2, lineHeight: 1.4 }}>
+                      تلقى إشعارات فورية على هذا الجهاز عند تجهيز طلبك أو شحنه
+                    </div>
+                  </div>
+                </div>
+                <button
+                  className="btn btn-primary btn-sm"
+                  onClick={async () => {
+                    setSubscribing(true)
+                    try {
+                      const res = await Notification.requestPermission()
+                      setPermission(res)
+                      if (res === 'granted') {
+                        await subscribeCustomerToPush(dbOrder.id, store.id, orderNumber)
+                        setSubscribed(true)
+                        toast.success('🔔 تم تفعيل إشعارات التتبع بنجاح!')
+                      } else {
+                        toast.error('تم رفض إذن الإشعارات من المتصفح')
+                      }
+                    } catch (err) {
+                      toast.error(err.message || 'تعذّر تفعيل الإشعارات')
+                    } finally {
+                      setSubscribing(false)
+                    }
+                  }}
+                  disabled={subscribing}
+                  style={{ alignSelf: 'flex-end', fontSize: 11, height: 32, minHeight: 32, padding: '0 14px' }}
+                >
+                  {subscribing ? 'جاري التفعيل...' : 'تفعيل الإشعارات'}
+                </button>
+              </div>
+            )}
+            
+            {subscribed && (
+              <div className="glass" style={{
+                padding: '10px 14px', borderRadius: 12, display: 'flex', gap: 10, alignItems: 'center',
+                background: 'rgba(16, 185, 129, 0.08)', border: '1px solid rgba(16, 185, 129, 0.2)',
+              }}>
+                <span style={{ color: 'var(--clr-accent)', fontSize: 16 }}>✓</span>
+                <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--clr-text)' }}>
+                  إشعارات التتبع نشطة على هذا الجهاز 📱
+                </span>
+              </div>
+            )}
 
             {/* Stepper Timeline */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16, padding: '10px 6px', position: 'relative' }}>
