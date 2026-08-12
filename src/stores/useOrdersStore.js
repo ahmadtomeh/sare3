@@ -3,6 +3,34 @@ import { supabase, isConfigured } from '../lib/supabase'
 import { DEMO_ORDERS } from '../utils/demoData'
 import { useAuthStore } from './useAuthStore'
 
+// صوت طلب جديد — يعمل بدون ملفات خارجية عبر Web Audio API
+function playNewOrderSound() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)()
+
+    const playTone = (freq, startTime, duration, vol = 0.4) => {
+      const osc = ctx.createOscillator()
+      const gain = ctx.createGain()
+      osc.connect(gain)
+      gain.connect(ctx.destination)
+      osc.type = 'sine'
+      osc.frequency.value = freq
+      gain.gain.setValueAtTime(vol, startTime)
+      gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration)
+      osc.start(startTime)
+      osc.stop(startTime + duration)
+    }
+
+    const t = ctx.currentTime
+    // صوت طلب جديد: ثلاث نغمات تصاعدية (Do → Mi → Sol)
+    playTone(523, t, 0.18)       // Do
+    playTone(659, t + 0.2, 0.18) // Mi
+    playTone(784, t + 0.4, 0.35) // Sol — أطول وأعلى
+  } catch {
+    // المتصفح لا يدعم AudioContext — يتجاهل بهدوء
+  }
+}
+
 // Always use the correct hardcoded Supabase URL for edge function calls
 const CORRECT_SUPABASE_URL = 'https://aewutaqpjigaqpdnfrwu.supabase.co'
 const CORRECT_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFld3V0YXFwamlnYXFwZG5mcnd1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ5MDk2MjYsImV4cCI6MjEwMDQ4NTYyNn0.Nc8stbQBls4fFC7gXtSZDYoj6ByrQ87EvWQrMwEk_G0'
@@ -212,6 +240,8 @@ export const useOrdersStore = create((set, get) => ({
       }, (payload) => {
         set((s) => {
           if (s.orders.some((o) => o.id === payload.new.id)) return s
+          // تشغيل صوت الإشعار عند وصول طلب جديد (حين يكون التطبيق مفتوحاً)
+          playNewOrderSound()
           return { orders: [payload.new, ...s.orders] }
         })
       })
