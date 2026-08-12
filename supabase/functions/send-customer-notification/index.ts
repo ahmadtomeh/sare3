@@ -25,7 +25,7 @@ Deno.serve(async (req: Request) => {
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY)
 
-    // جلب subscription الزبون بناءً على order_id
+    // 1. جلب subscription الزبون بناءً على order_id
     const { data: subs, error: subError } = await supabase
       .from('customer_push_subscriptions')
       .select('*')
@@ -34,13 +34,16 @@ Deno.serve(async (req: Request) => {
     if (subError) throw subError
 
     if (!subs || subs.length === 0) {
+      console.log(`No subscriptions found for order_id: ${order_id}`)
       return new Response(JSON.stringify({ sent: 0, message: 'No customer subscriptions' }), {
         status: 200,
         headers: { 'Content-Type': 'application/json', ...corsHeaders },
       })
     }
 
-    // جلب معلومات المتجر بشكل منفصل لتجنب أي مشاكل في العلاقات وقفل قاعدة البيانات
+    console.log(`Found ${subs.length} subscriptions for order_id: ${order_id}`)
+
+    // 2. جلب معلومات المتجر بشكل منفصل لتجنب أي مشاكل في العلاقات
     const storeId = subs[0].store_id
     const { data: storeObj } = await supabase
       .from('stores')
@@ -52,27 +55,20 @@ Deno.serve(async (req: Request) => {
       ? storeObj.logo_url 
       : `https://www.fawri.shop/api/store-icon?slug=${encodeURIComponent(storeObj?.slug || '')}`
 
-    // رسائل حالة الطلب بالعربي
-    const statusMessages: Record<string, { title: string; body: string; emoji: string }> = {
-      new:        { title: '📦 تم استلام طلبك', body: `طلبك #${order_number} من ${store_name} قيد المراجعة`, emoji: '📦' },
-      confirmed:  { title: '✅ تم تأكيد طلبك!', body: `طلبك #${order_number} من ${store_name} تم تأكيده`, emoji: '✅' },
-      preparing:  { title: '👨‍🍳 يتم تحضير طلبك', body: `طلبك #${order_number} من ${store_name} قيد التحضير الآن`, emoji: '👨‍🍳' },
-      ready:      { title: '🎉 طلبك جاهز!', body: `طلبك #${order_number} من ${store_name} جاهز للاستلام`, emoji: '🎉' },
-      delivering: { title: '🚗 طلبك في الطريق!', body: `طلبك #${order_number} من ${store_name} على الطريق إليك`, emoji: '🚗' },
-      delivered:  { title: '✅ تم التوصيل!', body: `طلبك #${order_number} من ${store_name} وصل. شكراً لك! 🙏`, emoji: '✅' },
-      cancelled:  { title: '❌ تم إلغاء الطلب', body: `طلبك #${order_number} من ${store_name} تم إلغاؤه`, emoji: '❌' },
+    const statusMessages: Record<string, { title: string; body: string }> = {
+      confirmed:  { title: '✅ تم تأكيد طلبك!', body: `طلبك #${order_number} من ${store_name} تم تأكيده` },
+      preparing:  { title: '👨‍🍳 يتم تحضير طلبك', body: `طلبك #${order_number} من ${store_name} قيد التحضير` },
+      ready:      { title: '🎉 طلبك جاهز!', body: `طلبك #${order_number} من ${store_name} جاهز للاستلام` },
+      delivering: { title: '🚗 طلبك في الطريق!', body: `طلبك #${order_number} من ${store_name} على الطريق إليك` },
+      delivered:  { title: '✅ تم التوصيل!', body: `طلبك #${order_number} من ${store_name} وصل. شكراً! 🙏` },
+      cancelled:  { title: '❌ تم إلغاء الطلب', body: `طلبك #${order_number} من ${store_name} تم إلغاؤه` },
     }
-
-    const msg = statusMessages[status] || {
-      title: `تحديث طلبك من ${store_name}`,
-      body: `رقم الطلب #${order_number} — الحالة: ${status}`,
-      emoji: '📋'
-    }
-
-    const notification = {
-      title: msg.title,
-      body: msg.body,
-      tag: `order-${order_id}-${status}`,
+    const msg = statusMessages[status] || { title: `تحديث طلبك من ${store_name}`, body: `رقم الطلب #${order_number}` }
+    
+    const notification = { 
+      title: msg.title, 
+      body: msg.body, 
+      tag: `order-${order_id}-${status}`, 
       url: '/my-orders',
       icon: storeLogo,
       badge: storeLogo,
@@ -81,38 +77,24 @@ Deno.serve(async (req: Request) => {
       ]
     }
 
-    const results = await Promise.allSettled(
-      subs.map(async (sub: any) => {
+    let sent = 0
+    for (const sub of subs) {
+      try {
+        console.log(`Attempting to send push to endpoint: ${sub.endpoint}`)
         webpush.setVapidDetails(VAPID_SUBJECT, sub.vapid_public_key, sub.vapid_private_key)
-        await webpush.sendNotification(
-          { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
-          JSON.stringify(notification),
-          { TTL: 86400, urgency: 'high' }
-        )
-      })
-    )
-
-    let sent = 0, failed = 0
-    results.forEach((res: any, i: number) => {
-      if (res.status === 'fulfilled') { sent++ }
-      else {
-        failed++
-        const err = res.reason
-        // حذف subscriptions المنتهية الصلاحية
-        if (err?.statusCode === 410 || err?.statusCode === 404) {
-          supabase.from('customer_push_subscriptions').delete().eq('endpoint', subs[i].endpoint)
+        await webpush.sendNotification({ endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } }, JSON.stringify(notification), { TTL: 86400, urgency: 'high' })
+        sent++
+        console.log(`Push sent successfully to: ${sub.endpoint}`)
+      } catch (e: any) {
+        console.error(`Push failed for endpoint: ${sub.endpoint}. Error:`, e)
+        if (e?.statusCode === 410 || e?.statusCode === 404) {
+          await supabase.from('customer_push_subscriptions').delete().eq('endpoint', sub.endpoint)
         }
       }
-    })
-
-    return new Response(JSON.stringify({ sent, failed }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json', ...corsHeaders },
-    })
+    }
+    return new Response(JSON.stringify({ sent, count: subs.length }), { status: 200, headers: { 'Content-Type': 'application/json', ...corsHeaders } })
   } catch (err: any) {
-    return new Response(JSON.stringify({ error: err?.message }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json', ...corsHeaders },
-    })
+    console.error('Edge Function top level error:', err)
+    return new Response(JSON.stringify({ error: err?.message }), { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } })
   }
 })
