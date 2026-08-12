@@ -5,8 +5,9 @@ import { supabase } from './supabase'
 import { generateValidVapidPair } from './pushNotifications'
 
 function urlBase64ToUint8Array(base64String) {
-  const padding = '='.repeat((4 - (base64String.length % 4)) % 4)
-  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/')
+  const cleanStr = (base64String || '').trim().replace(/^["']|["']$/g, '')
+  const padding = '='.repeat((4 - (cleanStr.length % 4)) % 4)
+  const base64 = (cleanStr + padding).replace(/-/g, '+').replace(/_/g, '/')
   const rawData = window.atob(base64)
   const outputArray = new Uint8Array(rawData.length)
   for (let i = 0; i < rawData.length; ++i) outputArray[i] = rawData.charCodeAt(i)
@@ -41,13 +42,15 @@ export async function subscribeCustomerToPush(orderId, storeId, orderNumber) {
     if (old) await old.unsubscribe()
   } catch {}
 
-  // توليد زوج مفاتيح VAPID حقيقي ومطابق 100% عبر WebCrypto
-  const vapidPair = await generateValidVapidPair()
+  // استخدام مفتاح VAPID العام الثابت للمنصة (مع تنظيف علامات الاقتباس إن وجدت)
+  const activeVapidKey = (import.meta.env.VITE_VAPID_PUBLIC_KEY || 'BGsX0fLhLEJH-Lzm5WOkQPJ3A32BLezs-OShOVXYmMKWT-NC4v4af5uO5-tKfA-eFivOM1drMV7Oy7ZAaDe_UfU')
+    .trim()
+    .replace(/^["']|["']$/g, '')
 
   // الاشتراك لدى خوادم Push
   const subscription = await reg.pushManager.subscribe({
     userVisibleOnly: true,
-    applicationServerKey: urlBase64ToUint8Array(vapidPair.publicKey),
+    applicationServerKey: urlBase64ToUint8Array(activeVapidKey),
   })
 
   const subJson = subscription.toJSON()
@@ -65,8 +68,8 @@ export async function subscribeCustomerToPush(orderId, storeId, orderNumber) {
     endpoint: subJson.endpoint,
     p256dh: subJson.keys?.p256dh,
     auth: subJson.keys?.auth,
-    vapid_public_key: vapidPair.publicKey,
-    vapid_private_key: vapidPair.privateKey,
+    vapid_public_key: activeVapidKey,
+    vapid_private_key: '', // فارغ للاعتماد على المفتاح الخاص الثابت في الخادم
   }
 
   const { error } = await supabase.from('customer_push_subscriptions').insert(payload)
