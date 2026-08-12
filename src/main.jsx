@@ -12,6 +12,14 @@ if ('serviceWorker' in navigator) {
   })
 }
 
+// ── طلب تخزين دائم لمنع Chrome من حذف التطبيق تلقائياً ──
+if ('storage' in navigator && 'persist' in navigator.storage) {
+  navigator.storage.persist().then((granted) => {
+    if (granted) console.log('✅ Persistent storage granted - PWA won\'t be auto-removed')
+  })
+}
+
+
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <App />
