@@ -1,5 +1,35 @@
-// Vercel Serverless Function - Store Icon Proxy
-// يُقدِّم أيقونة المتجر كصورة حقيقية من نفس الدومين لاستخدامها في الـ PWA manifest
+import https from 'https'
+
+function supabaseGet(path) {
+  return new Promise((resolve, reject) => {
+    const SUPABASE_URL = 'aewutaqpjigaqpdnfrwu.supabase.co'
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFld3V0YXFwamlnYXFwZG5mcnd1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ5MDk2MjYsImV4cCI6MjEwMDQ4NTYyNn0.Nc8stbQBls4fFC7gXtSZDYoj6ByrQ87EvWQrMwEk_G0'
+
+    const options = {
+      hostname: SUPABASE_URL,
+      path: path,
+      method: 'GET',
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': `Bearer ${SUPABASE_KEY}`,
+        'Content-Type': 'application/json',
+      },
+    }
+
+    const req = https.request(options, (res) => {
+      let data = ''
+      res.on('data', (chunk) => { data += chunk })
+      res.on('end', () => {
+        try { resolve(JSON.parse(data)) }
+        catch { resolve([]) }
+      })
+    })
+
+    req.on('error', reject)
+    req.setTimeout(8000, () => { req.destroy(new Error('timeout')) })
+    req.end()
+  })
+}
 
 export default async function handler(req, res) {
   const { slug } = req.query
@@ -9,25 +39,13 @@ export default async function handler(req, res) {
   }
 
   try {
-    const supabaseUrl = process.env.VITE_SUPABASE_URL || 'https://aewutaqpjigaqpdnfrwu.supabase.co'
-    const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFld3V0YXFwamlnYXFwZG5mcnd1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ5MDk2MjYsImV4cCI6MjEwMDQ4NTYyNn0.Nc8stbQBls4fFC7gXtSZDYoj6ByrQ87EvWQrMwEk_G0'
-
-    // جلب الـ logo من قاعدة البيانات
-    const response = await fetch(
-      `${supabaseUrl}/rest/v1/stores?slug=eq.${encodeURIComponent(slug)}&select=logo_url&limit=1`,
-      {
-        headers: {
-          apikey: supabaseKey,
-          Authorization: `Bearer ${supabaseKey}`,
-        },
-      }
+    const stores = await supabaseGet(
+      `/rest/v1/stores?slug=eq.${encodeURIComponent(slug)}&select=logo_url&limit=1`
     )
 
-    const stores = await response.json()
-    const logoUrl = stores?.[0]?.logo_url
+    const logoUrl = Array.isArray(stores) ? stores[0]?.logo_url : null
 
     if (!logoUrl) {
-      // إرجاع الأيقونة الافتراضية
       return res.redirect(302, '/icon-192.png')
     }
 
@@ -43,10 +61,10 @@ export default async function handler(req, res) {
       return res.status(200).send(buffer)
     }
 
-    // إذا كانت URL خارجية (Supabase Storage) → نعيد التوجيه
+    // إذا كانت URL خارجية → إعادة توجيه
     return res.redirect(302, logoUrl)
   } catch (err) {
-    console.error('Store icon error:', err)
+    console.error('Store icon error:', err.message)
     return res.redirect(302, '/icon-192.png')
   }
 }
