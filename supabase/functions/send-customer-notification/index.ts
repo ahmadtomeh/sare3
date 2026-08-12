@@ -3,10 +3,14 @@ import webpush from 'https://esm.sh/web-push@3.6.7'
 
 // @ts-ignore
 Deno.serve(async (req: Request) => {
+  const corsHeaders = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+    'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
+  }
+
   if (req.method === 'OPTIONS') {
-    return new Response(null, {
-      headers: { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': '*' },
-    })
+    return new Response('ok', { headers: corsHeaders })
   }
 
   try {
@@ -32,7 +36,7 @@ Deno.serve(async (req: Request) => {
     if (!subs || subs.length === 0) {
       return new Response(JSON.stringify({ sent: 0, message: 'No customer subscriptions' }), {
         status: 200,
-        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+        headers: { 'Content-Type': 'application/json', ...corsHeaders },
       })
     }
 
@@ -103,12 +107,12 @@ Deno.serve(async (req: Request) => {
 
     return new Response(JSON.stringify({ sent, failed }), {
       status: 200,
-      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+      headers: { 'Content-Type': 'application/json', ...corsHeaders },
     })
   } catch (err: any) {
     return new Response(JSON.stringify({ error: err?.message }), {
       status: 500,
-      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+      headers: { 'Content-Type': 'application/json', ...corsHeaders },
     })
   }
 })
