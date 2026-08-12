@@ -21,10 +21,10 @@ Deno.serve(async (req: Request) => {
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY)
 
-    // جلب subscription الزبون بناءً على order_id
+    // جلب subscription الزبون بناءً على order_id مع تفاصيل المتجر للبراندينج
     const { data: subs } = await supabase
       .from('customer_push_subscriptions')
-      .select('*')
+      .select('*, stores(slug, logo_url)')
       .eq('order_id', order_id)
 
     if (!subs || subs.length === 0) {
@@ -33,6 +33,11 @@ Deno.serve(async (req: Request) => {
         headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
       })
     }
+
+    const storeObj = (subs[0] as any)?.stores
+    const storeLogo = storeObj?.logo_url 
+      ? storeObj.logo_url 
+      : `https://www.fawri.shop/api/store-icon?slug=${encodeURIComponent(storeObj?.slug || '')}`
 
     // رسائل حالة الطلب بالعربي
     const statusMessages: Record<string, { title: string; body: string; emoji: string }> = {
@@ -56,6 +61,11 @@ Deno.serve(async (req: Request) => {
       body: msg.body,
       tag: `order-${order_id}-${status}`,
       url: '/my-orders',
+      icon: storeLogo,
+      badge: storeLogo,
+      actions: [
+        { action: 'open', title: '📋 تتبع الطلب' }
+      ]
     }
 
     const results = await Promise.allSettled(

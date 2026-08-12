@@ -21,19 +21,19 @@ self.addEventListener('push', (event) => {
     }
   }
 
-  const title = data.title || 'طلب جديد على فوري 🛒'
+  const title = data.title || 'تحديث من فوري ⚡'
   const options = {
-    body: data.body || 'لديك طلب جديد في متجرك!',
-    icon: '/icon-192.png',
-    badge: '/icon-192.png',
-    tag: data.tag || 'fawri-order',
+    body: data.body || '',
+    icon: data.icon || '/icon-192.png',
+    badge: data.badge || '/icon-192.png',
+    tag: data.tag || 'fawri-notification',
     renotify: true,
-    vibrate: [200, 100, 200, 100, 200, 100, 400],
+    vibrate: data.vibrate || [200, 100, 200],
     data: {
-      url: data.url || '/dashboard',
+      url: data.url || '/',
     },
-    actions: [
-      { action: 'open', title: '📋 عرض الطلب' },
+    actions: data.actions || [
+      { action: 'open', title: '📋 عرض التفاصيل' },
     ],
   }
 
