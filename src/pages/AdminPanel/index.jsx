@@ -85,18 +85,20 @@ export default function AdminPanel() {
     const code = generateCode()
     setGeneratedCode(code)
     try {
-      await supabase.from('activation_codes').insert({
+      const { error } = await supabase.from('activation_codes').insert({
         code,
         used: false,
         plan: codePlan,
         created_by: user?.id,
         note: codeNote || null,
       })
+      if (error) throw error
       toast.success(`✅ تم توليد الكود: ${code}`)
       loadCodes()
       setCodeNote('')
-    } catch {
-      toast.success(`✅ الكود: ${code}`)
+    } catch (err) {
+      console.error('Error generating code:', err)
+      toast.error('❌ فشل توليد الكود في قاعدة البيانات. تحقق من الصلاحيات.')
     }
   }
 
@@ -106,10 +108,12 @@ export default function AdminPanel() {
       ? { trial_ends_at: new Date(Date.now() + 30 * 86400000).toISOString() }
       : {}
     try {
-      await supabase.from('stores').update({ subscription_status: newStatus, ...extra }).eq('id', merchant.id)
+      const { error } = await supabase.from('stores').update({ subscription_status: newStatus, ...extra }).eq('id', merchant.id)
+      if (error) throw error
       setMerchants(prev => prev.map(m => m.id === merchant.id ? { ...m, subscription_status: newStatus, ...extra } : m))
       toast.success(newStatus === 'active' ? '✅ تم تفعيل التاجر (30 يوم)' : '⏸️ تم تعليق التاجر')
-    } catch {
+    } catch (err) {
+      console.error('Error toggling merchant:', err)
       toast.error('خطأ في التحديث')
     }
   }
@@ -117,10 +121,12 @@ export default function AdminPanel() {
   const handleDeleteCode = async (id) => {
     if (!window.confirm('حذف هذا الكود؟')) return
     try {
-      await supabase.from('activation_codes').delete().eq('id', id)
+      const { error } = await supabase.from('activation_codes').delete().eq('id', id)
+      if (error) throw error
       setCodes(prev => prev.filter(c => c.id !== id))
       toast.success('تم حذف الكود')
-    } catch {
+    } catch (err) {
+      console.error('Error deleting code:', err)
       toast.error('خطأ في الحذف')
     }
   }

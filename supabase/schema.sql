@@ -93,6 +93,20 @@ CREATE POLICY "auth_read_codes" ON activation_codes
 CREATE POLICY "auth_update_codes" ON activation_codes
   FOR UPDATE USING (auth.role() = 'authenticated');
 
+-- Allow admins to insert activation codes
+CREATE POLICY "admin_insert_codes" ON activation_codes
+  FOR INSERT WITH CHECK (
+    auth.jwt() ->> 'email' = 'admin@fawri.shop' OR 
+    auth.jwt() -> 'user_metadata' ->> 'role' = 'super_admin'
+  );
+
+-- Allow admins to delete activation codes
+CREATE POLICY "admin_delete_codes" ON activation_codes
+  FOR DELETE USING (
+    auth.jwt() ->> 'email' = 'admin@fawri.shop' OR 
+    auth.jwt() -> 'user_metadata' ->> 'role' = 'super_admin'
+  );
+
 -- ── Indexes ───────────────────────────────────────────────────
 CREATE INDEX IF NOT EXISTS idx_products_store ON products(store_id);
 CREATE INDEX IF NOT EXISTS idx_products_category ON products(category_id);
