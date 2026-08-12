@@ -354,7 +354,7 @@ export default function CustomerStorefront({ previewSlug }) {
     manifestLink.href = `/api/store-manifest?slug=${encodeURIComponent(storeSlug)}${isRootStorefront ? '&subdomain=1' : ''}`
     document.head.appendChild(manifestLink)
 
-  }, [store?.name, store?.description, store?.logo_url, storeSlug])
+  }, [store?.name, store?.description, store?.logo_url, store?.slug, slug])
 
   useEffect(() => {
     if (!store) return
