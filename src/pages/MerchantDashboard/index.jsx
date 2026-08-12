@@ -100,6 +100,18 @@ export default function MerchantDashboard() {
     return () => { cleanup?.then?.(fn => fn?.()) }
   }, [user?.id])
 
+  // ── Inject merchant dashboard PWA manifest (فتح التطبيق على لوحة الإدارة عند التثبيت) ──
+  useEffect(() => {
+    if (!store?.slug) return
+    document.querySelectorAll('link[rel="manifest"]').forEach(el => el.remove())
+    const link = document.createElement('link')
+    link.rel = 'manifest'
+    link.href = `/api/store-manifest?slug=${encodeURIComponent(store.slug)}&dashboard=1`
+    document.head.appendChild(link)
+    return () => link.remove()
+  }, [store?.slug])
+
+
   // طلب إذن الإشعارات والاشتراك تلقائياً عند فتح اللوحة
   useEffect(() => {
     isPushSubscribed().then(setPushEnabled)

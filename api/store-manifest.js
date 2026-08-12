@@ -33,7 +33,8 @@ function supabaseGet(path) {
 }
 
 export default async function handler(req, res) {
-  const { slug } = req.query
+  const { slug, dashboard } = req.query
+  const isDashboard = dashboard === '1'
 
   if (!slug) {
     return res.status(400).json({ error: 'slug is required' })
@@ -47,16 +48,22 @@ export default async function handler(req, res) {
     const store = Array.isArray(stores) ? stores[0] : null
 
     const storeName = store?.name || 'المتجر'
-    const storeDesc = store?.description || `تسوق من ${storeName} واطلب منتجاتك مباشرة عبر الواتساب`
+    const storeDesc = isDashboard
+      ? `إدارة متجر ${storeName} — الطلبات والمنتجات والإعدادات`
+      : (store?.description || `تسوق من ${storeName} واطلب منتجاتك مباشرة عبر الواتساب`)
     const themeColor = store?.primary_color || '#7c3aed'
     const iconUrl = store ? `/api/store-icon?slug=${encodeURIComponent(slug)}` : '/icon-192.png'
 
+    // وضع لوحة التاجر: start_url = /dashboard بدلاً من صفحة المتجر
+    const startUrl = isDashboard ? '/dashboard' : `/${slug}`
+    const scope    = isDashboard ? '/' : `/${slug}`
+
     const manifest = {
-      name: storeName,
-      short_name: storeName,
+      name: isDashboard ? `إدارة ${storeName}` : storeName,
+      short_name: isDashboard ? storeName : storeName,
       description: storeDesc,
-      start_url: `/${slug}`,
-      scope: `/${slug}`,
+      start_url: startUrl,
+      scope: scope,
       display: 'standalone',
       background_color: themeColor,
       theme_color: themeColor,
