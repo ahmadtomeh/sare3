@@ -21,11 +21,13 @@ Deno.serve(async (req: Request) => {
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY)
 
-    // جلب subscription الزبون بناءً على order_id مع تفاصيل المتجر للبراندينج
-    const { data: subs } = await supabase
+    // جلب subscription الزبون بناءً على order_id
+    const { data: subs, error: subError } = await supabase
       .from('customer_push_subscriptions')
-      .select('*, stores(slug, logo_url)')
+      .select('*')
       .eq('order_id', order_id)
+
+    if (subError) throw subError
 
     if (!subs || subs.length === 0) {
       return new Response(JSON.stringify({ sent: 0, message: 'No customer subscriptions' }), {
@@ -34,7 +36,14 @@ Deno.serve(async (req: Request) => {
       })
     }
 
-    const storeObj = (subs[0] as any)?.stores
+    // جلب معلومات المتجر بشكل منفصل لتجنب أي مشاكل في العلاقات وقفل قاعدة البيانات
+    const storeId = subs[0].store_id
+    const { data: storeObj } = await supabase
+      .from('stores')
+      .select('slug, logo_url')
+      .eq('id', storeId)
+      .maybeSingle()
+
     const storeLogo = storeObj?.logo_url 
       ? storeObj.logo_url 
       : `https://www.fawri.shop/api/store-icon?slug=${encodeURIComponent(storeObj?.slug || '')}`
