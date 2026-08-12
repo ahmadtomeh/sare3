@@ -63,9 +63,11 @@ export default function InstallPWA({ appName, logoUrl }) {
     const { outcome } = await deferredPrompt.userChoice
     if (outcome === 'accepted') {
       setShowPrompt(false)
+      localStorage.setItem('fawri-pwa-dismissed', 'true')  // ← لا تعرض مرة أخرى
     }
     setDeferredPrompt(null)
   }
+
 
   const handleDismiss = () => {
     setShowPrompt(false)
