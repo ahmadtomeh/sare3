@@ -72,7 +72,9 @@ export default async function handler(req, res) {
       dir: 'rtl',
       gcm_sender_id: '103953800507',
       icons: [
-        { src: iconUrl, sizes: 'any', type: 'image/svg+xml', purpose: 'any maskable' },
+        { src: '/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
+        { src: '/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any maskable' },
+        { src: iconUrl, sizes: '192x192', type: 'image/svg+xml', purpose: 'any maskable' },
         { src: iconUrl, sizes: '512x512', type: 'image/svg+xml', purpose: 'any maskable' },
       ],
     }
