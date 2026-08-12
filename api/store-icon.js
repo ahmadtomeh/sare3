@@ -47,6 +47,28 @@ function buildIconSvg(base64Image, bgColor, mimeType) {
 </svg>`
 }
 
+// دالة لجلب الصورة الخارجية وتحويلها إلى base64
+function fetchExternalImage(url) {
+  return new Promise((resolve, reject) => {
+    https.get(url, (res) => {
+      if (res.statusCode !== 200) {
+        reject(new Error(`Failed to fetch image: status ${res.statusCode}`))
+        return
+      }
+      const chunks = []
+      res.on('data', (chunk) => chunks.push(chunk))
+      res.on('end', () => {
+        const buffer = Buffer.concat(chunks)
+        const mimeType = res.headers['content-type'] || 'image/png'
+        resolve({
+          base64Data: buffer.toString('base64'),
+          mimeType
+        })
+      })
+    }).on('error', reject)
+  })
+}
+
 export default async function handler(req, res) {
   const { slug, bg } = req.query
 
@@ -67,7 +89,7 @@ export default async function handler(req, res) {
       return res.redirect(302, '/icon-192.png')
     }
 
-    // معالجة صورة base64
+    // معالجة صورة base64 محلية
     if (logoUrl.startsWith('data:')) {
       const [header, base64Data] = logoUrl.split(',')
       const mimeType = header.match(/data:([^;]+)/)?.[1] || 'image/png'
@@ -81,7 +103,21 @@ export default async function handler(req, res) {
       return res.status(200).send(svg)
     }
 
-    // صورة URL خارجية → إعادة توجيه مباشر
+    // صورة URL خارجية (مثل روابط Supabase Storage) → نقوم بجلبها ودمجها في الـ SVG مع الخلفية الملونة
+    if (logoUrl.startsWith('http')) {
+      try {
+        const { base64Data, mimeType } = await fetchExternalImage(logoUrl)
+        const svg = buildIconSvg(base64Data, bgColor, mimeType)
+        res.setHeader('Content-Type', 'image/svg+xml')
+        res.setHeader('Cache-Control', 'public, max-age=86400')
+        res.setHeader('Access-Control-Allow-Origin', '*')
+        return res.status(200).send(svg)
+      } catch (err) {
+        console.error('Failed to fetch external store logo for SVG:', err.message)
+        return res.redirect(302, logoUrl) // fallback
+      }
+    }
+
     return res.redirect(302, logoUrl)
   } catch (err) {
     console.error('Store icon error:', err.message)
