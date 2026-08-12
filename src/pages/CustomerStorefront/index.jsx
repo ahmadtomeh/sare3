@@ -1810,6 +1810,12 @@ function OrderFormSheet({
       localStorage.setItem(key, JSON.stringify([orderRecord, ...prev].slice(0, 30)))
     } catch {}
 
+    // ── تلقائي: تفعيل إشعارات التتبع إذا كان الإذن ممنوحاً مسبقاً ──
+    const pushSupported = 'Notification' in window && 'serviceWorker' in navigator
+    if (orderSaved && pushSupported && Notification.permission === 'granted') {
+      subscribeCustomerToPush(orderSaved.id, orderSaved.storeId, orderSaved.number).catch(() => {})
+    }
+
     // Trigger local confetti explosion!
     if (triggerConfetti) triggerConfetti()
 
