@@ -42,15 +42,13 @@ export async function subscribeCustomerToPush(orderId, storeId, orderNumber) {
     if (old) await old.unsubscribe()
   } catch {}
 
-  // استخدام مفتاح VAPID العام الثابت للمنصة (مع تنظيف علامات الاقتباس إن وجدت)
-  const activeVapidKey = (import.meta.env.VITE_VAPID_PUBLIC_KEY || 'BGsX0fLhLEJH-Lzm5WOkQPJ3A32BLezs-OShOVXYmMKWT-NC4v4af5uO5-tKfA-eFivOM1drMV7Oy7ZAaDe_UfU')
-    .trim()
-    .replace(/^["']|["']$/g, '')
+  // توليد زوج مفاتيح VAPID حقيقي ومطابق 100% عبر WebCrypto
+  const vapidPair = await generateValidVapidPair()
 
   // الاشتراك لدى خوادم Push
   const subscription = await reg.pushManager.subscribe({
     userVisibleOnly: true,
-    applicationServerKey: urlBase64ToUint8Array(activeVapidKey),
+    applicationServerKey: urlBase64ToUint8Array(vapidPair.publicKey),
   })
 
   const subJson = subscription.toJSON()
@@ -68,8 +66,8 @@ export async function subscribeCustomerToPush(orderId, storeId, orderNumber) {
     endpoint: subJson.endpoint,
     p256dh: subJson.keys?.p256dh,
     auth: subJson.keys?.auth,
-    vapid_public_key: activeVapidKey,
-    vapid_private_key: '', // فارغ للاعتماد على المفتاح الخاص الثابت في الخادم
+    vapid_public_key: vapidPair.publicKey,
+    vapid_private_key: vapidPair.privateKey,
   }
 
   const { error } = await supabase.from('customer_push_subscriptions').insert(payload)
