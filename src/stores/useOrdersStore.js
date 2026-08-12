@@ -274,7 +274,7 @@ export const useOrdersStore = create((set, get) => ({
 
     // ── إشعار الزبون بتحديث حالة طلبه ──
     try {
-      await supabase.functions.invoke('send-customer-notification', {
+      const { data: resData, error: resError } = await supabase.functions.invoke('send-customer-notification', {
         body: {
           order_id: orderId,
           status,
@@ -282,8 +282,13 @@ export const useOrdersStore = create((set, get) => ({
           order_number: data.order_number,
         },
       })
+      if (resError) {
+        console.error('Edge Function returned error:', resError)
+      } else {
+        console.log('Customer notification result:', resData)
+      }
     } catch (notifErr) {
-      console.warn('Customer notification failed (non-critical):', notifErr)
+      console.error('Failed to invoke customer notification:', notifErr)
     }
   },
 
