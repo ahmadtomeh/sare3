@@ -29,7 +29,8 @@ export default async function handler(req, res) {
     const storeName = store?.name || 'المتجر'
     const storeDesc = store?.description || `تسوق من ${storeName} واطلب منتجاتك مباشرة عبر الواتساب`
     const themeColor = store?.primary_color || '#7c3aed'
-    const iconUrl = store?.logo_url || `https://fawri.shop/icon-192.png`
+    // نستخدم الـ store-icon endpoint من نفس الدومين بدلاً من URL خارجي
+    const iconUrl = store ? `/api/store-icon?slug=${encodeURIComponent(slug)}` : '/icon-192.png'
 
     const manifest = {
       name: storeName,
