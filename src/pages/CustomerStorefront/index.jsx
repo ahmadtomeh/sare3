@@ -342,14 +342,19 @@ export default function CustomerStorefront({ previewSlug }) {
     // نستخدم API endpoint من نفس الدومين بدلاً من data: URI لضمان تثبيت PWA صحيح
     document.querySelectorAll('link[rel="manifest"]').forEach(el => el.remove())
 
+    const hostname = window.location.hostname
+    const parts = hostname.split('.')
+    const isSubdomain = parts.length >= 3 && !hostname.includes('vercel.app') && !['www', 'dashboard', 'admin', 'api'].includes(parts[0])
+    const isLocalhostSubdomain = hostname.includes('localhost') && parts.length >= 2 && parts[0] !== 'localhost'
+    const isRootStorefront = isSubdomain || isLocalhostSubdomain
+
     const manifestLink = document.createElement('link')
     manifestLink.id = 'dynamic-store-manifest'
     manifestLink.rel = 'manifest'
-    manifestLink.href = `/api/store-manifest?slug=${encodeURIComponent(storeSlug)}`
+    manifestLink.href = `/api/store-manifest?slug=${encodeURIComponent(storeSlug)}${isRootStorefront ? '&subdomain=1' : ''}`
     document.head.appendChild(manifestLink)
 
-
-  }, [store?.name, store?.description, store?.logo_url])
+  }, [store?.name, store?.description, store?.logo_url, storeSlug])
 
   useEffect(() => {
     if (!store) return

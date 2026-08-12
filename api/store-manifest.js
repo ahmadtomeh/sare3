@@ -33,8 +33,9 @@ function supabaseGet(path) {
 }
 
 export default async function handler(req, res) {
-  const { slug, dashboard } = req.query
+  const { slug, dashboard, subdomain } = req.query
   const isDashboard = dashboard === '1'
+  const isSubdomain = subdomain === '1'
 
   if (!slug) {
     return res.status(400).json({ error: 'slug is required' })
@@ -55,8 +56,14 @@ export default async function handler(req, res) {
     const iconUrl = store ? `/api/store-icon?slug=${encodeURIComponent(slug)}` : '/icon-192.png'
 
     // وضع لوحة التاجر: start_url = /dashboard بدلاً من صفحة المتجر
-    const startUrl = isDashboard ? '/dashboard' : `/${slug}`
-    const scope    = isDashboard ? '/' : `/${slug}`
+    // أما بالنسبة للمتجر على نطاق فرعي (subdomain)، الـ start_url والـ scope يكونان "/" لأن المتجر هو كامل الموقع هناك
+    const startUrl = isDashboard 
+      ? '/dashboard' 
+      : (isSubdomain ? '/' : `/${slug}`)
+      
+    const scope    = isDashboard 
+      ? '/' 
+      : (isSubdomain ? '/' : `/${slug}`)
 
     const manifest = {
       name: isDashboard ? `إدارة ${storeName}` : storeName,
