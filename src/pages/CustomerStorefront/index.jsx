@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { Search, ShoppingCart, Package, MapPin, Phone, User, MessageCircle, Plus, Check, ArrowRight } from 'lucide-react'
+import { Search, ShoppingCart, Package, MapPin, Phone, User, MessageCircle, Plus, Check, ArrowRight, Bell } from 'lucide-react'
 import { useStoreConfig } from '../../stores/useStoreConfig'
 import { useProductsStore } from '../../stores/useProductsStore'
 import { useCartStore } from '../../stores/useCartStore'
@@ -12,6 +12,8 @@ import { supabase } from '../../lib/supabase'
 import InstallPWA from '../../components/InstallPWA'
 import { useReviewsStore } from '../../stores/useReviewsStore'
 import toast from 'react-hot-toast'
+import { subscribeCustomerToPush } from '../../lib/customerPushNotifications'
+
 
 export const formatPrice = (val) => {
   const num = Number(val)
@@ -1683,6 +1685,9 @@ function OrderFormSheet({
     notes: customerInfo?.notes || '',
   })
   const [sending, setSending] = useState(false)
+  const [savedOrder, setSavedOrder] = useState(null)   // {id, number, storeId} بعد تأكيد الطلب
+  const [notifLoading, setNotifLoading] = useState(false)
+  const pushSupported = 'Notification' in window && 'serviceWorker' in navigator
 
   // Default to first shipping option if available and none selected yet (excluding the internal free shipping threshold zone)
   useEffect(() => {
@@ -1751,15 +1756,15 @@ function OrderFormSheet({
       status: 'new'
     }
 
-    let orderNumber = null
+    let orderSaved = null
     try {
-      const savedOrder = await useOrdersStore.getState().placeOrder(orderData)
-      if (savedOrder && savedOrder.order_number) {
-        orderNumber = savedOrder.order_number
+      const saved = await useOrdersStore.getState().placeOrder(orderData)
+      if (saved && saved.order_number) {
+        orderNumber = saved.order_number
+        if (saved.id) orderSaved = { id: saved.id, number: saved.order_number, storeId: store.id }
       }
     } catch (err) {
       console.error('Failed to save order to Supabase:', err)
-      // رقم طلب عشوائي كبديل في حال فشل الاتصال بقاعدة البيانات
       orderNumber = Math.floor(Math.random() * 9000) + 1000
     }
 
@@ -1811,13 +1816,34 @@ function OrderFormSheet({
     window.open(url, '_blank')
     clearCart()
     setSending(false)
-    onClose()
-    toast.success('🎉 تم إرسال طلبك وحفظه في سجل طلباتك!')
-    // Prompt review after order
-    if (onOrderSuccess) {
-      const firstItem = items[0]?.product || null
-      onOrderSuccess(firstItem)
+
+    // عرض prompt الإشعارات إذا تم حفظ الطلب بنجاح مع ID حقيقي
+    if (orderSaved && pushSupported && Notification.permission !== 'denied') {
+      setSavedOrder(orderSaved)
+    } else {
+      onClose()
+      toast.success('🎉 تم إرسال طلبك وحفظه في سجل طلباتك!')
+      if (onOrderSuccess) {
+        const firstItem = items[0]?.product || null
+        onOrderSuccess(firstItem)
+      }
     }
+  }
+
+  // تفعيل الإشعارات من Prompt
+  const handleEnableNotif = async () => {
+    if (!savedOrder) return
+    setNotifLoading(true)
+    try {
+      await subscribeCustomerToPush(savedOrder.id, savedOrder.storeId, savedOrder.number)
+      toast.success('🔔 سيصلك إشعار عند تحديث طلبك!')
+    } catch (err) {
+      toast.error(err.message || 'لم يتم تفعيل الإشعارات')
+    }
+    setNotifLoading(false)
+    setSavedOrder(null)
+    onClose()
+    if (onOrderSuccess) onOrderSuccess(items[0]?.product || null)
   }
 
   // Filter out the free shipping configuration limit option from zone selector dropdown
@@ -1825,9 +1851,50 @@ function OrderFormSheet({
   const hasSavedInfo = !!(customerInfo?.name)
 
   return (
-    <BottomSheet title="بيانات التوصيل 📍" onClose={onClose}>
+    <BottomSheet title={savedOrder ? '🎉 تم إرسال طلبك!' : 'بيانات التوصيل 📍'} onClose={onClose}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-        {hasSavedInfo && (
+
+        {/* ── بنر طلب تفعيل إشعارات التتبع ── */}
+        {savedOrder && (
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, padding: '24px 8px', textAlign: 'center' }}>
+            <div style={{
+              width: 72, height: 72, borderRadius: '50%',
+              background: 'var(--clr-primary-glow)', border: '2px solid var(--clr-accent)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 32,
+            }}>🔔</div>
+            <div>
+              <div style={{ fontSize: 17, fontWeight: 800, marginBottom: 6 }}>
+                تتبع طلبك بالإشعارات!
+              </div>
+              <div style={{ fontSize: 13, color: 'var(--clr-text-muted)', lineHeight: 1.6 }}>
+                فعّل الإشعارات وسيصلك تحديث فوري عندما يتم<br />
+                تأكيد طلبك أو إرساله للتوصيل 🚗
+              </div>
+            </div>
+            <button
+              className="btn btn-primary btn-full"
+              onClick={handleEnableNotif}
+              disabled={notifLoading}
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, minHeight: 46 }}
+              id="cust-enable-notif-btn"
+            >
+              <Bell size={17} />
+              {notifLoading ? 'جاري التفعيل...' : 'فعّل إشعارات التتبع'}
+            </button>
+            <button
+              className="btn btn-ghost btn-full"
+              onClick={() => { setSavedOrder(null); onClose(); if (onOrderSuccess) onOrderSuccess(items[0]?.product || null) }}
+              style={{ fontSize: 13, color: 'var(--clr-text-muted)' }}
+              id="cust-skip-notif-btn"
+            >
+              تخطي الآن
+            </button>
+          </div>
+        )}
+
+        {/* ── نموذج التوصيل (يُخفى بعد نجاح الطلب) ── */}
+        {!savedOrder && hasSavedInfo && (
           <div className="glass" style={{
             padding: 10, background: 'var(--clr-primary-glow)',
             border: '1px solid var(--clr-primary)', borderRadius: 10,
@@ -1839,6 +1906,9 @@ function OrderFormSheet({
           </div>
         )}
 
+        {/* حقول النموذج تظهر فقط قبل تأكيد الطلب */}
+        {!savedOrder && (
+        <>
         <div className="input-group">
           <label className="input-label"><User size={12} /> الاسم الكامل *</label>
           <input className="input" style={{ minHeight: 38, fontSize: 13 }} value={form.name} onChange={e => set('name', e.target.value)} placeholder="محمد أحمد" required id="cust-order-name" />
@@ -1892,6 +1962,8 @@ function OrderFormSheet({
           <MessageCircle size={18} />
           إرسال الطلب الآن ({formatPrice(finalTotal)} {currency}) 💬
         </button>
+        </>
+        )}
       </div>
     </BottomSheet>
   )

@@ -265,12 +265,26 @@ export const useOrdersStore = create((set, get) => ({
       .from('orders')
       .update({ status, status_updated_at: new Date().toISOString() })
       .eq('id', orderId)
-      .select()
+      .select('*, stores(name)')
       .single()
     if (error) throw error
     set((s) => ({
       orders: s.orders.map((o) => o.id === orderId ? data : o),
     }))
+
+    // ── إشعار الزبون بتحديث حالة طلبه ──
+    try {
+      await supabase.functions.invoke('send-customer-notification', {
+        body: {
+          order_id: orderId,
+          status,
+          store_name: data.stores?.name || 'المتجر',
+          order_number: data.order_number,
+        },
+      })
+    } catch (notifErr) {
+      console.warn('Customer notification failed (non-critical):', notifErr)
+    }
   },
 
   cancelOrder: async (orderNumber, storeId) => {
