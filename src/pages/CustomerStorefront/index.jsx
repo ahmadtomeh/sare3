@@ -336,66 +336,16 @@ export default function CustomerStorefront({ previewSlug }) {
     setMeta('og:type', 'website', 'property')
     setMeta('apple-mobile-web-app-title', storeName)
 
-    // ── Dynamic Store PWA Manifest Injection (base64 icon for Chrome badge-free install) ──
-    const injectManifest = async () => {
-      try {
-        // تحويل شعار المتجر إلى base64 حتى يثق به Chrome ويُثبّت التطبيق بدون شارة كروم
-        let iconSrc = '/icon-192.png' // fallback محلي
-        if (storeLogo && !storeLogo.includes('og-default.png')) {
-          try {
-            const res = await fetch(storeLogo, { mode: 'cors', cache: 'force-cache' })
-            if (res.ok) {
-              const blob = await res.blob()
-              iconSrc = await new Promise((resolve) => {
-                const reader = new FileReader()
-                reader.onloadend = () => resolve(reader.result)
-                reader.readAsDataURL(blob)
-              })
-            }
-          } catch {
-            // إذا فشل التحميل نستخدم الأيقونة المحلية
-            iconSrc = '/icon-192.png'
-          }
-        }
+    // ── Dynamic Store PWA Manifest (same-origin API endpoint — no Chrome badge) ──
+    // نستخدم API endpoint من نفس الدومين بدلاً من data: URI لضمان تثبيت PWA صحيح
+    document.querySelectorAll('link[rel="manifest"]').forEach(el => el.remove())
 
-        const dynamicManifest = {
-          name: storeName,
-          short_name: storeName,
-          description: storeDesc,
-          start_url: `/${storeSlug}`,
-          scope: `/${storeSlug}`,
-          display: 'standalone',
-          background_color: '#0d0d12',
-          theme_color: store.primary_color || '#7c3aed',
-          orientation: 'portrait-primary',
-          lang: 'ar',
-          dir: 'rtl',
-          gcm_sender_id: '103953800507',
-          icons: [
-            {
-              src: iconSrc,
-              sizes: '192x192',
-              type: iconSrc.startsWith('data:') ? iconSrc.split(';')[0].replace('data:', '') : 'image/png',
-              purpose: 'any maskable'
-            }
-          ]
-        }
+    const manifestLink = document.createElement('link')
+    manifestLink.id = 'dynamic-store-manifest'
+    manifestLink.rel = 'manifest'
+    manifestLink.href = `/api/store-manifest?slug=${encodeURIComponent(storeSlug)}`
+    document.head.appendChild(manifestLink)
 
-        // إزالة الـ manifest الثابت وإضافة الديناميكي
-        document.querySelectorAll('link[rel="manifest"]').forEach(el => el.remove())
-
-        const dataManifestUrl = 'data:application/manifest+json;charset=utf-8,' + encodeURIComponent(JSON.stringify(dynamicManifest))
-        const manifestLink = document.createElement('link')
-        manifestLink.id = 'dynamic-store-manifest'
-        manifestLink.rel = 'manifest'
-        manifestLink.href = dataManifestUrl
-        document.head.appendChild(manifestLink)
-      } catch (err) {
-        console.warn('Could not inject dynamic PWA manifest:', err)
-      }
-    }
-
-    injectManifest()
 
   }, [store?.name, store?.description, store?.logo_url])
 
