@@ -1756,6 +1756,7 @@ function OrderFormSheet({
       status: 'new'
     }
 
+    let orderNumber = null
     let orderSaved = null
     try {
       const saved = await useOrdersStore.getState().placeOrder(orderData)
