@@ -20,14 +20,15 @@
   /* Backgrounds */
   --clr-bg: #090a12;
   --clr-bg-surface: #0f111e;
-  --clr-bg-card: rgba(22, 25, 43, 0.75);
+  --clr-bg-card: #171a2e;
 
-  /* Glassmorphism Tokens */
-  --glass-bg: rgba(15, 17, 30, 0.85);
-  --glass-bg-2: rgba(255, 255, 255, 0.05);
-  --glass-border: rgba(255, 255, 255, 0.1);
+  /* Crisp Solid Tokens (Eliminates background bleed-through) */
+  --glass-bg: #0f111e;
+  --glass-bg-2: #171a2e;
+  --glass-bg-3: #222642;
+  --glass-border: rgba(255, 255, 255, 0.12);
   --glass-border-glow: rgba(139, 92, 246, 0.4);
-  --glass-blur: 24px;
+  --glass-blur: 0px;
 
   /* Text Colors */
   --clr-text: #f8fafc;
@@ -87,13 +88,15 @@
 [data-theme="light"] {
   --clr-bg: #f8fafc;
   --clr-bg-surface: #ffffff;
-  --glass-bg: rgba(255, 255, 255, 0.88);
-  --glass-bg-2: rgba(0, 0, 0, 0.035);
-  --glass-border: rgba(0, 0, 0, 0.08);
+  --clr-bg-card: #f1f5f9;
+  --glass-bg: #ffffff;
+  --glass-bg-2: #f1f5f9;
+  --glass-bg-3: #e2e8f0;
+  --glass-border: rgba(0, 0, 0, 0.1);
   --clr-text: #0f172a;
   --clr-text-2: #334155;
   --clr-text-3: #64748b;
-  --clr-border: rgba(0, 0, 0, 0.08);
+  --clr-border: rgba(0, 0, 0, 0.1);
 }
 
 /* Base Styles & Touch Optimizations */
@@ -542,9 +545,7 @@ body {
   position: fixed;
   inset: 0;
   z-index: 110;
-  background: rgba(0, 0, 0, 0.65);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  background: rgba(0, 0, 0, 0.75);
   animation: fadeInOverlay 0.2s ease forwards;
 }
 
@@ -556,12 +557,14 @@ body {
   z-index: 120;
   max-height: 85dvh;
   overflow-y: auto;
+  background: var(--clr-bg-surface) !important;
+  border-top: 1px solid var(--clr-border);
   padding: var(--sp-md) var(--sp-lg) calc(var(--sp-xl) + env(safe-area-inset-bottom));
   border-bottom-left-radius: 0;
   border-bottom-right-radius: 0;
-  border-top-left-radius: var(--radius-xl);
-  border-top-right-radius: var(--radius-xl);
-  box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.6);
+  border-top-left-radius: 24px;
+  border-top-right-radius: 24px;
+  box-shadow: 0 -12px 48px rgba(0, 0, 0, 0.7);
   animation: slideUpSheet 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
@@ -661,11 +664,9 @@ body {
   width: calc(100% - 24px);
   max-width: 480px;
   height: 62px;
-  background: var(--glass-bg);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
+  background: var(--clr-bg-surface);
   border: 1px solid var(--clr-border);
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
   border-radius: 24px;
   display: flex;
   align-items: center;
