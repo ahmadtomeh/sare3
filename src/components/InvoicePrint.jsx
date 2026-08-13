@@ -151,7 +151,9 @@ export default function InvoicePrint({ order, store, onClose }) {
                   const price = parseFloat(item.price) || parseFloat(item.product?.price) || 0
                   const qty = parseInt(item.qty || item.quantity) || 1
                   const name = item.name || item.product?.name
-                  const option = item.option || (item.selectedOptions ? Object.entries(item.selectedOptions).map(([k, v]) => `${k}: ${v}`).join(', ') : '')
+                  const option = item.option || (typeof item.selectedOptions === 'string'
+                    ? item.selectedOptions
+                    : (item.selectedOptions ? Object.entries(item.selectedOptions).map(([k, v]) => `${k}: ${v}`).join(', ') : ''))
                   return (
                     <div key={idx} style={{ display: 'flex', flexDirection: 'column', fontSize: 11 }}>
                       <div style={{ fontWeight: 700 }}>{name} {option && `(${option})`}</div>
@@ -246,7 +248,9 @@ export default function InvoicePrint({ order, store, onClose }) {
                     const price = parseFloat(item.price) || parseFloat(item.product?.price) || 0
                     const qty = parseInt(item.qty || item.quantity) || 1
                     const name = item.name || item.product?.name
-                    const option = item.option || (item.selectedOptions ? Object.entries(item.selectedOptions).map(([k, v]) => `${k}: ${v}`).join(', ') : '')
+                    const option = item.option || (typeof item.selectedOptions === 'string'
+                      ? item.selectedOptions
+                      : (item.selectedOptions ? Object.entries(item.selectedOptions).map(([k, v]) => `${k}: ${v}`).join(', ') : ''))
                     return (
                       <tr key={idx} style={{ borderBottom: '1px solid #e5e7eb' }}>
                         <td style={{ padding: 8, color: '#111827' }}>

@@ -230,7 +230,9 @@ function OrderCard({ order, currency, isExpanded, onToggle, onStatusUpdate, onNo
             <div style={{ fontSize: 'var(--text-sm)', fontWeight: 700, color: 'var(--clr-text-2)', marginBottom: 8 }}>🧾 الطلبيات:</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
               {(order.items || []).map((item, i) => {
-                const opts = item.selectedOptions ? Object.entries(item.selectedOptions).map(([k, v]) => `${k}: ${v}`).join(' | ') : ''
+                const opts = typeof item.selectedOptions === 'string'
+                  ? item.selectedOptions
+                  : (item.selectedOptions ? Object.entries(item.selectedOptions).map(([k, v]) => `${k}: ${v}`).join(' | ') : '')
                 return (
                   <div key={i} style={{ display: 'flex', gap: 'var(--sp-sm)', alignItems: 'center', padding: '6px 10px', background: 'var(--glass-bg-2)', borderRadius: 8 }}>
                     <div style={{ flex: 1, fontSize: 'var(--text-sm)' }}>
