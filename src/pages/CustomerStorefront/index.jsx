@@ -1565,20 +1565,27 @@ function CartDrawer({
                       {/* Options Tags */}
                       {item.selectedOptions && Object.keys(item.selectedOptions).length > 0 && (
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-                          {Object.entries(item.selectedOptions).map(([label, val]) => (
-                            <span
-                              key={label}
-                              style={{
-                                background: 'rgba(255,255,255,0.08)',
-                                color: 'var(--clr-text-2)',
-                                fontSize: 10, fontWeight: 600,
-                                padding: '2px 7px', borderRadius: 6,
-                                border: '1px solid var(--clr-border)'
-                              }}
-                            >
-                              {label}: {val.name || val}{val.price > 0 ? ` (+${val.price} ${currency})` : ''}
-                            </span>
-                          ))}
+                          {Object.entries(item.selectedOptions).map(([label, val]) => {
+                            const isGenericLabel = !label || label === 'الخيارات المحددة' || label === 'الخيارات' || label === 'الخيار' || label === 'option' || label === 'options'
+                            const valText = typeof val === 'object' ? (val.name || '') : String(val)
+                            const priceText = typeof val === 'object' && val.price > 0 ? ` (+${val.price} ${currency})` : ''
+                            const textToShow = isGenericLabel ? `${valText}${priceText}` : `${label}: ${valText}${priceText}`
+
+                            return (
+                              <span
+                                key={label}
+                                style={{
+                                  background: 'rgba(255,255,255,0.08)',
+                                  color: 'var(--clr-text-2)',
+                                  fontSize: 10, fontWeight: 600,
+                                  padding: '2px 7px', borderRadius: 6,
+                                  border: '1px solid var(--clr-border)'
+                                }}
+                              >
+                                {textToShow}
+                              </span>
+                            )
+                          })}
                         </div>
                       )}
 
