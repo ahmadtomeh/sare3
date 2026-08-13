@@ -587,41 +587,12 @@ export default function CustomerStorefront({ previewSlug }) {
             style={{ padding: 6, minHeight: 34 }}
             onClick={() => setSearchOpen(!searchOpen)}
             id="cust-toggle-search"
+            title="بحث"
           >
-            <Search size={16} />
+            <Search size={18} />
           </button>
           
-          {/* Shopping Cart Button in Header */}
-          <button
-            className={`btn btn-ghost btn-sm ${cartPulseClass}`}
-            style={{ padding: '6px 8px', minHeight: 34, position: 'relative', display: 'flex', alignItems: 'center', gap: 4 }}
-            onClick={() => setCartOpen(true)}
-            id="cust-top-cart-btn"
-          >
-            <ShoppingCart size={18} style={{ color: cartCount > 0 ? 'var(--clr-accent)' : 'var(--clr-text)' }} />
-            {cartCount > 0 && (
-              <span style={{
-                background: 'var(--clr-accent)', color: '#fff',
-                fontSize: 10, fontWeight: 900, borderRadius: 'var(--radius-full)',
-                padding: '1px 6px', minWidth: 16, height: 16,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                boxShadow: '0 2px 6px var(--clr-accent-glow)',
-              }}>
-                {cartCount}
-              </span>
-            )}
-          </button>
-
           <ThemeToggle />
-
-          <button
-            className="btn btn-ghost btn-sm"
-            style={{ padding: 6, minHeight: 34 }}
-            onClick={() => setMyOrdersOpen(true)}
-            id="cust-orders-icon"
-          >
-            📋
-          </button>
         </div>
       </header>
 
