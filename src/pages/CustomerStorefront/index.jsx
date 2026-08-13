@@ -2010,9 +2010,12 @@ function OrderFormSheet({
 
 function MyOrdersSheet({ store, onClose, onTrack, products = [], onOpenCart }) {
   const { addItem } = useCartStore()
+  const { products: storeProducts } = useProductsStore()
   const { cancelOrder } = useOrdersStore()
   const [orders, setOrders] = useState([])
   const [cancelling, setCancelling] = useState(null) // orderId being cancelled
+
+  const catalogProducts = (products && products.length > 0) ? products : storeProducts
 
   useEffect(() => {
     try {
@@ -2025,26 +2028,61 @@ function MyOrdersSheet({ store, onClose, onTrack, products = [], onOpenCart }) {
   }, [store.id])
 
   const handleReorder = (order) => {
-    if (!order?.items || order.items.length === 0) return
+    if (!order?.items || order.items.length === 0) {
+      toast.error('لا توجد عناصر في هذا الطلب لإعادتها')
+      return
+    }
+
+    let addedCount = 0
 
     order.items.forEach(item => {
-      // Find matching product in catalog or construct fallback product object
-      const foundProduct = products.find(p => p.id === item.product_id || p.name === item.name)
-      const productObj = foundProduct || item.product || {
-        id: item.product_id || `reorder-${item.name}`,
-        name: item.name,
-        price: item.price || 0,
-      }
-      const quantity = item.quantity || item.qty || 1
-      const selectedOpts = item.selectedOptions || {}
+      // 1. Try to find the original product in the active catalog
+      const cleanItemName = (item.name || '').trim().toLowerCase()
+      const foundProduct = catalogProducts.find(p => {
+        if (!p) return false
+        if (item.product_id && p.id === item.product_id) return true
+        if (item.product && item.product.id && p.id === item.product.id) return true
+        const pName = (p.name || '').trim().toLowerCase()
+        if (pName && cleanItemName && (pName === cleanItemName || cleanItemName.includes(pName) || pName.includes(cleanItemName))) return true
+        return false
+      })
 
-      // Correct call signature: addItem(product, selectedOptions, quantity)
-      addItem(productObj, selectedOpts, quantity)
+      // 2. Parse quantity safely
+      const quantity = Math.max(1, parseInt(item.quantity || item.qty || 1, 10))
+
+      // 3. Parse options safely
+      let selectedOpts = {}
+      if (item.selectedOptions && typeof item.selectedOptions === 'object' && Object.keys(item.selectedOptions).length > 0) {
+        selectedOpts = item.selectedOptions
+      } else if (item.option && typeof item.option === 'string' && item.option.trim()) {
+        selectedOpts = { 'الخيارات المحددة': { name: item.option, price: 0 } }
+      }
+
+      if (foundProduct) {
+        // Product matched in catalog! Use real catalog product (has image_url, price, description, etc.)
+        addItem(foundProduct, selectedOpts, quantity)
+        addedCount++
+      } else {
+        // Fallback for legacy order or deleted product
+        const fallbackProduct = item.product || {
+          id: item.product_id || `reorder-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
+          name: item.name || 'منتج غير معرف',
+          price: Number(item.price) || 0,
+          image_url: item.image_url || '',
+          description: ''
+        }
+        addItem(fallbackProduct, selectedOpts, quantity)
+        addedCount++
+      }
     })
 
-    toast.success('✅ تم نقل جميع عناصر الطلب إلى السلة!')
-    onClose()
-    if (onOpenCart) onOpenCart()
+    if (addedCount > 0) {
+      toast.success('✅ تم نقل جميع عناصر الطلب إلى السلة بنجاح!')
+      onClose()
+      if (onOpenCart) onOpenCart()
+    } else {
+      toast.error('تعذّر إعادة إضافة عناصر الطلب')
+    }
   }
 
   const handleCancelOrder = async (order) => {
