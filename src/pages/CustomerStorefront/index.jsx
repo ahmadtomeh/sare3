@@ -2198,7 +2198,8 @@ function OrderStatusTracker({ store, order, onClose }) {
       case 'new': return 'تم الاستلام 📝'
       case 'preparing': return 'قيد التجهيز 🍳'
       case 'shipping':
-      case 'delivering': return 'جاري التوصيل 🚚'
+      case 'delivering':
+      case 'out_for_delivery': return 'جاري التوصيل 🚚'
       case 'completed':
       case 'done': return 'تم التسليم 🎉'
       default: return 'تم الاستلام 📝'
@@ -2208,14 +2209,14 @@ function OrderStatusTracker({ store, order, onClose }) {
   const stages = [
     { key: 'new', label: 'تم الاستلام', desc: 'تم استلام الطلب وبانتظار الموافقة', icon: '📝' },
     { key: 'preparing', label: 'قيد التجهيز', desc: 'يتم تحضير طلبك الآن في المتجر', icon: '🍳' },
-    { key: 'shipping', label: 'جاري التوصيل', desc: 'طلبك في الطريق مع سائق التوصيل', icon: '🚚' },
+    { key: 'out_for_delivery', label: 'جاري التوصيل', desc: 'طلبك في الطريق مع سائق التوصيل', icon: '🚚' },
     { key: 'done', label: 'تم التسليم', desc: 'استلمت طلبك بنجاح، بالهناء والشفاء!', icon: '🎉' }
   ]
 
   // Map database status string to stage keys
   const getActiveStageIndex = () => {
     if (status === 'preparing') return 1
-    if (status === 'shipping' || status === 'delivering') return 2
+    if (status === 'shipping' || status === 'delivering' || status === 'out_for_delivery') return 2
     if (status === 'completed' || status === 'done') return 3
     return 0 // default 'new'
   }
