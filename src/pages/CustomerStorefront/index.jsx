@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { Search, ShoppingCart, Package, MapPin, Phone, User, MessageCircle, Plus, Check, ArrowRight, Bell } from 'lucide-react'
+import { Search, ShoppingCart, Package, MapPin, Phone, User, MessageCircle, Plus, Check, ArrowRight, Bell, Trash2, Sparkles, Tag, ShoppingBag } from 'lucide-react'
 import { useStoreConfig } from '../../stores/useStoreConfig'
 import { useProductsStore } from '../../stores/useProductsStore'
 import { useCartStore } from '../../stores/useCartStore'
@@ -1505,11 +1505,12 @@ function CartDrawer({
 
   return (
     <BottomSheet title="سلة التسوق 🛒" onClose={onClose}>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
         {items.length === 0 ? (
-          <div className="empty-state" style={{ padding: 24 }}>
-            <div style={{ fontSize: '2.5rem' }}>🛒</div>
-            <div className="empty-state-title" style={{ fontSize: 14 }}>السلة فارغة</div>
+          <div className="empty-state" style={{ padding: '36px 16px', textAlign: 'center' }}>
+            <div style={{ fontSize: '3rem', marginBottom: 8 }}>🛒</div>
+            <div className="empty-state-title" style={{ fontSize: 15, fontWeight: 700 }}>سلة التسوق فارغة</div>
+            <div style={{ fontSize: 12, color: 'var(--clr-text-3)', marginTop: 4 }}>تصفح المنتجات وأضف ما يعجبك للسلة</div>
           </div>
         ) : (
           <>
@@ -1518,7 +1519,7 @@ function CartDrawer({
               <div
                 className={`glass ${isFreeShippingEligible ? 'free-shipping-container-celebrate' : ''}`}
                 style={{
-                  padding: 12, borderRadius: 12, border: '1px solid var(--clr-border)',
+                  padding: '10px 14px', borderRadius: 14, border: '1px solid var(--clr-border)',
                   background: 'var(--glass-bg-2)', display: 'flex', flexDirection: 'column', gap: 6,
                   transition: 'all 0.3s ease',
                 }}
@@ -1550,10 +1551,10 @@ function CartDrawer({
                   ) : (
                     <span>يتبقى لك <strong style={{ color: 'var(--clr-primary)' }}>{formatPrice(remaining)} {currency}</strong> للحصول على شحن مجاني 🚚</span>
                   )}
-                  <span>{percent.toFixed(0)}%</span>
+                  <span style={{ color: 'var(--clr-primary)', fontWeight: 900 }}>{percent.toFixed(0)}%</span>
                 </div>
                 {/* Progress bar track */}
-                <div style={{ width: '100%', height: 8, background: 'var(--clr-border)', borderRadius: 4, overflow: 'hidden' }}>
+                <div style={{ width: '100%', height: 7, background: 'var(--clr-border)', borderRadius: 4, overflow: 'hidden' }}>
                   <div
                     className={isFreeShippingEligible ? 'free-shipping-bar-celebrate' : ''}
                     style={{
@@ -1568,37 +1569,99 @@ function CartDrawer({
               </div>
             )}
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, maxHeight: '35dvh', overflowY: 'auto' }}>
+            {/* Cart Items List */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, maxHeight: '42dvh', overflowY: 'auto', paddingLeft: 2, paddingRight: 2 }}>
               {items.map((item) => {
                 // Find if any selected option has a custom image_url
                 const optionWithImage = Object.values(item.selectedOptions || {}).find(opt => opt.image_url)
                 const displayImage = optionWithImage ? optionWithImage.image_url : item.product.image_url
+                const itemPrice = (Number(item.product.price) + Object.values(item.selectedOptions || {}).reduce((s, opt) => s + Number(opt.price || 0), 0)) * item.quantity
 
                 return (
-                  <div key={item.key} style={{ display: 'flex', gap: 8, alignItems: 'center', padding: 8, background: 'var(--glass-bg-2)', borderRadius: 10 }}>
-                    {displayImage
-                      ? <img src={displayImage} style={{ width: 44, height: 44, objectFit: 'cover', borderRadius: 8, flexShrink: 0 }} />
-                      : <div style={{ width: 44, height: 44, background: 'var(--clr-bg-surface)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>📦</div>
-                    }
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontWeight: 700, fontSize: 12, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.product.name}</div>
+                  <div
+                    key={item.key}
+                    style={{
+                      display: 'flex', gap: 12, alignItems: 'center',
+                      padding: 10, background: 'var(--glass-bg-2)',
+                      borderRadius: 14, border: '1px solid var(--clr-border)',
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.06)'
+                    }}
+                  >
+                    {/* Item Thumbnail */}
+                    {displayImage ? (
+                      <img src={displayImage} alt={item.product.name} style={{ width: 52, height: 52, objectFit: 'cover', borderRadius: 10, flexShrink: 0, border: '1px solid var(--clr-border)' }} />
+                    ) : (
+                      <div style={{ width: 52, height: 52, background: 'var(--clr-bg-surface)', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, flexShrink: 0 }}>📦</div>
+                    )}
+
+                    {/* Title & Options */}
+                    <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 3 }}>
+                      <div style={{ fontWeight: 800, fontSize: 13, color: 'var(--clr-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {item.product.name}
+                      </div>
+
+                      {/* Options Tags */}
                       {item.selectedOptions && Object.keys(item.selectedOptions).length > 0 && (
-                        <div style={{ fontSize: 10, color: 'var(--clr-text-3)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          {Object.entries(item.selectedOptions)
-                            .map(([label, val]) => `${label}: ${val.name || val}${val.price > 0 ? ` (+${val.price} ${currency})` : ''}`)
-                            .join(' | ')}
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                          {Object.entries(item.selectedOptions).map(([label, val]) => (
+                            <span
+                              key={label}
+                              style={{
+                                background: 'rgba(255,255,255,0.08)',
+                                color: 'var(--clr-text-2)',
+                                fontSize: 10, fontWeight: 600,
+                                padding: '2px 7px', borderRadius: 6,
+                                border: '1px solid var(--clr-border)'
+                              }}
+                            >
+                              {label}: {val.name || val}{val.price > 0 ? ` (+${val.price} ${currency})` : ''}
+                            </span>
+                          ))}
                         </div>
                       )}
-                      <div style={{ fontWeight: 900, color: 'var(--clr-accent)', fontSize: 12, marginTop: 2 }}>
-                        {formatPrice((Number(item.product.price) + Object.values(item.selectedOptions || {}).reduce((s, opt) => s + Number(opt.price || 0), 0)) * item.quantity)} {currency}
+
+                      <div style={{ fontWeight: 900, color: 'var(--clr-accent)', fontSize: 13, marginTop: 2 }}>
+                        {formatPrice(itemPrice)} {currency}
                       </div>
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'var(--glass-bg-2)', padding: '2px 4px', borderRadius: 6 }}>
-                      <button className="btn btn-ghost btn-sm" style={{ padding: '2px 6px', minHeight: 24 }} onClick={() => updateQty(item.key, item.quantity - 1)}>−</button>
-                      <span style={{ fontWeight: 800, fontSize: 12 }}>{item.quantity}</span>
-                      <button className="btn btn-ghost btn-sm" style={{ padding: '2px 6px', minHeight: 24 }} onClick={() => updateQty(item.key, item.quantity + 1)}>+</button>
+
+                    {/* Quantity Control Pill */}
+                    <div style={{
+                      display: 'flex', alignItems: 'center', gap: 4,
+                      background: 'rgba(0,0,0,0.12)',
+                      padding: '3px 5px', borderRadius: 10, border: '1px solid var(--clr-border)'
+                    }}>
+                      <button
+                        className="btn btn-ghost btn-sm"
+                        style={{ width: 24, height: 24, padding: 0, minHeight: 0, fontSize: 14, fontWeight: 900, borderRadius: 6 }}
+                        onClick={() => updateQty(item.key, item.quantity - 1)}
+                      >
+                        −
+                      </button>
+                      <span style={{ fontWeight: 900, fontSize: 12, minWidth: 16, textAlign: 'center' }}>{item.quantity}</span>
+                      <button
+                        className="btn btn-ghost btn-sm"
+                        style={{ width: 24, height: 24, padding: 0, minHeight: 0, fontSize: 14, fontWeight: 900, borderRadius: 6 }}
+                        onClick={() => updateQty(item.key, item.quantity + 1)}
+                      >
+                        +
+                      </button>
                     </div>
-                    <button onClick={() => removeItem(item.key)} style={{ color: 'var(--clr-danger)', background: 'none', border: 'none', cursor: 'pointer', padding: 4 }}>✕</button>
+
+                    {/* Delete Icon Button */}
+                    <button
+                      onClick={() => removeItem(item.key)}
+                      title="حذف من السلة"
+                      style={{
+                        color: 'var(--clr-danger, #ef4444)',
+                        background: 'rgba(239, 68, 68, 0.12)',
+                        border: 'none', borderRadius: 8, width: 28, height: 28,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        cursor: 'pointer', flexShrink: 0, transition: 'transform 0.15s ease'
+                      }}
+                    >
+                      <Trash2 size={14} />
+                    </button>
                   </div>
                 )
               })}
@@ -1607,11 +1670,12 @@ function CartDrawer({
             {/* Recommendations / Upsell Carousel */}
             {recommendations.length > 0 && (
               <div style={{
-                marginTop: 8, padding: '12px 0 4px', borderTop: '1px solid var(--clr-border)',
+                marginTop: 4, padding: '10px 0 2px', borderTop: '1px solid var(--clr-border)',
                 direction: 'rtl'
               }}>
-                <div style={{ fontWeight: 800, fontSize: 12, marginBottom: 8, color: 'var(--clr-text)' }}>
-                  قد يعجبك أيضاً ✨
+                <div style={{ fontWeight: 800, fontSize: 12, marginBottom: 8, color: 'var(--clr-text)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <Sparkles size={14} style={{ color: '#f59e0b' }} />
+                  <span>قد يعجبك أيضاً ✨</span>
                 </div>
                 <div style={{
                   display: 'flex', gap: 10, overflowX: 'auto', paddingBottom: 6,
@@ -1621,15 +1685,15 @@ function CartDrawer({
                     <div
                       key={prod.id}
                       style={{
-                        flex: '0 0 130px', background: 'var(--glass-bg-2)', borderRadius: 10,
+                        flex: '0 0 130px', background: 'var(--glass-bg-2)', borderRadius: 12,
                         border: '1px solid var(--clr-border)', padding: 8,
                         display: 'flex', flexDirection: 'column', gap: 6, position: 'relative'
                       }}
                     >
                       {prod.image_url ? (
-                        <img src={prod.image_url} style={{ width: '100%', height: 74, objectFit: 'cover', borderRadius: 6 }} />
+                        <img src={prod.image_url} alt={prod.name} style={{ width: '100%', height: 72, objectFit: 'cover', borderRadius: 8 }} />
                       ) : (
-                        <div style={{ width: '100%', height: 74, background: 'var(--clr-bg-surface)', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24 }}>
+                        <div style={{ width: '100%', height: 72, background: 'var(--clr-bg-surface)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24 }}>
                           📦
                         </div>
                       )}
@@ -1667,11 +1731,11 @@ function CartDrawer({
               </div>
             )}
 
-            {/* Coupon Section */}
+            {/* Coupon Code Section */}
             <div style={{ padding: '8px 0', borderTop: '1px solid var(--clr-border)', display: 'flex', gap: 8, alignItems: 'center' }}>
               <input
                 className="input"
-                style={{ minHeight: 34, fontSize: 11, flex: 1 }}
+                style={{ minHeight: 36, fontSize: 11, flex: 1, borderRadius: 10 }}
                 placeholder="أدخل رمز الكوبون..."
                 value={couponCode}
                 onChange={e => setCouponCode(e.target.value)}
@@ -1690,7 +1754,7 @@ function CartDrawer({
                 <button
                   type="button"
                   className="btn btn-primary btn-sm"
-                  style={{ minHeight: 34, fontSize: 11, padding: '0 14px' }}
+                  style={{ minHeight: 36, fontSize: 11, padding: '0 14px', borderRadius: 10 }}
                   onClick={handleApplyCoupon}
                   disabled={checkingCoupon}
                 >
@@ -1699,28 +1763,34 @@ function CartDrawer({
               )}
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 4, borderTop: '1px solid var(--clr-border)', paddingTop: 8 }}>
+            {/* Glassmorphic Order Summary Card */}
+            <div style={{
+              display: 'flex', flexDirection: 'column', gap: 6,
+              background: 'var(--glass-bg-2)', padding: 12, borderRadius: 14,
+              border: '1px solid var(--clr-border)'
+            }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 12, color: 'var(--clr-text-3)' }}>
                 <span>مجموع المنتجات:</span>
-                <span>{formatPrice(cartTotal)} {currency}</span>
+                <span style={{ fontWeight: 700 }}>{formatPrice(cartTotal)} {currency}</span>
               </div>
               {appliedCoupon && (
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 12, color: 'var(--clr-accent)' }}>
                   <span>خصم كوبون ({appliedCoupon.code}):</span>
-                  <span>-{formatPrice(discountAmount)} {currency}</span>
+                  <span style={{ fontWeight: 800 }}>-{formatPrice(discountAmount)} {currency}</span>
                 </div>
               )}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px dashed var(--clr-border)', paddingTop: 6, marginTop: 4 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px dashed var(--clr-border)', paddingTop: 8, marginTop: 2 }}>
                 <span style={{ fontWeight: 800, fontSize: 13 }}>المجموع الإجمالي:</span>
-                <span style={{ fontWeight: 900, fontSize: 16, color: 'var(--clr-accent)' }}>
+                <span style={{ fontWeight: 900, fontSize: 17, color: 'var(--clr-accent)' }}>
                   {formatPrice(finalTotal)} {currency}
                 </span>
               </div>
             </div>
 
-            <button className="btn btn-primary btn-full btn-lg animate-glow" onClick={onCheckout} id="cust-cart-checkout" style={{ marginTop: 4 }}>
+            {/* Primary Action Button */}
+            <button className="btn btn-primary btn-full btn-lg animate-glow" onClick={onCheckout} id="cust-cart-checkout" style={{ marginTop: 2, borderRadius: 14 }}>
               <MessageCircle size={18} />
-              تأكيد الطلب والتوصيل 💬
+              <span>متابعة الشراء (إتمام الطلب) ⚡</span>
             </button>
           </>
         )}
