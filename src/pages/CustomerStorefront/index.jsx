@@ -13,6 +13,7 @@ import InstallPWA from '../../components/InstallPWA'
 import { useReviewsStore } from '../../stores/useReviewsStore'
 import toast from 'react-hot-toast'
 import { subscribeCustomerToPush } from '../../lib/customerPushNotifications'
+import SpinWheelModal from '../../components/SpinWheelModal'
 
 
 export const formatPrice = (val) => {
@@ -59,6 +60,7 @@ export default function CustomerStorefront({ previewSlug }) {
   const [myOrdersOpen, setMyOrdersOpen] = useState(false)
   const [trackedOrder, setTrackedOrder] = useState(null)
   const [reviewOpen, setReviewOpen] = useState(false) // {product} after order success
+  const [spinWheelOpen, setSpinWheelOpen] = useState(false)
 
   // ── Coupon & Shipping States ──
   const [couponCode, setCouponCode] = useState('')
@@ -730,6 +732,20 @@ export default function CustomerStorefront({ previewSlug }) {
           isFreeShippingEligible={isFreeShippingEligible}
           onClose={() => setCartOpen(false)}
           onCheckout={() => { setCartOpen(false); setOrderOpen(true) }}
+          onOpenSpinWheel={() => setSpinWheelOpen(true)}
+        />
+      )}
+
+      {/* ── Spin Wheel Modal ── */}
+      {spinWheelOpen && (
+        <SpinWheelModal
+          store={store}
+          onClose={() => setSpinWheelOpen(false)}
+          onApplyCoupon={(code) => {
+            setCouponCode(code)
+            setCartOpen(true)
+            toast.success(`✅ تم تعبئة كود الخصم (${code})، اضغط تطبيق بالسلة!`)
+          }}
         />
       )}
 
@@ -1402,7 +1418,7 @@ function ProductOptionsSheet({ product, currency, onClose, onAdd }) {
 function CartDrawer({
   store, items, currency, cartTotal,
   couponCode, setCouponCode, appliedCoupon, setAppliedCoupon,
-  discountAmount, finalTotal, freeShippingLimit, isFreeShippingEligible, onClose, onCheckout
+  discountAmount, finalTotal, freeShippingLimit, isFreeShippingEligible, onClose, onCheckout, onOpenSpinWheel
 }) {
   const { addItem, updateQty, removeItem } = useCartStore()
   const { products } = useProductsStore()
@@ -1729,6 +1745,52 @@ function CartDrawer({
                     disabled={checkingCoupon}
                   >
                     {checkingCoupon ? 'جاري الفحص...' : 'تطبيق'}
+                  </button>
+                )}
+              </div>
+            {/* Spin Wheel Promo Banner in Cart */}
+            {store?.enable_spin_wheel === true && (
+              <div style={{
+                background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.12), rgba(16, 185, 129, 0.12))',
+                border: '1px solid var(--clr-primary)', borderRadius: 12, padding: '10px 14px',
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8,
+                marginTop: 4
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <div style={{ fontSize: 24, animation: 'bounce 2s infinite' }}>🎡</div>
+                  <div>
+                    {cartTotal >= (store.wheel_min_amount || 50) ? (
+                      <>
+                        <div style={{ fontSize: 12, fontWeight: 900, color: 'var(--clr-text)' }}>
+                          مبروك! تأهلت لتدوير عجلة الحظ 🎁
+                        </div>
+                        <div style={{ fontSize: 10, color: 'var(--clr-accent)', fontWeight: 700 }}>
+                          لُفّ العجلة واكسب خصمك الآن!
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div style={{ fontSize: 12, fontWeight: 800, color: 'var(--clr-text)' }}>
+                          عجلة الجوائز والخصومات 🎡
+                        </div>
+                        <div style={{ fontSize: 10, color: 'var(--clr-text-3)' }}>
+                          يتبقى لك <strong style={{ color: 'var(--clr-primary)' }}>{formatPrice(Math.max(0, (store.wheel_min_amount || 50) - cartTotal))} {currency}</strong> لتأهل لتدوير العجلة
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </div>
+                {cartTotal >= (store.wheel_min_amount || 50) && (
+                  <button
+                    type="button"
+                    className="btn btn-primary btn-sm"
+                    onClick={() => {
+                      onClose()
+                      if (onOpenSpinWheel) onOpenSpinWheel()
+                    }}
+                    style={{ fontSize: 11, padding: '4px 10px', borderRadius: 8, fontWeight: 900, flexShrink: 0 }}
+                  >
+                    لَفّ العجلة 🎡
                   </button>
                 )}
               </div>

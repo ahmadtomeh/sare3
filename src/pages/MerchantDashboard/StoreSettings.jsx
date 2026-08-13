@@ -38,6 +38,15 @@ export default function StoreSettings() {
     telegram_chat_id: '',
     enable_whatsapp_redirect: true,
     enable_coupons: true,
+    enable_spin_wheel: false,
+    wheel_min_amount: 50,
+    wheel_prizes: [
+      { id: 'p1', label: 'خصم 10%', type: 'percentage', value: 10, code: 'SPIN10', color: '#8B5CF6' },
+      { id: 'p2', label: 'خصم 5 ₪', type: 'fixed', value: 5, code: 'SPIN5', color: '#10B981' },
+      { id: 'p3', label: 'شحن مجاني 🚚', type: 'free_shipping', value: 0, code: 'FREESHIP', color: '#F59E0B' },
+      { id: 'p4', label: 'هدية مع الطلب 🎁', type: 'gift', value: 0, code: 'GIFT', color: '#EC4899' },
+      { id: 'p5', label: 'حظاً أوفر 🍀', type: 'no_win', value: 0, code: '', color: '#6B7280' }
+    ],
   })
   const [loading, setLoading] = useState(false)
   const [saved, setSaved] = useState(false)
@@ -71,6 +80,15 @@ export default function StoreSettings() {
         free_shipping_limit: limitOpt ? limitOpt.cost : '',
         enable_whatsapp_redirect: store.enable_whatsapp_redirect !== false,
         enable_coupons: store.enable_coupons !== false,
+        enable_spin_wheel: store.enable_spin_wheel === true,
+        wheel_min_amount: store.wheel_min_amount ?? 50,
+        wheel_prizes: store.wheel_prizes || [
+          { id: 'p1', label: 'خصم 10%', type: 'percentage', value: 10, code: 'SPIN10', color: '#8B5CF6' },
+          { id: 'p2', label: 'خصم 5 ₪', type: 'fixed', value: 5, code: 'SPIN5', color: '#10B981' },
+          { id: 'p3', label: 'شحن مجاني 🚚', type: 'free_shipping', value: 0, code: 'FREESHIP', color: '#F59E0B' },
+          { id: 'p4', label: 'هدية مع الطلب 🎁', type: 'gift', value: 0, code: 'GIFT', color: '#EC4899' },
+          { id: 'p5', label: 'حظاً أوفر 🍀', type: 'no_win', value: 0, code: '', color: '#6B7280' }
+        ],
       })
     }
   }, [store])
@@ -450,6 +468,53 @@ export default function StoreSettings() {
         <p style={{ fontSize: 11, color: 'var(--clr-text-3)', marginRight: 26, marginTop: 4, lineHeight: 1.5 }}>
           عند تفعيل هذا الخيار، تظهر خانة أدخل الكوبون في سلة التسوق. وعند إيقافه، يتم إخفاء الخانة بالكامل لجعل السلة أبسط وأشيك.
         </p>
+      </div>
+
+      {/* Spin the Wheel Gamification Settings */}
+      <div className="glass" style={{ padding: 'var(--sp-xl)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10, marginBottom: 8 }}>
+          <div>
+            <h2 style={{ fontWeight: 800, fontSize: 'var(--text-lg)', display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span>🎡 عجلة الحظ والجوائز (Spin & Win)</span>
+            </h2>
+            <p style={{ fontSize: 'var(--text-xs)', color: 'var(--clr-text-3)', lineHeight: 1.5, marginTop: 2 }}>
+              حفّز زبائنك على زيادات المبيعات والوصول لمبلغ معين لتدوير عجلة الجوائز والخصومات!
+            </p>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <input
+              type="checkbox"
+              id="spin-wheel-toggle"
+              checked={form.enable_spin_wheel}
+              onChange={e => set('enable_spin_wheel', e.target.checked)}
+              style={{ width: 20, height: 20, accentColor: 'var(--clr-accent)', cursor: 'pointer' }}
+            />
+            <label htmlFor="spin-wheel-toggle" style={{ fontWeight: 800, fontSize: 13, cursor: 'pointer' }}>
+              {form.enable_spin_wheel ? 'مفعلة في المتجر ✅' : 'معطلة ⏸️'}
+            </label>
+          </div>
+        </div>
+
+        {form.enable_spin_wheel && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginTop: 14, borderTop: '1px dashed var(--clr-border)', paddingTop: 14 }}>
+            <div className="input-group">
+              <label className="input-label" style={{ fontWeight: 700 }}>
+                الحد الأدنى لمجموع المشتريات بالسلة لتأهل الزبون لتدوير العجلة ({form.currency}) *
+              </label>
+              <input
+                type="number"
+                className="input"
+                value={form.wheel_min_amount}
+                onChange={e => set('wheel_min_amount', parseFloat(e.target.value) || 0)}
+                placeholder="مثال: 50"
+                style={{ maxWidth: 200 }}
+              />
+              <span style={{ fontSize: 11, color: 'var(--clr-text-3)', marginTop: 4 }}>
+                عند وصول سلة الزبون لهذا المبلغ أو أعلى، تظهر له عجلة الجوائز فوراً بدفعة تفاعلية!
+              </span>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Telegram Notifications */}
