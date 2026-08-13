@@ -860,17 +860,6 @@ export default function CustomerStorefront({ previewSlug }) {
 
             <button
               className="mobile-bottom-nav-item"
-              onClick={() => {
-                const el = document.getElementById('store-categories-section')
-                if (el) el.scrollIntoView({ behavior: 'smooth' })
-              }}
-            >
-              <span className="mobile-bottom-nav-item-icon">𝄃𝄃𝄂</span>
-              <span>الأقسام</span>
-            </button>
-
-            <button
-              className="mobile-bottom-nav-item"
               onClick={() => setCartOpen(true)}
               style={{ position: 'relative' }}
             >
