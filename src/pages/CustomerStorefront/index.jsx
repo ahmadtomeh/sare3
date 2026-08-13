@@ -1732,36 +1732,38 @@ function CartDrawer({
             )}
 
             {/* Coupon Code Section */}
-            <div style={{ padding: '8px 0', borderTop: '1px solid var(--clr-border)', display: 'flex', gap: 8, alignItems: 'center' }}>
-              <input
-                className="input"
-                style={{ minHeight: 36, fontSize: 11, flex: 1, borderRadius: 10 }}
-                placeholder="أدخل رمز الكوبون..."
-                value={couponCode}
-                onChange={e => setCouponCode(e.target.value)}
-                disabled={appliedCoupon}
-              />
-              {appliedCoupon ? (
-                <button
-                  type="button"
-                  className="btn btn-ghost btn-sm"
-                  style={{ color: 'var(--clr-danger)', fontSize: 11 }}
-                  onClick={() => { setAppliedCoupon(null); setCouponCode('') }}
-                >
-                  إلغاء الخصم
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  className="btn btn-primary btn-sm"
-                  style={{ minHeight: 36, fontSize: 11, padding: '0 14px', borderRadius: 10 }}
-                  onClick={handleApplyCoupon}
-                  disabled={checkingCoupon}
-                >
-                  {checkingCoupon ? 'جاري الفحص...' : 'تطبيق'}
-                </button>
-              )}
-            </div>
+            {store?.enable_coupons !== false && (
+              <div style={{ padding: '8px 0', borderTop: '1px solid var(--clr-border)', display: 'flex', gap: 8, alignItems: 'center' }}>
+                <input
+                  className="input"
+                  style={{ minHeight: 36, fontSize: 11, flex: 1, borderRadius: 10 }}
+                  placeholder="أدخل رمز الكوبون..."
+                  value={couponCode}
+                  onChange={e => setCouponCode(e.target.value)}
+                  disabled={appliedCoupon}
+                />
+                {appliedCoupon ? (
+                  <button
+                    type="button"
+                    className="btn btn-ghost btn-sm"
+                    style={{ color: 'var(--clr-danger)', fontSize: 11 }}
+                    onClick={() => { setAppliedCoupon(null); setCouponCode('') }}
+                  >
+                    إلغاء الخصم
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    className="btn btn-primary btn-sm"
+                    style={{ minHeight: 36, fontSize: 11, padding: '0 14px', borderRadius: 10 }}
+                    onClick={handleApplyCoupon}
+                    disabled={checkingCoupon}
+                  >
+                    {checkingCoupon ? 'جاري الفحص...' : 'تطبيق'}
+                  </button>
+                )}
+              </div>
+            )}
 
             {/* Glassmorphic Order Summary Card */}
             <div style={{

@@ -5,11 +5,23 @@ import { useStoreConfig } from '../../stores/useStoreConfig'
 import toast from 'react-hot-toast'
 
 export default function CouponManager() {
-  const { store } = useStoreConfig()
+  const { store, updateStore } = useStoreConfig()
   const [coupons, setCoupons] = useState([])
   const [loading, setLoading] = useState(true)
   const [adding, setAdding] = useState(false)
   const [form, setForm] = useState({ code: '', discount_type: 'percentage', discount_value: '' })
+
+  const isCouponsEnabled = store?.enable_coupons !== false
+
+  const handleToggleStoreCoupons = async () => {
+    const nextState = !isCouponsEnabled
+    try {
+      await updateStore({ enable_coupons: nextState })
+      toast.success(nextState ? '✅ تم تفعيل وإظهار خانة الكوبون في السلة!' : '🙈 تم إخفاء خانة الكوبون من السلة بنجاح')
+    } catch {
+      toast.error('فشل تحديث الإعدادات')
+    }
+  }
 
   useEffect(() => {
     if (store?.id) {
@@ -124,6 +136,36 @@ export default function CouponManager() {
         </div>
         <button className="btn btn-primary" onClick={() => setAdding(!adding)} style={{ gap: 8 }}>
           <Plus size={16} /> إضافة كوبون جديد
+        </button>
+      </div>
+
+      {/* Quick Storewide Coupon Visibility Toggle Card */}
+      <div
+        className="glass"
+        style={{
+          padding: '14px 18px', borderRadius: 'var(--radius-md)',
+          display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12,
+          border: '1px solid var(--clr-border)', background: 'var(--glass-bg-2)'
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{ fontSize: 20 }}>{isCouponsEnabled ? '👁️' : '🙈'}</div>
+          <div>
+            <div style={{ fontWeight: 800, fontSize: 13, color: 'var(--clr-text)' }}>
+              حالة خانة الكوبون في سلة الزبائن: <span style={{ color: isCouponsEnabled ? 'var(--clr-accent)' : 'var(--clr-danger)' }}>{isCouponsEnabled ? 'ظاهرة ومفعلة ✅' : 'مخفية بالكامل 🙈'}</span>
+            </div>
+            <div style={{ fontSize: 11, color: 'var(--clr-text-3)', marginTop: 2 }}>
+              {isCouponsEnabled ? 'يمكن للزبائن إدخال كود الخصم في السلة' : 'تم إخفاء خانة الكوبون من السلة لجعل تصميم السلة أبسط وأشيك'}
+            </div>
+          </div>
+        </div>
+        <button
+          type="button"
+          className={`btn btn-sm ${isCouponsEnabled ? 'btn-ghost' : 'btn-primary'}`}
+          onClick={handleToggleStoreCoupons}
+          style={{ gap: 6, fontSize: 12 }}
+        >
+          {isCouponsEnabled ? '🙈 إخفاء الخانة من السلة' : '👁️ إظهار الخانة في السلة'}
         </button>
       </div>
 

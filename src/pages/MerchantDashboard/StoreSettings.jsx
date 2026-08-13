@@ -37,6 +37,7 @@ export default function StoreSettings() {
     logo_url: '', banner_url: '',
     telegram_chat_id: '',
     enable_whatsapp_redirect: true,
+    enable_coupons: true,
   })
   const [loading, setLoading] = useState(false)
   const [saved, setSaved] = useState(false)
@@ -69,6 +70,7 @@ export default function StoreSettings() {
         working_hours_end: store.working_hours_end || '23:00',
         free_shipping_limit: limitOpt ? limitOpt.cost : '',
         enable_whatsapp_redirect: store.enable_whatsapp_redirect !== false,
+        enable_coupons: store.enable_coupons !== false,
       })
     }
   }, [store])
@@ -431,6 +433,22 @@ export default function StoreSettings() {
         </div>
         <p style={{ fontSize: 11, color: 'var(--clr-text-3)', marginRight: 26, marginTop: 4, lineHeight: 1.5 }}>
           عند إلغاء هذا الخيار، سيتم تسجيل الطلب في لوحة التحكم وتأكيده للزبون مباشرة على الموقع دون الانتقال لتطبيق واتساب.
+        </p>
+
+        <div style={{ marginTop: 16, display: 'flex', alignItems: 'center', gap: 8, borderTop: '1px dashed var(--clr-primary-glow)', paddingTop: 14 }}>
+          <input
+            type="checkbox"
+            id="coupons-enable-checkbox"
+            checked={form.enable_coupons}
+            onChange={e => set('enable_coupons', e.target.checked)}
+            style={{ width: 18, height: 18, accentColor: 'var(--clr-accent)', cursor: 'pointer' }}
+          />
+          <label htmlFor="coupons-enable-checkbox" style={{ fontSize: 13, fontWeight: 700, cursor: 'pointer', userSelect: 'none' }}>
+            تفعيل وإظهار خانة كود الخصم (الكوبون) في سلة التسوق 🎟️
+          </label>
+        </div>
+        <p style={{ fontSize: 11, color: 'var(--clr-text-3)', marginRight: 26, marginTop: 4, lineHeight: 1.5 }}>
+          عند تفعيل هذا الخيار، تظهر خانة أدخل الكوبون في سلة التسوق. وعند إيقافه، يتم إخفاء الخانة بالكامل لجعل السلة أبسط وأشيك.
         </p>
       </div>
 
