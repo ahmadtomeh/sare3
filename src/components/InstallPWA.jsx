@@ -77,9 +77,9 @@ export default function InstallPWA({ appName, logoUrl }) {
   if (isStandalone || !showPrompt) return null
 
   return (
-    <div style={{
+    <div className="pwa-install-banner" style={{
       position: 'fixed',
-      bottom: 20,
+      bottom: 84,
       left: 16,
       right: 16,
       maxWidth: 420,

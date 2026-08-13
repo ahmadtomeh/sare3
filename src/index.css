@@ -763,3 +763,9 @@ body {
     display: none !important;
   }
 }
+
+/* Stacking rule: Float PWA install banner above quick cart bar when cart is active */
+.mobile-quick-cart-bar ~ .pwa-install-banner,
+.mobile-quick-cart-bar ~ * .pwa-install-banner {
+  bottom: 154px !important;
+}

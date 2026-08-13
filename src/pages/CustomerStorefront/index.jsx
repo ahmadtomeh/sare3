@@ -717,33 +717,6 @@ export default function CustomerStorefront({ previewSlug }) {
         )}
       </div>
 
-      {/* ── Fixed Bottom Cart Bar (Thumb Zone) ── */}
-      {cartCount > 0 && (
-        <div style={{
-          position: 'fixed', bottom: 'calc(10px + env(safe-area-inset-bottom))',
-          left: 12, right: 12, zIndex: 90,
-        }}>
-          <button
-            className={`btn btn-primary btn-full animate-glow ${cartPulseClass}`}
-            onClick={() => setCartOpen(true)}
-            id="cust-bottom-cart-bar"
-            style={{
-              background: `linear-gradient(135deg, ${store.primary_color || 'var(--clr-primary)'}, ${store.accent_color || 'var(--clr-accent)'})`,
-              minHeight: 48, borderRadius: 14,
-              boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
-              display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 16px',
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14, fontWeight: 800 }}>
-              <ShoppingCart size={18} />
-              <span>السلة ({cartCount})</span>
-            </div>
-            <div style={{ fontWeight: 900, fontSize: 16 }}>
-              {formatPrice(cartTotal)} {currency} ←
-            </div>
-          </button>
-        </div>
-      )}
 
       </div>
 
