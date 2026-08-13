@@ -762,7 +762,9 @@ export default function CustomerStorefront({ previewSlug }) {
       {myOrdersOpen && (
         <MyOrdersSheet
           store={store}
+          products={products}
           onClose={() => setMyOrdersOpen(false)}
+          onOpenCart={() => setCartOpen(true)}
           onTrack={(order) => {
             setMyOrdersOpen(false)
             setTrackedOrder(order)
@@ -1885,10 +1887,14 @@ function OrderFormSheet({
           .join(' | ')
         const optionExtra = Object.values(i.selectedOptions || {}).reduce((s, opt) => s + Number(opt.price || 0), 0)
         return {
+          product_id: i.product.id,
           name: i.product.name,
           qty: i.quantity,
+          quantity: i.quantity,
           price: Number(i.product.price) + optionExtra,
-          option: optionStr
+          option: optionStr,
+          selectedOptions: i.selectedOptions || {},
+          product: i.product
         }
       }),
       total: finalTotal,
@@ -2002,7 +2008,7 @@ function OrderFormSheet({
   )
 }
 
-function MyOrdersSheet({ store, onClose, onTrack }) {
+function MyOrdersSheet({ store, onClose, onTrack, products = [], onOpenCart }) {
   const { addItem } = useCartStore()
   const { cancelOrder } = useOrdersStore()
   const [orders, setOrders] = useState([])
@@ -2019,11 +2025,26 @@ function MyOrdersSheet({ store, onClose, onTrack }) {
   }, [store.id])
 
   const handleReorder = (order) => {
+    if (!order?.items || order.items.length === 0) return
+
     order.items.forEach(item => {
-      addItem({ id: `reorder-${item.name}`, name: item.name, price: item.price }, item.qty, item.option)
+      // Find matching product in catalog or construct fallback product object
+      const foundProduct = products.find(p => p.id === item.product_id || p.name === item.name)
+      const productObj = foundProduct || item.product || {
+        id: item.product_id || `reorder-${item.name}`,
+        name: item.name,
+        price: item.price || 0,
+      }
+      const quantity = item.quantity || item.qty || 1
+      const selectedOpts = item.selectedOptions || {}
+
+      // Correct call signature: addItem(product, selectedOptions, quantity)
+      addItem(productObj, selectedOpts, quantity)
     })
-    toast.success('✅ تمت إعادة الطلب إلى السلة!')
+
+    toast.success('✅ تم نقل جميع عناصر الطلب إلى السلة!')
     onClose()
+    if (onOpenCart) onOpenCart()
   }
 
   const handleCancelOrder = async (order) => {
