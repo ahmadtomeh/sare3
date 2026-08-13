@@ -1748,6 +1748,8 @@ function CartDrawer({
                   </button>
                 )}
               </div>
+            )}
+
             {/* Spin Wheel Promo Banner in Cart */}
             {store?.enable_spin_wheel === true && (
               <div style={{
