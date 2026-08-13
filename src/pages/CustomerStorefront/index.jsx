@@ -503,7 +503,7 @@ export default function CustomerStorefront({ previewSlug }) {
   if (isExpired) return <StoreExpired storeName={store.name} />
 
   return (
-    <div style={{ minHeight: '100dvh', background: 'var(--clr-bg)', paddingBottom: cartCount > 0 ? 84 : 20 }}>
+    <div style={{ minHeight: '100dvh', background: 'var(--clr-bg)', paddingBottom: cartCount > 0 ? 150 : 90 }}>
       {/* Global persistent style block for keyframe animations to prevent browser re-render bugs */}
       <style>{`
         .image-fly-to-cart {
@@ -845,6 +845,81 @@ export default function CustomerStorefront({ previewSlug }) {
 
       {/* ── Install PWA Banner ── */}
       <InstallPWA appName={store?.name} logoUrl={store?.logo_url} />
+
+      {/* ── Mobile Floating Quick Cart Bar ── */}
+      {cartCount > 0 && !cartOpen && !orderOpen && (
+        <div
+          className="mobile-quick-cart-bar touch-scale"
+          onClick={() => setCartOpen(true)}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div style={{
+              background: 'rgba(255,255,255,0.25)',
+              padding: '4px 10px', borderRadius: 12,
+              fontWeight: 900, fontSize: 13
+            }}>
+              {cartCount} {cartCount === 1 ? 'عنصر' : 'عناصر'}
+            </div>
+            <span style={{ fontSize: 13, fontWeight: 700 }}>سلة التسوق</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 900, fontSize: 14 }}>
+            <span>{formatPrice(cartTotal)} {currency}</span>
+            <span>←</span>
+          </div>
+        </div>
+      )}
+
+      {/* ── Mobile Floating Bottom Navigation ── */}
+      <nav className="mobile-bottom-nav">
+        <button
+          className={`mobile-bottom-nav-item ${activeCategory === 'all' && !cartOpen && !myOrdersOpen ? 'active' : ''}`}
+          onClick={() => {
+            window.scrollTo({ top: 0, behavior: 'smooth' })
+            setActiveCategory('all')
+          }}
+        >
+          <span className="mobile-bottom-nav-item-icon">🏠</span>
+          <span>الرئيسية</span>
+        </button>
+
+        <button
+          className="mobile-bottom-nav-item"
+          onClick={() => {
+            const el = document.getElementById('store-categories-section')
+            if (el) el.scrollIntoView({ behavior: 'smooth' })
+          }}
+        >
+          <span className="mobile-bottom-nav-item-icon">𝄃𝄃𝄂</span>
+          <span>الأقسام</span>
+        </button>
+
+        <button
+          className={`mobile-bottom-nav-item ${cartOpen ? 'active' : ''}`}
+          onClick={() => setCartOpen(true)}
+          style={{ position: 'relative' }}
+        >
+          <span className="mobile-bottom-nav-item-icon">🛒</span>
+          {cartCount > 0 && (
+            <span style={{
+              position: 'absolute', top: 2, right: '22%',
+              background: 'var(--clr-accent, #10b981)', color: '#fff',
+              fontSize: 9, fontWeight: 900, borderRadius: 10,
+              padding: '1px 5px', minWidth: 16, textAlign: 'center'
+            }}>
+              {cartCount}
+            </span>
+          )}
+          <span>السلة</span>
+        </button>
+
+        <button
+          className={`mobile-bottom-nav-item ${myOrdersOpen ? 'active' : ''}`}
+          onClick={() => setMyOrdersOpen(true)}
+        >
+          <span className="mobile-bottom-nav-item-icon">📋</span>
+          <span>طلباتي</span>
+        </button>
+      </nav>
     </div>
   )
 }

@@ -642,3 +642,124 @@ body {
   object-fit: contain;
   border-radius: var(--radius-md);
 }
+
+/* ── Mobile-First Touch & Navigation Styles ── */
+.touch-scale {
+  transition: transform 0.15s cubic-bezier(0.2, 0.8, 0.4, 1), opacity 0.15s ease;
+}
+.touch-scale:active {
+  transform: scale(0.95) !important;
+  opacity: 0.9;
+}
+
+/* Floating Bottom Navigation Bar for Mobile */
+.mobile-bottom-nav {
+  position: fixed;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: calc(100% - 24px);
+  max-width: 480px;
+  height: 62px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid var(--clr-border);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+  border-radius: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  padding: 0 8px;
+  z-index: 1000;
+  direction: rtl;
+}
+
+@media (min-width: 769px) {
+  .mobile-bottom-nav {
+    display: none !important;
+  }
+}
+
+.mobile-bottom-nav-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  background: transparent;
+  border: none;
+  color: var(--clr-text-3);
+  font-size: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 6px 0;
+  border-radius: 16px;
+  transition: all 0.2s ease;
+  position: relative;
+  text-decoration: none;
+}
+
+.mobile-bottom-nav-item.active {
+  color: var(--clr-primary);
+}
+
+.mobile-bottom-nav-item.active::before {
+  content: '';
+  position: absolute;
+  top: 2px;
+  width: 20px;
+  height: 3px;
+  background: var(--clr-primary);
+  border-radius: 3px;
+  box-shadow: 0 0 8px var(--clr-primary);
+}
+
+.mobile-bottom-nav-item-icon {
+  font-size: 20px;
+  line-height: 1;
+  transition: transform 0.2s ease;
+}
+
+.mobile-bottom-nav-item.active .mobile-bottom-nav-item-icon {
+  transform: translateY(-1px) scale(1.1);
+}
+
+/* Floating Quick Cart Bar */
+.mobile-quick-cart-bar {
+  position: fixed;
+  bottom: 84px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: calc(100% - 24px);
+  max-width: 480px;
+  background: linear-gradient(135deg, var(--clr-primary, #7c3aed), var(--clr-accent, #10b981));
+  color: #fff;
+  border-radius: 18px;
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 10px 25px rgba(124, 58, 237, 0.4);
+  z-index: 999;
+  cursor: pointer;
+  animation: slideUpCart 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes slideUpCart {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 20px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+@media (min-width: 769px) {
+  .mobile-quick-cart-bar {
+    display: none !important;
+  }
+}
