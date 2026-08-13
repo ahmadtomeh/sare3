@@ -61,12 +61,17 @@ Deno.serve(async (req: Request) => {
     }
 
     const statusMessages: Record<string, { title: string; body: string }> = {
-      confirmed:  { title: '✅ تم تأكيد طلبك!', body: `طلبك #${order_number} من ${store_name} تم تأكيده` },
-      preparing:  { title: '👨‍🍳 يتم تحضير طلبك', body: `طلبك #${order_number} من ${store_name} قيد التحضير` },
-      ready:      { title: '🎉 طلبك جاهز!', body: `طلبك #${order_number} من ${store_name} جاهز للاستلام` },
-      delivering: { title: '🚗 طلبك في الطريق!', body: `طلبك #${order_number} من ${store_name} على الطريق إليك` },
-      delivered:  { title: '✅ تم التوصيل!', body: `طلبك #${order_number} من ${store_name} وصل. شكراً! 🙏` },
-      cancelled:  { title: '❌ تم إلغاء الطلب', body: `طلبك #${order_number} من ${store_name} تم إلغاؤه` },
+      new:              { title: '📝 تم استلام طلبك!', body: `طلبك #${order_number} من ${store_name} تم استلامه وبانتظار الموافقة` },
+      confirmed:        { title: '✅ تم تأكيد طلبك!', body: `طلبك #${order_number} من ${store_name} تم تأكيده` },
+      preparing:        { title: '👨‍🍳 يتم تحضير طلبك', body: `طلبك #${order_number} من ${store_name} قيد التحضير` },
+      ready:            { title: '🎉 طلبك جاهز!', body: `طلبك #${order_number} من ${store_name} جاهز للاستلام` },
+      shipping:         { title: '🚗 طلبك في الطريق!', body: `طلبك #${order_number} من ${store_name} على الطريق إليك` },
+      delivering:       { title: '🚗 طلبك في الطريق!', body: `طلبك #${order_number} من ${store_name} على الطريق إليك` },
+      out_for_delivery: { title: '🚗 طلبك في الطريق!', body: `طلبك #${order_number} من ${store_name} على الطريق إليك` },
+      completed:        { title: '✅ تم التسليم بنجاح!', body: `طلبك #${order_number} من ${store_name} تم تسليمه. شكراً لك! 🙏` },
+      done:             { title: '✅ تم التسليم بنجاح!', body: `طلبك #${order_number} من ${store_name} تم تسليمه. شكراً لك! 🙏` },
+      delivered:        { title: '✅ تم التسليم بنجاح!', body: `طلبك #${order_number} من ${store_name} تم تسليمه. شكراً لك! 🙏` },
+      cancelled:        { title: '❌ تم إلغاء الطلب', body: `طلبك #${order_number} من ${store_name} تم إلغاؤه` },
     }
     const msg = statusMessages[status] || { title: `تحديث طلبك من ${store_name}`, body: `رقم الطلب #${order_number}` }
     
