@@ -7,7 +7,48 @@ import { compressImage } from '../../utils/imageCompressor'
 import toast from 'react-hot-toast'
 import { supabase } from '../../lib/supabase'
 
-const EMOJIS = ['📦', '👔', '👗', '👠', '💄', '🧴', '☕', '🍕', '🥗', '📱', '💻', '🎁', '🌿', '🍰', '🥤', '🧃', '🍔', '🎮', '🏠', '🔧']
+const EMOJI_CATEGORIES = [
+  {
+    name: 'الأكثر استخداماً 🌟',
+    emojis: ['📦', '🏷️', '✨', '🔥', '⭐', '🛍️', '🛒', '⚡', '🎉', '💎']
+  },
+  {
+    name: 'مطاعم ومأكولات 🍔',
+    emojis: ['🍔', '🍕', '🌭', '🥪', '🥙', '🧆', '🌮', '🌯', '🥗', '🥘', '🍝', '🍜', '🍲', '🍣', '🍤', '🥐', '🍞', '🥨', '🥯', '🥞', '🧇', '🍟', '🍳']
+  },
+  {
+    name: 'كافيه ومشروبات ☕',
+    emojis: ['☕', '🍵', '🧃', '🥤', '🧋', '🥛', '🍺', '🍻', '🍷', '🍹', '🧊']
+  },
+  {
+    name: 'حلويات ومخبوزات 🍰',
+    emojis: ['🍰', '🎂', '🧁', '🥧', '🍦', '🍨', '🍩', '🍪', '🍫', '🍬', '🍭', '🍯']
+  },
+  {
+    name: 'موضة وأزياء 👔',
+    emojis: ['👔', '👕', '👖', '👗', '👘', '👙', '👠', '👡', '👢', '👞', '👟', '🎒', '👜', '👛', '👑', '🎩', '🧢', '💍', '🕶️', '👓', '⌚']
+  },
+  {
+    name: 'عناية وتجميل 💄',
+    emojis: ['💄', '🧴', '💅', '🪮', '🧼', '🪥', '🧻', '✂️', '💈', '🧖', '💆', '🌸']
+  },
+  {
+    name: 'إلكترونيات وتكنولوجيا 📱',
+    emojis: ['📱', '💻', '🖥️', '🖨️', '⌨️', '🖱️', '🎧', '📻', '📷', '📹', '🎮', '🕹️', '🔌', '🔋', '💡']
+  },
+  {
+    name: 'منزل وديكور 🏠',
+    emojis: ['🏠', '🛋️', '🛏️', '🚪', '🪟', '🪴', '🪑', '🖼️', '🕯️', '🧹', '🧺', '🍳', '🍽️']
+  },
+  {
+    name: 'هدايا وألعاب 🎁',
+    emojis: ['🎁', '🎈', '🎂', '🧸', '🎨', '🎯', '🎲', '🧩', '🚀', '⚽', '🏀']
+  },
+  {
+    name: 'صحة وصيدلية 💊',
+    emojis: ['💊', '🩺', '🏋️', '🚴', '🌿', '🌱', '🌴', '🍀', '🌻']
+  }
+]
 
 export default function ProductManager() {
   const { categories, products, fetchAll, addCategory, updateCategory, deleteCategory, addProduct, updateProduct, deleteProduct, toggleAvailability } = useProductsStore()
@@ -88,7 +129,7 @@ export default function ProductManager() {
                 className={`category-chip ${activeCat === cat.id ? 'active' : ''}`}
                 onClick={() => setActiveCat(cat.id)}
               >
-                {cat.emoji} {cat.name} ({products.filter(p => p.category_id === cat.id).length})
+                {cat.emoji ? `${cat.emoji} ` : ''}{cat.name} ({products.filter(p => p.category_id === cat.id).length})
               </button>
               <button
                 style={{ fontSize: 12, color: 'var(--clr-text-3)', padding: '2px 4px', background: 'none', border: 'none', cursor: 'pointer' }}
@@ -198,7 +239,7 @@ function ProductCard({ product, category, currency, onEdit, onDelete, onToggle }
           <span className={`badge ${product.is_available ? 'badge-success' : 'badge-danger'}`} style={{ fontSize: 10 }}>
             {product.is_available ? '🟢 متوفر' : '🔴 غير متوفر'}
           </span>
-          {category && <span className="badge badge-ghost" style={{ fontSize: 10 }}>{category.emoji} {category.name}</span>}
+          {category && <span className="badge badge-ghost" style={{ fontSize: 10 }}>{category.emoji ? `${category.emoji} ` : ''}{category.name}</span>}
           {product.track_stock && (
             <span className="badge" style={{
               fontSize: 10,
@@ -709,39 +750,105 @@ function ProductFormModal({ product, categories, storeId, currency, onClose, onS
 }
 
 function CategoryFormModal({ cat, storeId, onClose, onSave, onDelete }) {
-  const [form, setForm] = useState({ name: cat?.name || '', emoji: cat?.emoji || '📦' })
+  const [form, setForm] = useState({ name: cat?.name || '', emoji: cat?.emoji || '' })
+  const [activeTab, setActiveTab] = useState(0)
 
   return (
     <Modal title={cat ? 'تعديل الفئة' : 'فئة جديدة'} onClose={onClose}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sp-md)' }}>
         <div className="input-group">
           <label className="input-label">اسم الفئة *</label>
-          <input className="input" value={form.name} onChange={(e) => setForm(f => ({ ...f, name: e.target.value }))} placeholder="مثال: ملابس رجالية" id="cat-name-input" />
+          <input
+            className="input"
+            value={form.name}
+            onChange={(e) => setForm(f => ({ ...f, name: e.target.value }))}
+            placeholder="مثال: ملابس رجالية, مشروبات ساخنة..."
+            id="cat-name-input"
+            autoFocus
+          />
         </div>
+
+        {/* Emoji / Icon Selection */}
         <div className="input-group">
-          <label className="input-label">رمز الفئة (Emoji)</label>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-            {EMOJIS.map((e) => (
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+            <label className="input-label" style={{ margin: 0 }}>شكل / أيقونة الفئة (اختياري):</label>
+            <button
+              type="button"
+              className={`btn btn-xs ${!form.emoji ? 'btn-primary' : 'btn-ghost'}`}
+              onClick={() => setForm(f => ({ ...f, emoji: '' }))}
+              style={{ fontSize: 11, padding: '2px 8px' }}
+            >
+              🚫 بدون أيقونة
+            </button>
+          </div>
+
+          {/* Custom Emoji Input & Preview */}
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 10 }}>
+            <div style={{
+              width: 40, height: 40, borderRadius: 10,
+              background: 'var(--glass-bg-2)', border: '1px solid var(--clr-border)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 22, flexShrink: 0
+            }}>
+              {form.emoji || '🏷️'}
+            </div>
+            <input
+              className="input"
+              style={{ flex: 1, minHeight: 40, fontSize: 13 }}
+              placeholder="اكتب أو الصق أي رمز إيموجي مخصص..."
+              value={form.emoji}
+              onChange={(e) => setForm(f => ({ ...f, emoji: e.target.value }))}
+            />
+          </div>
+
+          {/* Category Tabs */}
+          <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 6, scrollbarWidth: 'none' }}>
+            {EMOJI_CATEGORIES.map((category, idx) => (
+              <button
+                key={category.name}
+                type="button"
+                className={`btn btn-xs ${activeTab === idx ? 'btn-primary' : 'btn-ghost'}`}
+                onClick={() => setActiveTab(idx)}
+                style={{ fontSize: 11, padding: '4px 10px', flexShrink: 0, whiteSpace: 'nowrap' }}
+              >
+                {category.name}
+              </button>
+            ))}
+          </div>
+
+          {/* Emojis Grid for active tab */}
+          <div style={{
+            display: 'flex', flexWrap: 'wrap', gap: 6,
+            maxHeight: 140, overflowY: 'auto',
+            background: 'var(--glass-bg-2)', padding: 8, borderRadius: 12,
+            border: '1px solid var(--clr-border)'
+          }}>
+            {EMOJI_CATEGORIES[activeTab]?.emojis.map((e) => (
               <button
                 key={e}
                 type="button"
                 style={{
-                  fontSize: '1.5rem', padding: 6, borderRadius: 8, border: '2px solid',
-                  borderColor: form.emoji === e ? 'var(--clr-primary)' : 'transparent',
-                  background: form.emoji === e ? 'var(--clr-primary-glow)' : 'var(--glass-bg-2)',
-                  cursor: 'pointer',
+                  fontSize: '1.4rem', width: 38, height: 38, borderRadius: 8,
+                  border: form.emoji === e ? '2px solid var(--clr-primary)' : '1px solid transparent',
+                  background: form.emoji === e ? 'var(--clr-primary-glow)' : 'transparent',
+                  cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  transition: 'transform 0.1s ease'
                 }}
                 onClick={() => setForm(f => ({ ...f, emoji: e }))}
-              >{e}</button>
+              >
+                {e}
+              </button>
             ))}
           </div>
         </div>
-        <div style={{ display: 'flex', gap: 'var(--sp-sm)', justifyContent: 'space-between', marginTop: 8 }}>
+
+        {/* Actions */}
+        <div style={{ display: 'flex', gap: 'var(--sp-sm)', justifyContent: 'space-between', marginTop: 10, borderTop: '1px solid var(--clr-border)', paddingTop: 12 }}>
           {onDelete && <button className="btn btn-danger btn-sm" onClick={onDelete} id="delete-cat-btn">حذف الفئة</button>}
           <div style={{ display: 'flex', gap: 'var(--sp-sm)', marginRight: 'auto' }}>
             <button className="btn btn-ghost" onClick={onClose}>إلغاء</button>
             <button className="btn btn-primary" onClick={() => form.name && onSave(form)} id="save-cat-btn">
-              {cat ? 'حفظ' : 'إضافة'}
+              {cat ? 'حفظ' : 'إضافة الفئة'}
             </button>
           </div>
         </div>

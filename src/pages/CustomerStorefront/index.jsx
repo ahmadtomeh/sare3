@@ -664,7 +664,7 @@ export default function CustomerStorefront({ previewSlug }) {
               onClick={() => setActiveCategory(cat.id)}
               id={`cat-${cat.id}`}
             >
-              {cat.emoji} {cat.name}
+              {cat.emoji ? `${cat.emoji} ` : ''}{cat.name}
             </button>
           ))}
         </div>
