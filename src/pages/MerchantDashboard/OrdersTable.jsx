@@ -213,16 +213,42 @@ function OrderCard({ order, currency, isExpanded, onToggle, onStatusUpdate, onNo
         <div style={{ borderTop: '1px solid var(--clr-border)', padding: 'var(--sp-md)', display: 'flex', flexDirection: 'column', gap: 'var(--sp-md)' }}>
           {/* Customer Info */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 'var(--sp-sm)' }}>
-            {[
-              { icon: '📞', label: 'الهاتف', value: order.customer_phone },
-              { icon: '📍', label: 'العنوان', value: order.customer_address },
-              { icon: '📝', label: 'ملاحظات', value: order.notes },
-            ].filter(f => f.value).map((f) => (
-              <div key={f.label} style={{ background: 'var(--glass-bg-2)', padding: 'var(--sp-sm)', borderRadius: 'var(--radius-md)' }}>
-                <div style={{ fontSize: 'var(--text-xs)', color: 'var(--clr-text-3)', marginBottom: 2 }}>{f.icon} {f.label}</div>
-                <div style={{ fontSize: 'var(--text-sm)', fontWeight: 500 }}>{f.value}</div>
+            {order.customer_phone && (
+              <div style={{ background: 'var(--glass-bg-2)', padding: 'var(--sp-sm)', borderRadius: 'var(--radius-md)' }}>
+                <div style={{ fontSize: 'var(--text-xs)', color: 'var(--clr-text-3)', marginBottom: 2 }}>📞 الهاتف</div>
+                <div style={{ fontSize: 'var(--text-sm)', fontWeight: 600, direction: 'ltr', textAlign: 'right' }}>
+                  <a href={`tel:${order.customer_phone}`} style={{ color: 'var(--clr-accent)', textDecoration: 'none' }}>
+                    {order.customer_phone}
+                  </a>
+                </div>
               </div>
-            ))}
+            )}
+
+            {(order.customer_address || order.maps_link) && (
+              <div style={{ background: 'var(--glass-bg-2)', padding: 'var(--sp-sm)', borderRadius: 'var(--radius-md)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 2 }}>
+                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--clr-text-3)' }}>📍 العنوان والموقع</div>
+                  <a
+                    href={order.maps_link || `https://maps.google.com/?q=${encodeURIComponent(order.customer_address)}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    style={{ fontSize: 11, color: 'var(--clr-primary)', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 2, textDecoration: 'underline' }}
+                  >
+                    فتح بالخريطة 🗺️
+                  </a>
+                </div>
+                <div style={{ fontSize: 'var(--text-sm)', fontWeight: 500 }}>
+                  {order.customer_address || 'تم تحديد الموقع عبر GPS'}
+                </div>
+              </div>
+            )}
+
+            {order.notes && (
+              <div style={{ background: 'var(--glass-bg-2)', padding: 'var(--sp-sm)', borderRadius: 'var(--radius-md)' }}>
+                <div style={{ fontSize: 'var(--text-xs)', color: 'var(--clr-text-3)', marginBottom: 2 }}>📝 ملاحظات</div>
+                <div style={{ fontSize: 'var(--text-sm)', fontWeight: 500 }}>{order.notes}</div>
+              </div>
+            )}
           </div>
 
           {/* Items */}
@@ -260,6 +286,18 @@ function OrderCard({ order, currency, isExpanded, onToggle, onStatusUpdate, onNo
               >
                 {updating ? '⏳' : nextAction.label}
               </button>
+            )}
+            {(order.maps_link || order.customer_address) && (
+              <a
+                href={order.maps_link || `https://maps.google.com/?q=${encodeURIComponent(order.customer_address)}`}
+                target="_blank"
+                rel="noreferrer"
+                className="btn btn-ghost btn-sm"
+                style={{ border: '1px solid var(--clr-primary)', color: 'var(--clr-primary)' }}
+                id={`map-location-${order.id}`}
+              >
+                🗺️ الموقع على الخريطة
+              </a>
             )}
             {order.customer_phone && (
               <button
