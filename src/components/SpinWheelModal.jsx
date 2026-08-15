@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { Modal } from './ui/Modal'
 import { Sparkles, Trophy, Gift, Check, Copy } from 'lucide-react'
 import toast from 'react-hot-toast'
+import { playAudioTick, playAudioWinFanfare } from '../utils/audio'
 
 const DEFAULT_PRIZES = [
   { id: 'p1', label: 'خصم 10%', type: 'percentage', value: 10, code: 'SPIN10', color: '#8B5CF6' },
@@ -113,39 +114,12 @@ export default function SpinWheelModal({ store, onClose, onApplyCoupon }) {
 
   // Play audio tick sound using Web Audio API
   const playTickSound = () => {
-    try {
-      const audioCtx = new (window.AudioContext || window.webkitAudioContext)()
-      const osc = audioCtx.createOscillator()
-      const gain = audioCtx.createGain()
-      osc.connect(gain)
-      gain.connect(audioCtx.destination)
-      osc.type = 'triangle'
-      osc.frequency.setValueAtTime(800, audioCtx.currentTime)
-      gain.gain.setValueAtTime(0.06, audioCtx.currentTime)
-      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.03)
-      osc.start(audioCtx.currentTime)
-      osc.stop(audioCtx.currentTime + 0.03)
-    } catch {}
+    playAudioTick()
   }
 
   // Play winning fanfare sound
   const playWinSound = () => {
-    try {
-      const audioCtx = new (window.AudioContext || window.webkitAudioContext)()
-      const notes = [523.25, 659.25, 783.99, 1046.50]
-      notes.forEach((freq, idx) => {
-        const osc = audioCtx.createOscillator()
-        const gain = audioCtx.createGain()
-        osc.connect(gain)
-        gain.connect(audioCtx.destination)
-        osc.type = 'sine'
-        osc.frequency.setValueAtTime(freq, audioCtx.currentTime + idx * 0.1)
-        gain.gain.setValueAtTime(0.2, audioCtx.currentTime + idx * 0.1)
-        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + idx * 0.1 + 0.3)
-        osc.start(audioCtx.currentTime + idx * 0.1)
-        osc.stop(audioCtx.currentTime + idx * 0.1 + 0.3)
-      })
-    } catch {}
+    playAudioWinFanfare()
   }
 
   const spin = () => {

@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from 'react'
+import { useState, useEffect, useMemo, useRef, memo, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { Search, ShoppingCart, Package, MapPin, Phone, User, MessageCircle, Plus, Check, ArrowRight, Bell, Trash2, Sparkles, Tag, ShoppingBag, Share2 } from 'lucide-react'
 import { useStoreConfig } from '../../stores/useStoreConfig'
@@ -15,6 +15,7 @@ import toast from 'react-hot-toast'
 import { subscribeCustomerToPush } from '../../lib/customerPushNotifications'
 import SpinWheelModal from '../../components/SpinWheelModal'
 import ImageLightboxModal from '../../components/ImageLightboxModal'
+import { playAudioPop } from '../../utils/audio'
 
 
 export const formatPrice = (val) => {
@@ -918,7 +919,7 @@ export default function CustomerStorefront({ previewSlug }) {
 }
 
 /* ── Star Rating Display Helper ── */
-function StarRating({ rating, count, size = 11 }) {
+const StarRating = memo(function StarRating({ rating, count, size = 11 }) {
   if (!rating) return null
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
@@ -928,10 +929,10 @@ function StarRating({ rating, count, size = 11 }) {
       <span style={{ fontSize: size - 1, color: 'var(--clr-text-3)', marginRight: 2 }}>({count})</span>
     </div>
   )
-}
+})
 
 /* ── Ultra-Compact Product Card Component ── */
-function CompactProductCard({ product, currency, badge, onAdd, rating, qtyInCart, onPreviewImage }) {
+const CompactProductCard = memo(function CompactProductCard({ product, currency, badge, onAdd, rating, qtyInCart, onPreviewImage }) {
   const isInCart = qtyInCart > 0
   const badgeAnimClass = qtyInCart % 2 === 0 ? 'badgePulseEvenClass' : 'badgePulseOddClass'
 
@@ -1082,7 +1083,7 @@ function CompactProductCard({ product, currency, badge, onAdd, rating, qtyInCart
       </div>
     </div>
   )
-}
+})
 
 /* ── Review Submission Sheet ── */
 function ReviewSheet({ store, product, onClose }) {

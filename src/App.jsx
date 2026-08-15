@@ -1,16 +1,17 @@
-import { Component, useEffect } from 'react'
+import { Component, useEffect, lazy, Suspense } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { useAuthStore } from './stores/useAuthStore'
 import { useThemeStore } from './stores/useThemeStore'
 import Toast from './components/ui/Toast'
 import InstallPWA from './components/InstallPWA'
 
-import LandingPage from './pages/LandingPage'
-import AuthPage from './pages/AuthPage'
-import OnboardingWizard from './pages/OnboardingWizard'
-import MerchantDashboard from './pages/MerchantDashboard'
-import CustomerStorefront from './pages/CustomerStorefront'
-import AdminPanel from './pages/AdminPanel'
+// Route-based Lazy Loading for fast initial load
+const LandingPage = lazy(() => import('./pages/LandingPage'))
+const AuthPage = lazy(() => import('./pages/AuthPage'))
+const OnboardingWizard = lazy(() => import('./pages/OnboardingWizard'))
+const MerchantDashboard = lazy(() => import('./pages/MerchantDashboard'))
+const CustomerStorefront = lazy(() => import('./pages/CustomerStorefront'))
+const AdminPanel = lazy(() => import('./pages/AdminPanel'))
 
 class ErrorBoundary extends Component {
   constructor(props) {
@@ -107,16 +108,18 @@ function AppRoutes() {
   }, [])
 
   return (
-    <Routes>
-      <Route path="/"              element={<RootElement />} />
-      <Route path="/auth"          element={<AuthPage />} />
-      <Route path="/onboarding"    element={<ProtectedRoute><OnboardingWizard /></ProtectedRoute>} />
-      <Route path="/dashboard"     element={<ProtectedRoute><MerchantDashboard /></ProtectedRoute>} />
-      <Route path="/dashboard/*"   element={<ProtectedRoute><MerchantDashboard /></ProtectedRoute>} />
-      <Route path="/admin"         element={<ProtectedRoute><AdminPanel /></ProtectedRoute>} />
-      <Route path="/:slug"         element={<CustomerStorefront />} />
-      <Route path="*"              element={<Navigate to="/" replace />} />
-    </Routes>
+    <Suspense fallback={<AppLoader />}>
+      <Routes>
+        <Route path="/"              element={<RootElement />} />
+        <Route path="/auth"          element={<AuthPage />} />
+        <Route path="/onboarding"    element={<ProtectedRoute><OnboardingWizard /></ProtectedRoute>} />
+        <Route path="/dashboard"     element={<ProtectedRoute><MerchantDashboard /></ProtectedRoute>} />
+        <Route path="/dashboard/*"   element={<ProtectedRoute><MerchantDashboard /></ProtectedRoute>} />
+        <Route path="/admin"         element={<ProtectedRoute><AdminPanel /></ProtectedRoute>} />
+        <Route path="/:slug"         element={<CustomerStorefront />} />
+        <Route path="*"              element={<Navigate to="/" replace />} />
+      </Routes>
+    </Suspense>
   )
 }
 
