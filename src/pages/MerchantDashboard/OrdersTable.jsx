@@ -3,7 +3,7 @@ import { Download, MessageSquare, RefreshCw, Printer } from 'lucide-react'
 import { useOrdersStore } from '../../stores/useOrdersStore'
 import { useStoreConfig } from '../../stores/useStoreConfig'
 import { exportOrdersToExcel } from '../../utils/export'
-import { buildStatusUpdateMessage, buildWhatsAppUrl } from '../../utils/whatsapp'
+import { buildStatusUpdateMessage, buildWhatsAppUrl, getGoogleMapsUrl } from '../../utils/whatsapp'
 import InvoicePrint from '../../components/InvoicePrint'
 import toast from 'react-hot-toast'
 
@@ -172,6 +172,7 @@ export default function OrdersTable() {
 function OrderCard({ order, currency, isExpanded, onToggle, onStatusUpdate, onNotify, onPrint, updating }) {
   const sc = STATUS_STYLES[order.status] || STATUS_STYLES.new
   const nextAction = STATUS_NEXT[order.status]
+  const mapUrl = getGoogleMapsUrl(order.customer_address, order.maps_link)
 
   return (
     <div className="glass" style={{ overflow: 'hidden' }}>
@@ -224,18 +225,20 @@ function OrderCard({ order, currency, isExpanded, onToggle, onStatusUpdate, onNo
               </div>
             )}
 
-            {(order.customer_address || order.maps_link) && (
+            {(order.customer_address || mapUrl) && (
               <div style={{ background: 'var(--glass-bg-2)', padding: 'var(--sp-sm)', borderRadius: 'var(--radius-md)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 2 }}>
                   <div style={{ fontSize: 'var(--text-xs)', color: 'var(--clr-text-3)' }}>📍 العنوان والموقع</div>
-                  <a
-                    href={order.maps_link || `https://maps.google.com/?q=${encodeURIComponent(order.customer_address)}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    style={{ fontSize: 11, color: 'var(--clr-primary)', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 2, textDecoration: 'underline' }}
-                  >
-                    فتح بالخريطة 🗺️
-                  </a>
+                  {mapUrl && (
+                    <a
+                      href={mapUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      style={{ fontSize: 11, color: 'var(--clr-primary)', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 2, textDecoration: 'underline' }}
+                    >
+                      فتح بالخريطة 🗺️
+                    </a>
+                  )}
                 </div>
                 <div style={{ fontSize: 'var(--text-sm)', fontWeight: 500 }}>
                   {order.customer_address || 'تم تحديد الموقع عبر GPS'}
@@ -287,9 +290,9 @@ function OrderCard({ order, currency, isExpanded, onToggle, onStatusUpdate, onNo
                 {updating ? '⏳' : nextAction.label}
               </button>
             )}
-            {(order.maps_link || order.customer_address) && (
+            {mapUrl && (
               <a
-                href={order.maps_link || `https://maps.google.com/?q=${encodeURIComponent(order.customer_address)}`}
+                href={mapUrl}
                 target="_blank"
                 rel="noreferrer"
                 className="btn btn-ghost btn-sm"

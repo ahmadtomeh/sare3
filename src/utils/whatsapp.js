@@ -80,3 +80,30 @@ export function buildStatusUpdateMessage({ storeName, orderNumber, status, curre
     `شكراً لتسوقك معنا! 🙏`,
   ].filter(Boolean).join('\n')
 }
+
+/**
+ * توليد رابط خرائط جوجل دقيق ونظيف من العنوان أو الرابط أو الإحداثيات
+ */
+export function getGoogleMapsUrl(address, mapsLink) {
+  if (mapsLink && typeof mapsLink === 'string' && mapsLink.startsWith('http')) {
+    return mapsLink
+  }
+
+  if (!address || typeof address !== 'string') return ''
+
+  // 1. إذا كان العنوان يحتوي أصلاً على رابط URL
+  const urlMatch = address.match(/https?:\/\/[^\s]+/)
+  if (urlMatch) return urlMatch[0]
+
+  // 2. إذا كان العنوان يحتوي على إحداثيات (خط العرض وخط الطول)
+  const coordMatch = address.match(/(-?\d+\.\d+)\s*,\s*(-?\d+\.\d+)/)
+  if (coordMatch) {
+    return `https://www.google.com/maps?q=${coordMatch[1]},${coordMatch[2]}`
+  }
+
+  // 3. تنظيف العنوان من الرموز التعبيرية
+  const clean = address.replace(/[📍📌🗺️]/g, '').trim()
+  if (!clean) return ''
+  
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(clean)}`
+}

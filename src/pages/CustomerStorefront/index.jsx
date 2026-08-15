@@ -1919,15 +1919,18 @@ function OrderFormSheet({
     setLocating(true)
     navigator.geolocation.getCurrentPosition(
       (pos) => {
-        const { latitude, longitude } = pos.coords
-        const mapsUrl = `https://maps.google.com/?q=${latitude},${longitude}`
+        const lat = pos.coords.latitude
+        const lng = pos.coords.longitude
+        const mapsUrl = `https://www.google.com/maps?q=${lat},${lng}`
         setForm(f => ({
           ...f,
           maps_link: mapsUrl,
-          address: f.address ? f.address : `📍 موقعي على الخريطة (${latitude.toFixed(4)}, ${longitude.toFixed(4)})`
+          address: f.address && !f.address.includes('(')
+            ? `${f.address} (${lat.toFixed(5)}, ${lng.toFixed(5)})`
+            : `${lat.toFixed(6)}, ${lng.toFixed(6)}`
         }))
         setLocating(false)
-        toast.success('📍 تم تحديد موقعك الجغرافي بدقة!')
+        toast.success('📍 تم تحديد موقعك الجغرافي بنجاح!')
       },
       (err) => {
         setLocating(false)
