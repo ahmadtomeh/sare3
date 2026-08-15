@@ -1,6 +1,7 @@
 import { useRef } from 'react'
 import { QRCodeSVG } from 'qrcode.react'
 import { useStoreConfig } from '../../stores/useStoreConfig'
+import { getStoreUrl } from '../../utils/storeUrl'
 import toast from 'react-hot-toast'
 
 export default function QRGenerator() {
@@ -8,8 +9,8 @@ export default function QRGenerator() {
   const qrRef = useRef()
 
   const storeUrl = store?.slug
-    ? `${window.location.origin}/${store.slug}`
-    : 'https://fawri.shop/my-store'
+    ? getStoreUrl(store.slug)
+    : 'https://my-store.fawri.shop'
 
   const copyLink = () => {
     navigator.clipboard.writeText(storeUrl)

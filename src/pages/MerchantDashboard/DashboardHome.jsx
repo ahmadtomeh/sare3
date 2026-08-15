@@ -5,6 +5,7 @@ import { useOrdersStore } from '../../stores/useOrdersStore'
 import { useProductsStore } from '../../stores/useProductsStore'
 import { subscribeToPush } from '../../lib/pushNotifications'
 import { checkAndBindTelegram } from '../../lib/telegram'
+import { getStoreUrl } from '../../utils/storeUrl'
 import toast from 'react-hot-toast'
 
 const formatPrice = (val) => {
@@ -132,7 +133,7 @@ export default function DashboardHome({ onNavigate }) {
   })
 
   const handleShareStore = () => {
-    const storeUrl = `${window.location.origin}/${store?.slug || 'demo'}`
+    const storeUrl = getStoreUrl(store?.slug || 'demo')
     if (navigator.share) {
       navigator.share({
         title: store?.name || 'متجري على فوري',
@@ -146,7 +147,7 @@ export default function DashboardHome({ onNavigate }) {
   }
 
   const handleCopyLink = () => {
-    const storeUrl = `${window.location.origin}/${store?.slug || 'demo'}`
+    const storeUrl = getStoreUrl(store?.slug || 'demo')
     navigator.clipboard.writeText(storeUrl).then(() => {
       toast.success(`📋 تم نسخ رابط المتجر: ${storeUrl}`, { duration: 3000 })
     }).catch(() => {

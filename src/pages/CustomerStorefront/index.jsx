@@ -16,6 +16,7 @@ import { subscribeCustomerToPush } from '../../lib/customerPushNotifications'
 import SpinWheelModal from '../../components/SpinWheelModal'
 import ImageLightboxModal from '../../components/ImageLightboxModal'
 import { playAudioPop } from '../../utils/audio'
+import { getStoreUrl } from '../../utils/storeUrl'
 
 export const formatPrice = (val) => {
   const num = Number(val)
@@ -75,14 +76,15 @@ export default function CustomerStorefront({ previewSlug }) {
 
   // ── Share Store Action ──
   const handleShareStore = () => {
+    const storeUrl = store?.slug ? getStoreUrl(store.slug) : window.location.href
     if (navigator.share) {
       navigator.share({
         title: store?.name || 'المتجر',
         text: `تسوق الآن من متجر ${store?.name || ''} على منصة فوري ⚡`,
-        url: window.location.href
+        url: storeUrl
       }).catch(() => {})
     } else {
-      navigator.clipboard.writeText(window.location.href)
+      navigator.clipboard.writeText(storeUrl)
       toast.success('🔗 تم نسخ رابط المتجر بنجاح!')
     }
   }

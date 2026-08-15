@@ -5,6 +5,7 @@ import { useStoreConfig } from '../stores/useStoreConfig'
 import { useAuthStore } from '../stores/useAuthStore'
 import { useProductsStore } from '../stores/useProductsStore'
 import { DEMO_PRESETS } from '../utils/demoData'
+import { getStoreUrl } from '../utils/storeUrl'
 import toast from 'react-hot-toast'
 
 const STEPS = [
@@ -95,7 +96,7 @@ export default function OnboardingWizard() {
     }
   }
 
-  const storeUrl = form.slug ? `${window.location.origin}/${form.slug}` : ''
+  const storeUrl = form.slug ? getStoreUrl(form.slug) : ''
   const isAdmin = user?.email === 'admin@fawri.shop' || user?.user_metadata?.role === 'super_admin'
 
   return (

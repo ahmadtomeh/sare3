@@ -5,6 +5,7 @@ import { useAuthStore } from '../../stores/useAuthStore'
 import { supabase } from '../../lib/supabase'
 import { Download, Upload, Plus, Trash2, X, Image } from 'lucide-react'
 import { compressImage } from '../../utils/imageCompressor'
+import { getStoreUrl } from '../../utils/storeUrl'
 import toast from 'react-hot-toast'
 
 const CURRENCIES = [
@@ -230,7 +231,7 @@ export default function StoreSettings() {
   }
 
   const storeUrl = store?.slug
-    ? `${window.location.origin}/${store.slug}`
+    ? getStoreUrl(store.slug)
     : 'أنشئ متجرك أولاً'
 
 
@@ -251,8 +252,8 @@ export default function StoreSettings() {
       {store?.slug && (
         <div className="glass" style={{ padding: 'var(--sp-md)', display: 'flex', gap: 'var(--sp-md)', alignItems: 'center', flexWrap: 'wrap', borderColor: 'var(--clr-accent-glow)', borderWidth: 1 }}>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 'var(--text-xs)', color: 'var(--clr-text-3)', marginBottom: 2 }}>رابط متجرك</div>
-            <div style={{ fontWeight: 700, color: 'var(--clr-accent)', fontSize: 'var(--text-sm)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            <div style={{ fontSize: 'var(--text-xs)', color: 'var(--clr-text-3)', marginBottom: 2 }}>رابط متجرك المعتمد (Subdomain)</div>
+            <div style={{ fontWeight: 700, color: 'var(--clr-accent)', fontSize: 'var(--text-sm)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', direction: 'ltr', textAlign: 'left' }}>
               🔗 {storeUrl}
             </div>
           </div>
@@ -282,17 +283,18 @@ export default function StoreSettings() {
           <div className="input-group">
             <label className="input-label">الرابط المخصص للمتجر</label>
             <div style={{ display: 'flex', gap: 'var(--sp-sm)', alignItems: 'center', direction: 'ltr' }}>
+              <span style={{ color: 'var(--clr-text-3)', fontSize: 'var(--text-sm)', flexShrink: 0, whiteSpace: 'nowrap' }}>https://</span>
               <input
                 className="input"
                 value={form.slug || ''}
                 onChange={e => set('slug', e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '').replace(/--+/g, '-'))}
                 placeholder="my-store"
-                style={{ direction: 'ltr', flex: 1 }}
+                style={{ direction: 'ltr', flex: 1, textAlign: 'left' }}
                 id="store-slug-input"
               />
-              <span style={{ color: 'var(--clr-text-3)', fontSize: 'var(--text-sm)', flexShrink: 0, whiteSpace: 'nowrap' }}>fawri.shop/</span>
+              <span style={{ color: 'var(--clr-primary)', fontWeight: 700, fontSize: 'var(--text-sm)', flexShrink: 0, whiteSpace: 'nowrap' }}>.fawri.shop</span>
             </div>
-            <p style={{ fontSize: 'var(--text-xs)', color: 'var(--clr-text-muted)' }}>أحرف إنجليزية وأرقام وشرطات فقط</p>
+            <p style={{ fontSize: 'var(--text-xs)', color: 'var(--clr-text-muted)' }}>أحرف إنجليزية وأرقام وشرطات فقط (مثال: {form.slug || 'my-store'}.fawri.shop)</p>
           </div>
         </div>
       </div>
