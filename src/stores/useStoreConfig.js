@@ -140,6 +140,24 @@ export const useStoreConfig = create(
         set({ store: data })
         return data
       },
+
+      subscribeToStoreRealtime: (storeId) => {
+        if (!storeId || !isConfigured || storeId.startsWith('demo-')) return () => {}
+        const channel = supabase
+          .channel(`store-live-${storeId}`)
+          .on(
+            'postgres_changes',
+            { event: 'UPDATE', schema: 'public', table: 'stores', filter: `id=eq.${storeId}` },
+            (payload) => {
+              if (payload?.new) {
+                set({ store: payload.new })
+              }
+            }
+          )
+          .subscribe()
+
+        return () => supabase.removeChannel(channel)
+      },
     }),
     {
       name: 'fawri-store-config',
