@@ -737,7 +737,7 @@ export default function CustomerStorefront({ previewSlug }) {
       {/* ── Product Options Sheet ── */}
       {selectedProduct && (
         <ProductOptionsSheet
-          key={`${selectedProduct.id}-${items.length}`}
+          key={selectedProduct.id}
           product={selectedProduct}
           currency={currency}
           onClose={() => setSelectedProduct(null)}
@@ -870,8 +870,8 @@ export default function CustomerStorefront({ previewSlug }) {
           {/* ── Mobile Floating Quick Cart Bar ── */}
           {cartCount > 0 && (
             <div
-              className="mobile-quick-cart-bar touch-scale"
-              onClick={(e) => {
+              className="mobile-quick-cart-bar"
+              onPointerDown={(e) => {
                 e.preventDefault()
                 e.stopPropagation()
                 setCartOpen(true)
@@ -879,26 +879,10 @@ export default function CustomerStorefront({ previewSlug }) {
               role="button"
               tabIndex={0}
               id="mobile-quick-cart-bar-btn"
-              style={{
-                cursor: 'pointer',
-                pointerEvents: 'auto',
-                zIndex: 100000,
-              }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, pointerEvents: 'none' }}>
-                <div style={{
-                  background: 'rgba(255,255,255,0.25)',
-                  padding: '4px 10px', borderRadius: 12,
-                  fontWeight: 900, fontSize: 13, pointerEvents: 'none'
-                }}>
-                  {cartCount} {cartCount === 1 ? 'عنصر' : 'عناصر'}
-                </div>
-                <span style={{ fontSize: 13, fontWeight: 700, pointerEvents: 'none' }}>سلة التسوق</span>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 900, fontSize: 14, pointerEvents: 'none' }}>
-                <span style={{ pointerEvents: 'none' }}>{formatPrice(cartTotal)} {currency}</span>
-                <span style={{ pointerEvents: 'none' }}>←</span>
-              </div>
+              <span>{cartCount} {cartCount === 1 ? 'عنصر' : 'عناصر'}</span>
+              <span>سلة التسوق</span>
+              <span>{formatPrice(cartTotal)} {currency} ←</span>
             </div>
           )}
 
@@ -1347,7 +1331,6 @@ function ProductOptionsSheet({ product, currency, onClose, onAdd, onPreviewImage
 
   const handleConfirmAdd = (e) => {
     if (e) e.stopPropagation()
-    setAdded(true)
     onAdd(selected, quantity)
   }
 

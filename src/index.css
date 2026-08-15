@@ -651,7 +651,7 @@ body {
   transition: transform 0.15s cubic-bezier(0.2, 0.8, 0.4, 1), opacity 0.15s ease;
 }
 .touch-scale:active {
-  transform: scale(0.95) !important;
+  transform: scale(0.96);
   opacity: 0.9;
 }
 
@@ -731,10 +731,12 @@ body {
 .mobile-quick-cart-bar {
   position: fixed;
   bottom: 84px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: calc(100% - 24px);
+  left: 12px;
+  right: 12px;
+  width: auto;
   max-width: 480px;
+  margin-left: auto;
+  margin-right: auto;
   background: linear-gradient(135deg, var(--clr-primary, #7c3aed), var(--clr-accent, #10b981));
   color: #fff;
   border-radius: 18px;
@@ -747,6 +749,7 @@ body {
   cursor: pointer;
   pointer-events: auto;
   user-select: none;
+  touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
   animation: slideUpCart 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
@@ -758,11 +761,11 @@ body {
 @keyframes slideUpCart {
   from {
     opacity: 0;
-    transform: translate(-50%, 20px);
+    transform: translateY(20px);
   }
   to {
     opacity: 1;
-    transform: translate(-50%, 0);
+    transform: translateY(0);
   }
 }
 
