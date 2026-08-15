@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef, memo, useCallback } from 'react'
+import { useState, useEffect, useMemo, useRef, memo, useCallback, useDeferredValue } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { Search, ShoppingCart, Package, MapPin, Phone, User, MessageCircle, Plus, Check, ArrowRight, Bell, Trash2, Sparkles, Tag, ShoppingBag, Share2 } from 'lucide-react'
 import { useStoreConfig } from '../../stores/useStoreConfig'
@@ -17,11 +17,19 @@ import SpinWheelModal from '../../components/SpinWheelModal'
 import ImageLightboxModal from '../../components/ImageLightboxModal'
 import { playAudioPop } from '../../utils/audio'
 
-
 export const formatPrice = (val) => {
   const num = Number(val)
   if (isNaN(num)) return '0'
   return num % 1 === 0 ? num.toString() : num.toFixed(2).replace(/\.?0+$/, '')
+}
+
+export function optimizeImageUrl(url, width = 360, quality = 80) {
+  if (!url || typeof url !== 'string') return url
+  if (url.includes('images.unsplash.com')) {
+    const clean = url.split('?')[0]
+    return `${clean}?w=${width}&q=${quality}&auto=format&fit=crop`
+  }
+  return url
 }
 
 export default function CustomerStorefront({ previewSlug }) {
@@ -493,15 +501,18 @@ export default function CustomerStorefront({ previewSlug }) {
     }
   }, [isFreeShippingEligible, celebratedFreeShipping])
 
+  const deferredSearch = useDeferredValue(search)
+
   const filteredProducts = useMemo(() => {
+    const q = deferredSearch.trim().toLowerCase()
     return products
       .filter((p) => {
         const inCat = activeCategory === 'all' || p.category_id === activeCategory
-        const inSearch = !search || p.name.includes(search) || p.description?.includes(search)
+        const inSearch = !q || p.name?.toLowerCase().includes(q) || p.description?.toLowerCase().includes(q)
         return inCat && inSearch
       })
       .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0) || new Date(a.created_at) - new Date(b.created_at))
-  }, [products, activeCategory, search])
+  }, [products, activeCategory, deferredSearch])
 
   if (!store) {
     if (storeLoading) return <CompactSkeleton logoUrl={null} storeName="" />
@@ -1028,7 +1039,13 @@ const CompactProductCard = memo(function CompactProductCard({ product, currency,
         }}
       >
         {product.image_url ? (
-          <img src={product.image_url} alt={product.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} loading="lazy" decoding="async" />
+          <img
+            src={optimizeImageUrl(product.image_url, 360, 80)}
+            alt={product.name}
+            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+            loading="lazy"
+            decoding="async"
+          />
         ) : (
           <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--clr-text-muted)' }}>
             <Package size={28} style={{ opacity: 0.3 }} />

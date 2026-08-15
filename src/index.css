@@ -770,3 +770,20 @@ body {
 .mobile-quick-cart-bar ~ * .pwa-install-banner {
   bottom: 154px !important;
 }
+
+/* ── Modern Rendering & GPU Performance Optimizations ── */
+.compact-product-card,
+.storefront-product-item {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 240px;
+}
+
+/* Hardware accelerated smooth scrolling */
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+}
+
+img {
+  content-visibility: auto;
+}
