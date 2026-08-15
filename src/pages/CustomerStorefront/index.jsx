@@ -96,25 +96,33 @@ export default function CustomerStorefront({ previewSlug }) {
   const [selectedShippingZone, setSelectedShippingZone] = useState(null)
 
   // ── Audio Feedback (Web Audio API) ──
+  const audioCtxRef = useRef(null)
   const playAudioPop = () => {
     try {
-      const audioCtx = new (window.AudioContext || window.webkitAudioContext)()
+      // Reuse a single AudioContext — browsers limit simultaneous contexts
+      if (!audioCtxRef.current) {
+        audioCtxRef.current = new (window.AudioContext || window.webkitAudioContext)()
+      }
+      const audioCtx = audioCtxRef.current
+      // Resume if suspended (iOS pauses AudioContext when no interaction)
+      if (audioCtx.state === 'suspended') audioCtx.resume()
+
       const osc = audioCtx.createOscillator()
       const gain = audioCtx.createGain()
       osc.connect(gain)
       gain.connect(audioCtx.destination)
-      
+
       osc.type = 'sine'
       osc.frequency.setValueAtTime(400, audioCtx.currentTime)
       osc.frequency.exponentialRampToValueAtTime(800, audioCtx.currentTime + 0.1)
-      
+
       gain.gain.setValueAtTime(0.08, audioCtx.currentTime)
       gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.12)
-      
+
       osc.start(audioCtx.currentTime)
       osc.stop(audioCtx.currentTime + 0.12)
     } catch (e) {
-      console.warn('Audio Context not supported or blocked:', e)
+      console.warn('Audio not supported:', e)
     }
   }
 
