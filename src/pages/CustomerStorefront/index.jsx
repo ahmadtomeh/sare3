@@ -737,7 +737,7 @@ export default function CustomerStorefront({ previewSlug }) {
       {/* ── Product Options Sheet ── */}
       {selectedProduct && (
         <ProductOptionsSheet
-          key={selectedProduct.id}
+          key={`${selectedProduct.id}-${items.length}`}
           product={selectedProduct}
           currency={currency}
           onClose={() => setSelectedProduct(null)}
@@ -746,13 +746,7 @@ export default function CustomerStorefront({ previewSlug }) {
             addItem(selectedProduct, opts, qty)
             playAudioPop()
             toast.success('أضيف للسلة 🛒', { duration: 1000 })
-            // The parent manages the delay so the fly-to-cart animation completes perfectly before unmounting
-            setTimeout(() => {
-              setSelectedProduct(prev => {
-                console.log("Setting selected product to null. Previous product:", prev)
-                return null
-              })
-            }, 700)
+            setSelectedProduct(null)
           }}
         />
       )}
@@ -885,6 +879,11 @@ export default function CustomerStorefront({ previewSlug }) {
               role="button"
               tabIndex={0}
               id="mobile-quick-cart-bar-btn"
+              style={{
+                cursor: 'pointer',
+                pointerEvents: 'auto',
+                zIndex: 100000,
+              }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, pointerEvents: 'none' }}>
                 <div style={{
@@ -894,11 +893,11 @@ export default function CustomerStorefront({ previewSlug }) {
                 }}>
                   {cartCount} {cartCount === 1 ? 'عنصر' : 'عناصر'}
                 </div>
-                <span style={{ fontSize: 13, fontWeight: 700 }}>سلة التسوق</span>
+                <span style={{ fontSize: 13, fontWeight: 700, pointerEvents: 'none' }}>سلة التسوق</span>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 900, fontSize: 14 }}>
-                <span>{formatPrice(cartTotal)} {currency}</span>
-                <span>←</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 900, fontSize: 14, pointerEvents: 'none' }}>
+                <span style={{ pointerEvents: 'none' }}>{formatPrice(cartTotal)} {currency}</span>
+                <span style={{ pointerEvents: 'none' }}>←</span>
               </div>
             </div>
           )}
