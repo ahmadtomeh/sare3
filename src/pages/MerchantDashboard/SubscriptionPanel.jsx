@@ -19,61 +19,86 @@ export default function SubscriptionPanel() {
     const key = licenseKey.trim().toUpperCase()
     if (!key.startsWith('FAWRI-')) { toast.error('كود التفعيل غير صالح — يجب أن يبدأ بـ FAWRI-'); return }
 
+    if (!store?.id) {
+      toast.error('خطأ: لم يتم العثور على متجرك')
+      return
+    }
+
     setActivating(true)
     try {
-      // 1. ابحث عن الكود في قاعدة البيانات
-      const { data: keyData, error: keyError } = await supabase
-        .from('activation_codes')
-        .select('*')
-        .eq('code', key)
-        .single()
+      // 1. استدعاء الدالة الآمنة في قاعدة البيانات لتفعيل الكود
+      const { data: rpcRes, error: rpcErr } = await supabase.rpc('redeem_activation_code', {
+        input_code: key,
+        target_store_id: store.id,
+      })
 
-      if (keyError || !keyData) {
-        toast.error('❌ الكود غير موجود — تأكد من صحة الكود أو تواصل معنا')
+      if (rpcErr) {
+        // Fallback في حال لم يتم تشغيل الـ migration بعد
+        console.warn('RPC failed, trying direct activation:', rpcErr)
+        const { data: keyData, error: keyError } = await supabase
+          .from('activation_codes')
+          .select('*')
+          .eq('code', key)
+          .single()
+
+        if (keyError || !keyData) {
+          toast.error('❌ الكود غير موجود — تأكد من صحة الكود أو تواصل معنا')
+          setActivating(false)
+          return
+        }
+
+        if (keyData.used) {
+          toast.error('❌ هذا الكود تم استخدامه مسبقاً')
+          setActivating(false)
+          return
+        }
+
+        const durationDays = keyData.plan === 'yearly' ? 365 : 30
+        const expiresAt = new Date()
+        expiresAt.setDate(expiresAt.getDate() + durationDays)
+
+        const { data: updatedStore, error: storeError } = await supabase
+          .from('stores')
+          .update({
+            subscription_status: 'active',
+            trial_ends_at: expiresAt.toISOString(),
+          })
+          .eq('id', store.id)
+          .select()
+          .single()
+
+        if (storeError) throw storeError
+
+        await supabase
+          .from('activation_codes')
+          .update({ used: true, used_by: store.id, used_at: new Date().toISOString() })
+          .eq('id', keyData.id)
+
+        setStore(updatedStore)
+        toast.success(`🎉 تم تفعيل الاشتراك! ينتهي في ${expiresAt.toLocaleDateString('ar-EG')}`, { duration: 5000 })
+        setLicenseKey('')
+        setTab('plans')
         setActivating(false)
         return
       }
 
-      if (keyData.used) {
-        toast.error('❌ هذا الكود تم استخدامه مسبقاً')
+      if (!rpcRes?.success) {
+        toast.error(rpcRes?.error || '❌ فشل تفعيل الكود')
         setActivating(false)
         return
       }
 
-      if (!store?.id) {
-        toast.error('خطأ: لم يتم العثور على متجرك')
-        setActivating(false)
-        return
-      }
-
-      // 2. احسب تاريخ انتهاء الاشتراك
-      const durationDays = keyData.plan === 'yearly' ? 365 : 30
-      const expiresAt = new Date()
-      expiresAt.setDate(expiresAt.getDate() + durationDays)
-
-      // 3. حدّث المتجر في قاعدة البيانات
-      const { data: updatedStore, error: storeError } = await supabase
+      // جلب بيانات المتجر المحدثة
+      const { data: updatedStore } = await supabase
         .from('stores')
-        .update({
-          subscription_status: 'active',
-          trial_ends_at: expiresAt.toISOString(),
-        })
+        .select('*')
         .eq('id', store.id)
-        .select()
         .single()
 
-      if (storeError) throw storeError
+      if (updatedStore) setStore(updatedStore)
 
-      // 4. اعلّم الكود كمستخدم
-      await supabase
-        .from('activation_codes')
-        .update({ used: true, used_by: store.id, used_at: new Date().toISOString() })
-        .eq('id', keyData.id)
-
-      // 5. حدّث الحالة في الـ store محلياً
-      setStore(updatedStore)
-
-      toast.success(`🎉 تم تفعيل الاشتراك! ينتهي في ${expiresAt.toLocaleDateString('ar-EG')}`, { duration: 5000 })
+      const expDate = new Date(rpcRes.expires_at)
+      toast.success(`🎉 تم تفعيل الاشتراك بنجاح! ينتهي في ${expDate.toLocaleDateString('ar-EG')}`, { duration: 5000 })
       setLicenseKey('')
       setTab('plans')
     } catch (err) {
