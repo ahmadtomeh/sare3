@@ -243,6 +243,7 @@ function ProductCard({ product, category, currency, onEdit, onDelete, onToggle }
           <span className={`badge ${product.is_available ? 'badge-success' : 'badge-danger'}`} style={{ fontSize: 10 }}>
             {product.is_available ? '🟢 متوفر' : '🔴 غير متوفر'}
           </span>
+          {product.badge && <span className="badge badge-primary" style={{ fontSize: 10, background: 'var(--clr-primary)', color: '#fff' }}>{product.badge}</span>}
           {category && <span className="badge badge-ghost" style={{ fontSize: 10 }}>{category.emoji ? `${category.emoji} ` : ''}{category.name}</span>}
           {product.track_stock && (
             <span className="badge" style={{
@@ -311,6 +312,7 @@ function ProductFormModal({ product, categories, storeId, currency, onClose, onS
     options: normalizeOptions(product?.options),
     track_stock: product?.track_stock ?? false,
     stock_count: product?.stock_count ?? 0,
+    badge: product?.badge || '',
   })
   const [uploading, setUploading] = useState(false)
   const [uploadingVal, setUploadingVal] = useState(null) // { optIdx, valIdx }
@@ -541,6 +543,38 @@ function ProductFormModal({ product, categories, storeId, currency, onClose, onS
               <option value="">— بدون فئة —</option>
               {categories.map((c) => <option key={c.id} value={c.id}>{c.emoji} {c.name}</option>)}
             </select>
+          </div>
+
+          <div className="input-group" style={{ gridColumn: '1 / -1' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+              <label className="input-label" style={{ margin: 0 }}>وسام / شارة المنتج الترويجية (اختياري)</label>
+              {form.badge && (
+                <button type="button" className="btn btn-ghost btn-xs" onClick={() => set('badge', '')} style={{ color: 'var(--clr-danger)', fontSize: 11 }}>
+                  إلغاء الشارة
+                </button>
+              )}
+            </div>
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 6 }}>
+              {['🔥 الأكثر طلباً', '✨ جديدنا', '🏷️ عرض خاص', '⭐ اختيار الشيف', '🌿 نباتي'].map((b) => (
+                <button
+                  key={b}
+                  type="button"
+                  className={`btn btn-xs ${form.badge === b ? 'btn-primary' : 'btn-ghost'}`}
+                  style={{ borderRadius: 8, fontSize: 11 }}
+                  onClick={() => set('badge', form.badge === b ? '' : b)}
+                >
+                  {b}
+                </button>
+              ))}
+            </div>
+            <input
+              className="input"
+              value={form.badge}
+              onChange={(e) => set('badge', e.target.value)}
+              placeholder="أو اكتب شارة مخصصة (مثال: 🔥 الأكثر مبيعاً)"
+              style={{ fontSize: 12, minHeight: 34 }}
+              id="product-badge-input"
+            />
           </div>
 
           <div className="input-group" style={{ gridColumn: '1 / -1' }}>

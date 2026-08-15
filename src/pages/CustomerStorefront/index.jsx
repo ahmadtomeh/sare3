@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { Search, ShoppingCart, Package, MapPin, Phone, User, MessageCircle, Plus, Check, ArrowRight, Bell, Trash2, Sparkles, Tag, ShoppingBag } from 'lucide-react'
+import { Search, ShoppingCart, Package, MapPin, Phone, User, MessageCircle, Plus, Check, ArrowRight, Bell, Trash2, Sparkles, Tag, ShoppingBag, Share2 } from 'lucide-react'
 import { useStoreConfig } from '../../stores/useStoreConfig'
 import { useProductsStore } from '../../stores/useProductsStore'
 import { useCartStore } from '../../stores/useCartStore'
@@ -14,6 +14,7 @@ import { useReviewsStore } from '../../stores/useReviewsStore'
 import toast from 'react-hot-toast'
 import { subscribeCustomerToPush } from '../../lib/customerPushNotifications'
 import SpinWheelModal from '../../components/SpinWheelModal'
+import ImageLightboxModal from '../../components/ImageLightboxModal'
 
 
 export const formatPrice = (val) => {
@@ -61,6 +62,21 @@ export default function CustomerStorefront({ previewSlug }) {
   const [trackedOrder, setTrackedOrder] = useState(null)
   const [reviewOpen, setReviewOpen] = useState(false) // {product} after order success
   const [spinWheelOpen, setSpinWheelOpen] = useState(false)
+  const [previewImage, setPreviewImage] = useState(null) // { url, title }
+
+  // ── Share Store Action ──
+  const handleShareStore = () => {
+    if (navigator.share) {
+      navigator.share({
+        title: store?.name || 'المتجر',
+        text: `تسوق الآن من متجر ${store?.name || ''} على منصة فوري ⚡`,
+        url: window.location.href
+      }).catch(() => {})
+    } else {
+      navigator.clipboard.writeText(window.location.href)
+      toast.success('🔗 تم نسخ رابط المتجر بنجاح!')
+    }
+  }
 
   // ── Coupon & Shipping States ──
   const [couponCode, setCouponCode] = useState('')
@@ -593,6 +609,16 @@ export default function CustomerStorefront({ previewSlug }) {
           >
             <Search size={18} />
           </button>
+
+          <button
+            className="btn btn-ghost btn-sm"
+            style={{ padding: 6, minHeight: 34 }}
+            onClick={handleShareStore}
+            id="cust-share-store"
+            title="مشاركة المتجر"
+          >
+            <Share2 size={18} />
+          </button>
           
           <ThemeToggle />
         </div>
@@ -668,8 +694,9 @@ export default function CustomerStorefront({ previewSlug }) {
                   key={product.id}
                   product={product}
                   currency={currency}
-                  badge={idx === 0 ? '🔥 الأكثر مبيعاً' : null}
+                  badge={product.badge || (idx === 0 ? '🔥 الأكثر طلباً' : null)}
                   qtyInCart={qtyInCart}
+                  onPreviewImage={setPreviewImage}
                   onAdd={() => {
                     let opts = product.options
                     if (typeof opts === 'string') {
@@ -700,6 +727,7 @@ export default function CustomerStorefront({ previewSlug }) {
           product={selectedProduct}
           currency={currency}
           onClose={() => setSelectedProduct(null)}
+          onPreviewImage={setPreviewImage}
           onAdd={(opts, qty) => {
             addItem(selectedProduct, opts, qty)
             playAudioPop()
@@ -733,6 +761,15 @@ export default function CustomerStorefront({ previewSlug }) {
           onClose={() => setCartOpen(false)}
           onCheckout={() => { setCartOpen(false); setOrderOpen(true) }}
           onOpenSpinWheel={() => setSpinWheelOpen(true)}
+        />
+      )}
+
+      {/* ── Image Lightbox Full-Screen Preview ── */}
+      {previewImage && (
+        <ImageLightboxModal
+          imageUrl={previewImage.url}
+          title={previewImage.title}
+          onClose={() => setPreviewImage(null)}
         />
       )}
 
@@ -894,7 +931,7 @@ function StarRating({ rating, count, size = 11 }) {
 }
 
 /* ── Ultra-Compact Product Card Component ── */
-function CompactProductCard({ product, currency, badge, onAdd, rating, qtyInCart }) {
+function CompactProductCard({ product, currency, badge, onAdd, rating, qtyInCart, onPreviewImage }) {
   const isInCart = qtyInCart > 0
   const badgeAnimClass = qtyInCart % 2 === 0 ? 'badgePulseEvenClass' : 'badgePulseOddClass'
 
@@ -971,15 +1008,24 @@ function CompactProductCard({ product, currency, badge, onAdd, rating, qtyInCart
       {badge && product.is_available && (
         <span style={{
           position: 'absolute', top: 6, right: 6, zIndex: 10,
-          background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(4px)',
-          color: '#fff', fontSize: 9, fontWeight: 700, padding: '2px 6px', borderRadius: 6,
+          background: 'rgba(0,0,0,0.72)', backdropFilter: 'blur(4px)',
+          color: '#fff', fontSize: 9, fontWeight: 800, padding: '2px 7px', borderRadius: 6,
+          boxShadow: '0 2px 6px rgba(0,0,0,0.3)'
         }}>
           {badge}
         </span>
       )}
 
-      {/* Image */}
-      <div style={{ width: '100%', aspectRatio: '1/1', background: 'var(--glass-bg-2)', position: 'relative', overflow: 'hidden' }}>
+      {/* Image with Click to Zoom Lightbox */}
+      <div
+        style={{ width: '100%', aspectRatio: '1/1', background: 'var(--glass-bg-2)', position: 'relative', overflow: 'hidden', cursor: product.image_url ? 'zoom-in' : 'default' }}
+        onClick={(e) => {
+          if (product.image_url && onPreviewImage) {
+            e.stopPropagation()
+            onPreviewImage({ url: product.image_url, title: product.name })
+          }
+        }}
+      >
         {product.image_url ? (
           <img src={product.image_url} alt={product.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} loading="lazy" decoding="async" />
         ) : (
@@ -1154,7 +1200,7 @@ function ReviewSheet({ store, product, onClose }) {
 
 
 /* ── Product Options Sheet ── */
-function ProductOptionsSheet({ product, currency, onClose, onAdd }) {
+function ProductOptionsSheet({ product, currency, onClose, onAdd, onPreviewImage }) {
   const optionsList = useMemo(() => {
     if (!product?.options) return []
     let opts = product.options
@@ -1275,13 +1321,24 @@ function ProductOptionsSheet({ product, currency, onClose, onAdd }) {
         {/* Multi-Image Swiper */}
         {images.length > 0 && (
           <div style={{ position: 'relative', borderRadius: 12, overflow: 'hidden', userSelect: 'none' }}>
+            {product.badge && (
+              <span style={{
+                position: 'absolute', top: 10, right: 10, zIndex: 10,
+                background: 'rgba(0,0,0,0.72)', backdropFilter: 'blur(4px)',
+                color: '#fff', fontSize: 10, fontWeight: 800, padding: '3px 8px', borderRadius: 6,
+                boxShadow: '0 2px 6px rgba(0,0,0,0.3)'
+              }}>
+                {product.badge}
+              </span>
+            )}
             <img
               src={images[activeImg]}
               alt={product.name}
               className={added ? 'image-fly-to-cart' : ''}
+              onClick={() => onPreviewImage && onPreviewImage({ url: images[activeImg], title: product.name })}
               style={{ 
                 width: '100%', maxHeight: 200, objectFit: 'cover', display: 'block', borderRadius: 12,
-                transition: 'all 0.3s ease',
+                transition: 'all 0.3s ease', cursor: 'zoom-in'
               }}
               onTouchStart={handleImgTouchStart}
               onTouchEnd={handleImgTouchEnd}
@@ -1846,11 +1903,40 @@ function OrderFormSheet({
     phone: customerInfo?.phone || '',
     address: customerInfo?.address || '',
     notes: customerInfo?.notes || '',
+    maps_link: customerInfo?.maps_link || '',
   })
+  const [locating, setLocating] = useState(false)
   const [sending, setSending] = useState(false)
   const [savedOrder, setSavedOrder] = useState(null)   // {id, number, storeId} بعد تأكيد الطلب
   const [notifLoading, setNotifLoading] = useState(false)
   const pushSupported = 'Notification' in window && 'serviceWorker' in navigator
+
+  const handleGetLocation = () => {
+    if (!('geolocation' in navigator)) {
+      toast.error('خدمة تحديد الموقع (GPS) غير مدعومة على هذا الجهاز')
+      return
+    }
+    setLocating(true)
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const { latitude, longitude } = pos.coords
+        const mapsUrl = `https://maps.google.com/?q=${latitude},${longitude}`
+        setForm(f => ({
+          ...f,
+          maps_link: mapsUrl,
+          address: f.address ? f.address : `📍 موقعي على الخريطة (${latitude.toFixed(4)}, ${longitude.toFixed(4)})`
+        }))
+        setLocating(false)
+        toast.success('📍 تم تحديد موقعك الجغرافي بدقة!')
+      },
+      (err) => {
+        setLocating(false)
+        console.warn('Geolocation error:', err)
+        toast.error('يرجى السماح بصلاحية الموقع في المتصفح لتحديد موقعك تلقائياً')
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    )
+  }
 
   // Default to first shipping option if available and none selected yet (excluding the internal free shipping threshold zone)
   useEffect(() => {
@@ -1866,7 +1952,7 @@ function OrderFormSheet({
     if (!form.name) { toast.error('يرجى كتابة اسمك'); return }
     setSending(true)
 
-    const info = { name: form.name, phone: form.phone, address: form.address }
+    const info = { name: form.name, phone: form.phone, address: form.address, maps_link: form.maps_link }
     setCustomerInfo(info)
     onSaveCustomer?.(info)
 
@@ -2030,8 +2116,28 @@ function OrderFormSheet({
           <input className="input" style={{ minHeight: 38, fontSize: 13, direction: 'ltr' }} value={form.phone} onChange={e => set('phone', e.target.value)} placeholder="0599123456" type="tel" id="cust-order-phone" />
         </div>
         <div className="input-group">
-          <label className="input-label"><MapPin size={12} /> عنوان التوصيل</label>
-          <input className="input" style={{ minHeight: 38, fontSize: 13 }} value={form.address} onChange={e => set('address', e.target.value)} placeholder="المدينة — الشارع" id="cust-order-address" />
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+            <label className="input-label" style={{ margin: 0 }}><MapPin size={12} /> عنوان التوصيل</label>
+            <button
+              type="button"
+              className="btn btn-ghost btn-xs"
+              onClick={handleGetLocation}
+              disabled={locating}
+              style={{ fontSize: 11, color: 'var(--clr-accent)', gap: 4, padding: '2px 8px', fontWeight: 700 }}
+              title="تحديد الموقع عبر GPS"
+            >
+              {locating ? '📍 جاري التحديد...' : '📍 موقعي الحالي (GPS)'}
+            </button>
+          </div>
+          <input className="input" style={{ minHeight: 38, fontSize: 13 }} value={form.address} onChange={e => set('address', e.target.value)} placeholder="المدينة — الشارع — تفاصيل البناية" id="cust-order-address" />
+          {form.maps_link && (
+            <div style={{ fontSize: 11, color: 'var(--clr-accent)', display: 'flex', alignItems: 'center', gap: 4, marginTop: 4 }}>
+              <span>✅ تم إرفاق إحداثيات GPS:</span>
+              <a href={form.maps_link} target="_blank" rel="noreferrer" style={{ textDecoration: 'underline', color: 'var(--clr-primary)', fontWeight: 700 }}>
+                عرض الموقع 🗺️
+              </a>
+            </div>
+          )}
         </div>
 
         {/* Shipping Options Dropdown */}
