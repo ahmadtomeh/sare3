@@ -738,14 +738,21 @@ body {
   background: linear-gradient(135deg, var(--clr-primary, #7c3aed), var(--clr-accent, #10b981));
   color: #fff;
   border-radius: 18px;
-  padding: 10px 16px;
+  padding: 12px 18px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   box-shadow: 0 10px 25px rgba(124, 58, 237, 0.4);
-  z-index: 999;
+  z-index: 100000;
   cursor: pointer;
+  pointer-events: auto;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
   animation: slideUpCart 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.mobile-quick-cart-bar * {
+  pointer-events: none;
 }
 
 @keyframes slideUpCart {
@@ -769,6 +776,7 @@ body {
 .mobile-quick-cart-bar ~ .pwa-install-banner,
 .mobile-quick-cart-bar ~ * .pwa-install-banner {
   bottom: 154px !important;
+  z-index: 99990 !important;
 }
 
 /* ── Modern Rendering & GPU Performance Optimizations ── */

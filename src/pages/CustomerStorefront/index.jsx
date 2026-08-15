@@ -817,36 +817,50 @@ export default function CustomerStorefront({ previewSlug }) {
           onClose={() => setOrderOpen(false)}
           triggerConfetti={triggerConfetti}
           isFreeShippingEligible={isFreeShippingEligible}
-          onOrderSuccess={(lastProduct) => {
-            setOrderOpen(false)
-            // Show review sheet after a short delay
-            setTimeout(() => setReviewOpen(lastProduct || true), 800)
-          }}
+          onSuccess={handleOrderSuccess}
         />
       )}
 
-      {/* ── My Orders Sheet ── */}
+      {/* ── Previous Orders Sheet ── */}
       {myOrdersOpen && (
         <MyOrdersSheet
           store={store}
-          products={products}
+          currency={currency}
           onClose={() => setMyOrdersOpen(false)}
-          onOpenCart={() => setCartOpen(true)}
-          onTrack={(order) => {
-            setMyOrdersOpen(false)
-            setTrackedOrder(order)
-          }}
+          onTrackOrder={(order) => { setMyOrdersOpen(false); setTrackedOrder(order) }}
         />
       )}
 
-      {/* ── Order Status Tracker Sheet ── */}
+      {/* ── Live Order Tracker Modal ── */}
       {trackedOrder && (
-        <OrderStatusTracker
+        <OrderTrackerModal
           store={store}
           order={trackedOrder}
           onClose={() => setTrackedOrder(null)}
         />
       )}
+
+      {/* ── Spin Wheel Modal ── */}
+      {spinWheelOpen && (
+        <SpinWheelModal
+          store={store}
+          onClose={() => setSpinWheelOpen(false)}
+          onWinCoupon={(coupon) => {
+            setAppliedCoupon(coupon)
+            setCouponCode(coupon.code)
+          }}
+        />
+      )}
+
+      {/* ── Image Preview Lightbox ── */}
+      {previewImage && (
+        <ImageLightboxModal
+          imageUrl={previewImage.url}
+          title={previewImage.title}
+          onClose={() => setPreviewImage(null)}
+        />
+      )}
+
       {/* ── Review Sheet ── */}
       {reviewOpen && (
         <ReviewSheet
@@ -859,20 +873,24 @@ export default function CustomerStorefront({ previewSlug }) {
       {/* Hide all floating bars when any modal/sheet (selectedProduct, cartOpen, orderOpen, etc.) is open */}
       {!selectedProduct && !cartOpen && !orderOpen && !myOrdersOpen && !trackedOrder && !reviewOpen && (
         <>
-          {/* ── Install PWA Banner ── */}
-          <InstallPWA appName={store?.name} logoUrl={store?.logo_url} />
-
           {/* ── Mobile Floating Quick Cart Bar ── */}
           {cartCount > 0 && (
             <div
               className="mobile-quick-cart-bar touch-scale"
-              onClick={() => setCartOpen(true)}
+              onClick={(e) => {
+                e.preventDefault()
+                e.stopPropagation()
+                setCartOpen(true)
+              }}
+              role="button"
+              tabIndex={0}
+              id="mobile-quick-cart-bar-btn"
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, pointerEvents: 'none' }}>
                 <div style={{
                   background: 'rgba(255,255,255,0.25)',
                   padding: '4px 10px', borderRadius: 12,
-                  fontWeight: 900, fontSize: 13
+                  fontWeight: 900, fontSize: 13, pointerEvents: 'none'
                 }}>
                   {cartCount} {cartCount === 1 ? 'عنصر' : 'عناصر'}
                 </div>
