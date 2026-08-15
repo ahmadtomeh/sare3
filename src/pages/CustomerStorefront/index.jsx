@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useRef, memo, useCallback, useDeferredValue } from 'react'
+import { flushSync } from 'react-dom'
 import { useParams, useNavigate } from 'react-router-dom'
 import { Search, ShoppingCart, Package, MapPin, Phone, User, MessageCircle, Plus, Check, ArrowRight, Bell, Trash2, Sparkles, Tag, ShoppingBag, Share2 } from 'lucide-react'
 import { useStoreConfig } from '../../stores/useStoreConfig'
@@ -743,11 +744,13 @@ export default function CustomerStorefront({ previewSlug }) {
           onClose={() => setSelectedProduct(null)}
           onPreviewImage={setPreviewImage}
           onAdd={(opts, qty) => {
-            addItem(selectedProduct, opts, qty)
+            // flushSync closes the sheet SYNCHRONOUSLY before addItem triggers
+            // a Zustand (useSyncExternalStore) re-render that would race with setSelectedProduct
+            const productSnapshot = selectedProduct
+            flushSync(() => setSelectedProduct(null))
+            addItem(productSnapshot, opts, qty)
             playAudioPop()
             toast.success('أضيف للسلة 🛒', { duration: 1000 })
-            // Use rAF to close AFTER Zustand state flush to avoid race condition
-            requestAnimationFrame(() => setSelectedProduct(null))
           }}
         />
       )}
