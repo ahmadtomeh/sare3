@@ -256,7 +256,7 @@ export default function CustomerStorefront({ previewSlug }) {
 
   // ── Mobile Hardware Back Button / Gesture Management ──
   // Check if any modal/sheet is open
-  const isAnyModalOpen = !!(cartOpen || orderOpen || myOrdersOpen || searchOpen || trackedOrder)
+  const isAnyModalOpen = !!(cartOpen || orderOpen || myOrdersOpen || searchOpen || trackedOrder || selectedProduct)
 
   // Close all open modals helper
   const closeAllModals = () => {
@@ -746,7 +746,8 @@ export default function CustomerStorefront({ previewSlug }) {
             addItem(selectedProduct, opts, qty)
             playAudioPop()
             toast.success('أضيف للسلة 🛒', { duration: 1000 })
-            setSelectedProduct(null)
+            // Use rAF to close AFTER Zustand state flush to avoid race condition
+            requestAnimationFrame(() => setSelectedProduct(null))
           }}
         />
       )}
