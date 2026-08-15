@@ -19,6 +19,9 @@ ON public.orders (store_id, status, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_orders_customer_phone 
 ON public.orders (customer_phone, created_at DESC);
 
--- 5. Reviews indexing for product star ratings calculation
-CREATE INDEX IF NOT EXISTS idx_reviews_product_approved 
-ON public.reviews (product_id, is_approved);
+-- 5. Reviews indexing for product star ratings calculation & merchant view
+CREATE INDEX IF NOT EXISTS idx_reviews_product_rating 
+ON public.reviews (product_id, rating);
+
+CREATE INDEX IF NOT EXISTS idx_reviews_store_created 
+ON public.reviews (store_id, created_at DESC);
