@@ -3,6 +3,8 @@ import { persist } from 'zustand/middleware'
 import { supabase, isConfigured } from '../lib/supabase'
 import { DEMO_STORE, DEMO_PRESETS } from '../utils/demoData'
 import { useAuthStore } from './useAuthStore'
+import toast from 'react-hot-toast'
+
 
 // Map demo slugs → preset keys
 const DEMO_SLUGS = {
@@ -74,8 +76,16 @@ export const useStoreConfig = create(
           data = res.data
           error = res.error
         }
-        if (error) { set({ error: error.message, loading: false }); return null }
-        if (!data) { set({ error: 'المتجر غير موجود', loading: false }); return null }
+        if (error) {
+          toast.error(`خطأ في جلب بيانات المتجر: ${error.message}`, { id: 'store-fetch-err' })
+          set({ error: error.message, loading: false })
+          return null
+        }
+        if (!data) {
+          toast.error('المتجر غير موجود بقاعدة البيانات', { id: 'store-not-found-err' })
+          set({ error: 'المتجر غير موجود', loading: false })
+          return null
+        }
         set({ store: data, loading: false })
         return data
       },

@@ -3,6 +3,8 @@ import { supabase, isConfigured } from '../lib/supabase'
 import { DEMO_CATEGORIES, DEMO_PRODUCTS, DEMO_PRESETS } from '../utils/demoData'
 import { useAuthStore } from './useAuthStore'
 import { useStoreConfig } from './useStoreConfig'
+import toast from 'react-hot-toast'
+
 
 const checkDemo = (storeId) => {
   return !isConfigured ||
@@ -57,6 +59,9 @@ export const useProductsStore = create((set, get) => ({
         supabase.from('products').select('*').eq('store_id', storeId).order('sort_order'),
       ])
 
+      if (catRes.error) throw catRes.error
+      if (prodRes.error) throw prodRes.error
+
       const freshCats = catRes.data || []
       const freshProds = prodRes.data || []
 
@@ -73,6 +78,7 @@ export const useProductsStore = create((set, get) => ({
       } catch {}
     } catch (err) {
       console.warn('Error fetching products:', err)
+      toast.error(`خطأ في تحميل المنتجات: ${err.message || err}`, { id: 'prod-fetch-err' })
       set({ loading: false })
     }
   },
