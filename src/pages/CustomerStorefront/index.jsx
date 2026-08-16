@@ -2007,142 +2007,148 @@ function OrderFormSheet({
     if (!form.name) { toast.error('يرجى كتابة اسمك'); return }
     setSending(true)
 
-    const info = { name: form.name, phone: form.phone, address: form.address, maps_link: form.maps_link }
-    setCustomerInfo(info)
-    onSaveCustomer?.(info)
-
-    // Build discount and shipping detail objects (Set shipping cost to 0 if free shipping threshold is active)
-    const discountObj = appliedCoupon ? { code: appliedCoupon.code, amount: discountAmount } : null
-    
-    const actualShippingCost = isFreeShippingEligible ? 0 : (selectedShippingZone ? parseFloat(selectedShippingZone.cost) : 0)
-    const shippingObj = selectedShippingZone ? { name: selectedShippingZone.name, cost: actualShippingCost } : null
-
-    // ── تجهيز تفاصيل المنتجات لقاعدة البيانات ──
-    const dbItems = items.map(i => {
-      const optionStr = Object.entries(i.selectedOptions || {})
-        .map(([k, v]) => `${k}: ${v.name || v}${v.price > 0 ? ` (+${v.price} ${currency})` : ''}`)
-        .join(' | ')
-      const optionExtra = Object.values(i.selectedOptions || {}).reduce((s, opt) => s + Number(opt.price || 0), 0)
-      return {
-        product: { id: i.product.id, name: i.product.name, price: parseFloat(i.product.price) + optionExtra },
-        quantity: i.quantity,
-        selectedOptions: optionStr
-      }
-    })
-
-    // إضافة الخصم كبند خاص في سلة الطلب بقاعدة البيانات
-    if (appliedCoupon) {
-      dbItems.push({
-        product: { id: 'discount', name: `خصم كوبون (${appliedCoupon.code})`, price: -discountAmount },
-        quantity: 1,
-        isSpecial: true
-      })
-    }
-
-    // إضافة الشحن كبند خاص في سلة الطلب بقاعدة البيانات
-    if (selectedShippingZone) {
-      dbItems.push({
-        product: { id: 'shipping', name: `رسوم التوصيل (${selectedShippingZone.name})${isFreeShippingEligible ? ' — شحن مجاني 🎁' : ''}`, price: actualShippingCost },
-        quantity: 1,
-        isSpecial: true
-      })
-    }
-
-    // ── حفظ الطلب في قاعدة بيانات Supabase ──
-    const orderData = {
-      store_id: store.id,
-      customer_name: form.name,
-      customer_phone: form.phone || '',
-      customer_address: form.address || '',
-      notes: form.notes || '',
-      items: dbItems,
-      total: finalTotal,
-      status: 'new'
-    }
-
-    let orderNumber = null
-    let orderSaved = null
     try {
-      const saved = await useOrdersStore.getState().placeOrder(orderData)
-      if (saved && saved.order_number) {
-        orderNumber = saved.order_number
-        if (saved.id) orderSaved = { id: saved.id, number: saved.order_number, storeId: store.id }
-      }
-    } catch (err) {
-      console.error('Failed to save order to Supabase:', err)
-      orderNumber = Math.floor(Math.random() * 9000) + 1000
-    }
+      const info = { name: form.name, phone: form.phone, address: form.address, maps_link: form.maps_link }
+      setCustomerInfo(info)
+      onSaveCustomer?.(info)
 
-    const message = buildWhatsAppMessage({
-      store,
-      items,
-      customer: form,
-      total: finalTotal,
-      discount: discountObj,
-      shipping: shippingObj,
-      orderNumber
-    })
+      // Build discount and shipping detail objects (Set shipping cost to 0 if free shipping threshold is active)
+      const discountObj = appliedCoupon ? { code: appliedCoupon.code, amount: discountAmount } : null
+      
+      const actualShippingCost = isFreeShippingEligible ? 0 : (selectedShippingZone ? parseFloat(selectedShippingZone.cost) : 0)
+      const shippingObj = selectedShippingZone ? { name: selectedShippingZone.name, cost: actualShippingCost } : null
 
-    const whatsappNumber = `${store.country_code || '+970'}${store.whatsapp}`.replace(/[^0-9]/g, '')
-    const url = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`
-
-    // ── حفظ الطلب في localStorage للعميل ──
-    const orderRecord = {
-      id: orderNumber ? `#${orderNumber}` : `ORD-${Date.now()}`,
-      storeId: store.id,
-      storeName: store.name,
-      date: new Date().toISOString(),
-      customer: form,
-      items: items.map(i => {
+      // ── تجهيز تفاصيل المنتجات لقاعدة البيانات ──
+      const dbItems = items.map(i => {
         const optionStr = Object.entries(i.selectedOptions || {})
           .map(([k, v]) => `${k}: ${v.name || v}${v.price > 0 ? ` (+${v.price} ${currency})` : ''}`)
           .join(' | ')
         const optionExtra = Object.values(i.selectedOptions || {}).reduce((s, opt) => s + Number(opt.price || 0), 0)
         return {
-          product_id: i.product.id,
-          name: i.product.name,
-          qty: i.quantity,
+          product: { id: i.product.id, name: i.product.name, price: parseFloat(i.product.price) + optionExtra },
           quantity: i.quantity,
-          price: Number(i.product.price) + optionExtra,
-          option: optionStr,
-          selectedOptions: i.selectedOptions || {},
-          product: i.product
+          selectedOptions: optionStr
         }
-      }),
-      total: finalTotal,
-      currency,
-    }
-    try {
-      const key = `fawri-orders-${store.id}`
-      const prev = JSON.parse(localStorage.getItem(key) || '[]')
-      localStorage.setItem(key, JSON.stringify([orderRecord, ...prev].slice(0, 30)))
-    } catch {}
+      })
 
-    // ── تلقائي: تفعيل إشعارات التتبع إذا كان الإذن ممنوحاً مسبقاً ──
-    const pushSupported = 'Notification' in window && 'serviceWorker' in navigator
-    if (orderSaved && pushSupported && Notification.permission === 'granted') {
-      subscribeCustomerToPush(orderSaved.id, orderSaved.storeId, orderSaved.number).catch(() => {})
-    }
-
-    // Trigger local confetti explosion!
-    if (triggerConfetti) triggerConfetti()
-
-    await new Promise(r => setTimeout(r, 600))
-    if (store?.enable_whatsapp_redirect !== false) {
-      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
-      if (isMobile) {
-        window.location.href = url
-      } else {
-        window.open(url, '_blank')
+      // إضافة الخصم كبند خاص في سلة الطلب بقاعدة البيانات
+      if (appliedCoupon) {
+        dbItems.push({
+          product: { id: 'discount', name: `خصم كوبون (${appliedCoupon.code})`, price: -discountAmount },
+          quantity: 1,
+          isSpecial: true
+        })
       }
-    }
-    clearCart()
-    setSending(false)
-    onClose()
-    toast.success('🎉 تم إرسال طلبك وحفظه في سجل طلباتك!')
-    if (onOrderSuccess) {
-      const firstItem = items[0]?.product || null
-      onOrderSuccess(firstItem)
+
+      // إضافة الشحن كبند خاص في سلة الطلب بقاعدة البيانات
+      if (selectedShippingZone) {
+        dbItems.push({
+          product: { id: 'shipping', name: `رسوم التوصيل (${selectedShippingZone.name})${isFreeShippingEligible ? ' — شحن مجاني 🎁' : ''}`, price: actualShippingCost },
+          quantity: 1,
+          isSpecial: true
+        })
+      }
+
+      // ── حفظ الطلب في قاعدة بيانات Supabase ──
+      const orderData = {
+        store_id: store.id,
+        customer_name: form.name,
+        customer_phone: form.phone || '',
+        customer_address: form.address || '',
+        notes: form.notes || '',
+        items: dbItems,
+        total: finalTotal,
+        status: 'new'
+      }
+
+      let orderNumber = null
+      let orderSaved = null
+      try {
+        const saved = await useOrdersStore.getState().placeOrder(orderData)
+        if (saved && saved.order_number) {
+          orderNumber = saved.order_number
+          if (saved.id) orderSaved = { id: saved.id, number: saved.order_number, storeId: store.id }
+        }
+      } catch (err) {
+        console.error('Failed to save order to Supabase:', err)
+        orderNumber = Math.floor(Math.random() * 9000) + 1000
+      }
+
+      const message = buildWhatsAppMessage({
+        store,
+        items,
+        customer: form,
+        total: finalTotal,
+        discount: discountObj,
+        shipping: shippingObj,
+        orderNumber
+      })
+
+      const whatsappNumber = `${store.country_code || '+970'}${store.whatsapp}`.replace(/[^0-9]/g, '')
+      const url = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`
+
+      // ── حفظ الطلب في localStorage للعميل ──
+      const orderRecord = {
+        id: orderNumber ? `#${orderNumber}` : `ORD-${Date.now()}`,
+        storeId: store.id,
+        storeName: store.name,
+        date: new Date().toISOString(),
+        customer: form,
+        items: items.map(i => {
+          const optionStr = Object.entries(i.selectedOptions || {})
+            .map(([k, v]) => `${k}: ${v.name || v}${v.price > 0 ? ` (+${v.price} ${currency})` : ''}`)
+            .join(' | ')
+          const optionExtra = Object.values(i.selectedOptions || {}).reduce((s, opt) => s + Number(opt.price || 0), 0)
+          return {
+            product_id: i.product.id,
+            name: i.product.name,
+            qty: i.quantity,
+            quantity: i.quantity,
+            price: Number(i.product.price) + optionExtra,
+            option: optionStr,
+            selectedOptions: i.selectedOptions || {},
+            product: i.product
+          }
+        }),
+        total: finalTotal,
+        currency,
+      }
+      try {
+        const key = `fawri-orders-${store.id}`
+        const prev = JSON.parse(localStorage.getItem(key) || '[]')
+        localStorage.setItem(key, JSON.stringify([orderRecord, ...prev].slice(0, 30)))
+      } catch {}
+
+      // ── تلقائي: تفعيل إشعارات التتبع إذا كان الإذن ممنوحاً مسبقاً ──
+      const pushSupported = 'Notification' in window && 'serviceWorker' in navigator
+      if (orderSaved && pushSupported && Notification.permission === 'granted') {
+        subscribeCustomerToPush(orderSaved.id, orderSaved.storeId, orderSaved.number).catch(() => {})
+      }
+
+      // Trigger local confetti explosion!
+      if (triggerConfetti) triggerConfetti()
+
+      await new Promise(r => setTimeout(r, 600))
+      if (store?.enable_whatsapp_redirect !== false) {
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+        if (isMobile) {
+          window.location.href = url
+        } else {
+          window.open(url, '_blank')
+        }
+      }
+      clearCart()
+      setSending(false)
+      onClose()
+      toast.success('🎉 تم إرسال طلبك وحفظه في سجل طلباتك!')
+      if (onOrderSuccess) {
+        const firstItem = items[0]?.product || null
+        onOrderSuccess(firstItem)
+      }
+    } catch (sendErr) {
+      console.error('Crash in handleSend:', sendErr)
+      toast.error(`عذراً، حدث خطأ أثناء إرسال الطلب: ${sendErr.message || sendErr}`, { id: 'order-send-crash-err' })
+      setSending(false)
     }
   }
 
