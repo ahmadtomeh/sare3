@@ -2116,7 +2116,12 @@ function OrderFormSheet({
 
     await new Promise(r => setTimeout(r, 600))
     if (store?.enable_whatsapp_redirect !== false) {
-      window.open(url, '_blank')
+      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+      if (isMobile) {
+        window.location.href = url
+      } else {
+        window.open(url, '_blank')
+      }
     }
     clearCart()
     setSending(false)
