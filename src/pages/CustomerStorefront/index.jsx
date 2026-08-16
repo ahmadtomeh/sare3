@@ -72,6 +72,11 @@ export default function CustomerStorefront({ previewSlug }) {
   const [myOrdersOpen, setMyOrdersOpen] = useState(false)
   const [trackedOrder, setTrackedOrder] = useState(null)
   const [reviewOpen, setReviewOpen] = useState(false) // {product} after order success
+
+  // Called after a successful order placement — opens the review sheet
+  const handleOrderSuccess = (product) => {
+    if (product) setReviewOpen(product)
+  }
   const [spinWheelOpen, setSpinWheelOpen] = useState(false)
   const [previewImage, setPreviewImage] = useState(null) // { url, title }
 
@@ -825,7 +830,7 @@ export default function CustomerStorefront({ previewSlug }) {
           onClose={() => setOrderOpen(false)}
           triggerConfetti={triggerConfetti}
           isFreeShippingEligible={isFreeShippingEligible}
-          onSuccess={handleOrderSuccess}
+          onOrderSuccess={handleOrderSuccess}
         />
       )}
 
