@@ -527,7 +527,18 @@ export default function CustomerStorefront({ previewSlug }) {
         const inSearch = !q || p.name?.toLowerCase().includes(q) || p.description?.toLowerCase().includes(q)
         return inCat && inSearch
       })
-      .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0) || new Date(a.created_at) - new Date(b.created_at))
+      .sort((a, b) => {
+        const orderA = a.sort_order || 0
+        const orderB = b.sort_order || 0
+        if (orderA !== orderB) return orderA - orderB
+        
+        const dateA = a.created_at ? new Date(typeof a.created_at === 'string' ? a.created_at.replace(' ', 'T') : a.created_at) : null
+        const dateB = b.created_at ? new Date(typeof b.created_at === 'string' ? b.created_at.replace(' ', 'T') : b.created_at) : null
+        
+        const timeA = dateA && !isNaN(dateA.getTime()) ? dateA.getTime() : 0
+        const timeB = dateB && !isNaN(dateB.getTime()) ? dateB.getTime() : 0
+        return timeA - timeB
+      })
   }, [products, activeCategory, deferredSearch])
 
   if (!store) {
@@ -540,8 +551,10 @@ export default function CustomerStorefront({ previewSlug }) {
     if (!store.is_active) return true
     if (store.subscription_status === 'expired') return true
     if (store.subscription_status === 'trial') {
-      const trialEnd = store.trial_ends_at ? new Date(store.trial_ends_at) : null
-      if (trialEnd && new Date() > trialEnd) return true
+      const trialEndStr = store.trial_ends_at || ''
+      const cleanTrialEnd = typeof trialEndStr === 'string' ? trialEndStr.replace(' ', 'T') : trialEndStr
+      const trialEnd = cleanTrialEnd ? new Date(cleanTrialEnd) : null
+      if (trialEnd && !isNaN(trialEnd.getTime()) && new Date() > trialEnd) return true
     }
     return false
   })()
@@ -2374,7 +2387,11 @@ function MyOrdersSheet({ store, onClose, onTrack, products = [], onOpenCart }) {
                   <div>
                     <div style={{ fontWeight: 800, fontSize: 13 }}>{order.id}</div>
                     <div style={{ fontSize: 11, color: 'var(--clr-text-3)' }}>
-                      {new Date(order.date).toLocaleDateString('ar-EG', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                      {(() => {
+                        const dateVal = order.date && typeof order.date === 'string' ? order.date.replace(' ', 'T') : order.date
+                        const orderDate = new Date(dateVal)
+                        return isNaN(orderDate.getTime()) ? '—' : orderDate.toLocaleDateString('ar-EG', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+                      })()}
                     </div>
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
